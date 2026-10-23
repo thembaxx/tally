@@ -19,6 +19,7 @@ export function Segmented({
       {items.map((item) => (
         <button
           type="button"
+          data-tally-sound="select"
           key={item.id}
           aria-pressed={value === item.id}
           onClick={() => onChange(item.id)}

@@ -1,7 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import {
   initialProgress,
-  localDay,
   previousDay,
   streak,
   accepts,
@@ -34,6 +33,10 @@ test('accounting model, loose checks, daily variation, and real streaks', () => 
   expect(dailyTasks(day)).toEqual(dailyTasks(day));
   expect(dailyTasks(day)).not.toEqual(dailyTasks(previousDay(day)));
   expect(readProgress('{broken').xp).toBe(0);
+  expect(readProgress('{"sound":true,"soundVolume":900}').soundVolume).toBe(100);
+  expect(readProgress('{"sound":true,"soundVolume":-2}').soundVolume).toBe(0);
+  expect(readProgress('{"sound":true,"soundVolume":"loud"}').soundVolume).toBe(45);
+  expect(readProgress('{"sound":false}').sound).toBe(false);
   expect(readProgress('{"xp":"fake","completed":["bad"]}').completed).toEqual([]);
 });
 test('onboarding, swipe sorting, loose answer, XP and review persistence', async ({ page }) => {
@@ -171,7 +174,11 @@ test('navigation and responsive layouts at five widths', async ({ page }) => {
 });
 
 test('daily mix completes all three tasks and repeat rewards decrease', async ({ page }) => {
-  const day = localDay();
+  test.setTimeout(120000);
+  // Pin the device's clock so the date-seeded activity cannot change between
+  // test process and browser, including across time-zone or midnight boundaries.
+  const day = '2026-10-23';
+  await page.clock.setFixedTime(new Date('2026-10-23T12:00:00Z'));
   await returning(page);
   const tasks = dailyTasks(day);
   for (const expected of [90, 15]) {
@@ -224,4 +231,36 @@ test('Me shows personal progress while appearance and other preferences live in 
   await page.getByRole('button', { name: 'Close', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Your little corner of Tally.' })).toBeVisible();
   await expect(page.getByRole('group', { name: 'Choose theme' })).toHaveCount(0);
+});
+
+test('sound is opt-in with accessible volume, preview and persisted preference', async ({
+  page,
+}) => {
+  await returning(page);
+  await page.getByRole('button', { name: 'Open settings' }).click();
+  const sound = page.getByRole('switch', { name: 'Sound effects' });
+  const volume = page.getByRole('slider', { name: 'Sound volume' });
+  const preview = page.getByRole('button', { name: 'Preview sounds' });
+  await expect(sound).toHaveAttribute('aria-checked', 'false');
+  await expect(volume).toBeDisabled();
+  await expect(preview).toBeDisabled();
+
+  await sound.click();
+  await expect(sound).toHaveAttribute('aria-checked', 'true');
+  await expect(volume).toBeEnabled();
+  await expect(preview).toBeEnabled();
+  await volume.press('End');
+  for (let i = 0; i < 7; i++) await volume.press('ArrowLeft');
+  await expect(volume).toHaveValue('65');
+  await preview.click();
+  await page.getByRole('button', { name: 'Close', exact: true }).click();
+  await page.reload();
+  await page.getByRole('button', { name: 'Open settings' }).click();
+  await expect(page.getByRole('switch', { name: 'Sound effects' })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+  await expect(page.getByRole('slider', { name: 'Sound volume' })).toHaveValue('65');
+  await page.getByRole('switch', { name: 'Sound effects' }).click();
+  await expect(page.getByRole('button', { name: 'Preview sounds' })).toBeDisabled();
 });

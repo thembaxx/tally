@@ -27,6 +27,7 @@ import { ConceptExplorer } from './concept-explorer';
 import type { StudioActivity } from '@/lib/activity-types';
 import { ChoiceTask, JournalTask, RecallTask } from './studio-activities';
 import { AnswerFeedback } from './answer-feedback';
+import type { SoundCue } from './use-soundscape';
 const Scene = dynamic(() => import('./scene'), {
   ssr: false,
   loading: () => <div className="scene scene-loading" />,
@@ -40,11 +41,22 @@ type Props = {
   lesson: Lesson | 'daily';
   day: string;
   onComplete: (mistakes: number, confidence: string) => number;
+  onCelebrate: () => void;
+  onCue: (cue: SoundCue) => void;
   onClose: () => void;
   onFocus: () => void;
   feedback: (success: boolean) => void;
 };
-export function LessonPlayer({ lesson, day, onComplete, onClose, onFocus, feedback }: Props) {
+export function LessonPlayer({
+  lesson,
+  day,
+  onComplete,
+  onCelebrate,
+  onCue,
+  onClose,
+  onFocus,
+  feedback,
+}: Props) {
   const still = useReducedMotion();
   const daily = lesson === 'daily';
   const data = dailyTasks(day);
@@ -93,14 +105,18 @@ export function LessonPlayer({ lesson, day, onComplete, onClose, onFocus, feedba
     return () => clearTimeout(id);
   }, [intro, step, reflect, done, still]);
   function next() {
-    if (step < tasks.length - 1) setStep(step + 1);
-    else if (!daily) setReflect(true);
-    else finish();
+    if (step < tasks.length - 1) {
+      onCue('navigate');
+      setStep(step + 1);
+    } else if (!daily) {
+      onCue('navigate');
+      setReflect(true);
+    } else finish();
   }
   function finish() {
     setEarned(onComplete(mistakes, confidence));
     setDone(true);
-    feedback(true);
+    onCelebrate();
   }
   if (done)
     return (
@@ -179,7 +195,11 @@ export function LessonPlayer({ lesson, day, onComplete, onClose, onFocus, feedba
                 <Blob small />
                 <p>{lesson.tip}</p>
               </div>
-              <button className="button primary full" onClick={() => setIntro(false)}>
+              <button
+                className="button primary full"
+                data-tally-sound="open"
+                onClick={() => setIntro(false)}
+              >
                 I’m ready to try <ArrowRightIcon />
               </button>
               <p className="fine center">Take your time. Hints are always here.</p>
@@ -208,6 +228,7 @@ export function LessonPlayer({ lesson, day, onComplete, onClose, onFocus, feedba
                     aria-pressed={confidence === c}
                     className={confidence === c ? 'selected' : ''}
                     key={c}
+                    data-tally-sound="select"
                     onClick={() => setConfidence(c)}
                   >
                     {c}
@@ -497,6 +518,7 @@ function EntryTask({
       )}
       <button
         className="text-button hint-button"
+        data-tally-sound="hint"
         aria-expanded={hint}
         onClick={() => setHint(!hint)}
       >
@@ -538,6 +560,7 @@ function OrderRow({
       <span>{value}</span>
       <div className="order-arrows">
         <button
+          data-tally-sound="select"
           aria-label={`Move ${value} up`}
           disabled={index === 0}
           onClick={() => move(index, -1)}
@@ -545,6 +568,7 @@ function OrderRow({
           <ArrowUpIcon />
         </button>
         <button
+          data-tally-sound="select"
           aria-label={`Move ${value} down`}
           disabled={index === total - 1}
           onClick={() => move(index, 1)}
@@ -623,6 +647,7 @@ function OrderTask({
       )}
       <button
         className="text-button hint-button"
+        data-tally-sound="hint"
         aria-expanded={hint}
         onClick={() => setHint(!hint)}
       >

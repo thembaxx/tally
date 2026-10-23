@@ -54,6 +54,7 @@ import {
   type Progress,
 } from '@/lib/learning';
 import { useTally, useFocus, useTheme } from './use-tally';
+import { useSoundscape } from './use-soundscape';
 import { Logo, Blob } from './brand';
 import { Modal } from './modal';
 import { LessonPlayer } from './lesson-player';
@@ -128,7 +129,9 @@ export default function TallyApp() {
   const sw = useRef<ServiceWorkerRegistration | null>(null);
   const lessonLinkOpened = useRef(false);
   const showToast = useCallback((s: string) => setToast(s), []);
+  const playSound = useSoundscape(p.sound, p.soundVolume);
   const focus = useFocus(() => {
+    playSound('focus-end');
     const day = localDay();
     const alreadyEarned = p.focusDays.includes(day);
     showToast(
@@ -260,6 +263,7 @@ export default function TallyApp() {
     return () => removeEventListener('keydown', key);
   }, []);
   function navigate(next: Tab) {
+    if (next !== tab) playSound('navigate');
     setTab(next);
     const url = new URL(location.href);
     url.searchParams.delete('lesson');
@@ -273,30 +277,18 @@ export default function TallyApp() {
   }
   function feedback(success: boolean) {
     if (p.haptics && 'vibrate' in navigator) navigator.vibrate(success ? [12, 35, 12] : 25);
-    if (p.sound && success) {
-      try {
-        const ctx = new AudioContext();
-        const osc = ctx.createOscillator(),
-          gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.frequency.setValueAtTime(660, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(990, ctx.currentTime + 0.15);
-        gain.gain.setValueAtTime(0.045, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.24);
-        osc.onended = () => void ctx.close();
-      } catch {
-        /* Feedback remains visual. */
-      }
-    }
+    playSound(success ? 'correct' : 'incorrect');
+  }
+  function celebrate() {
+    if (p.haptics && 'vibrate' in navigator) navigator.vibrate([12, 40, 16, 55, 22]);
+    playSound('complete');
   }
   function launch(lesson: Lesson | 'daily') {
     if (lesson !== 'daily' && lesson.locked) {
       showToast('Cash Flow is coming soon. There’s plenty to discover in the meantime.');
       return;
     }
+    playSound('open');
     if (!p.onboarded) {
       setPending(lesson);
       setDraftName(p.name);
@@ -699,7 +691,11 @@ export default function TallyApp() {
                         </p>
                         <button
                           className="text-button"
-                          onClick={() => (focus.active ? focus.stop() : focus.start())}
+                          onClick={() => {
+                            playSound(focus.active ? 'focus-pause' : 'focus-start');
+                            if (focus.active) focus.stop();
+                            else focus.start();
+                          }}
                         >
                           {focus.active ? 'Leave focus mode' : 'Find your focus'} <ArrowRightIcon />
                         </button>
@@ -1078,11 +1074,21 @@ export default function TallyApp() {
               <button
                 aria-label={focus.paused ? 'Resume focus timer' : 'Pause focus timer'}
                 className="icon-button"
-                onClick={focus.togglePause}
+                onClick={() => {
+                  playSound(focus.paused ? 'focus-start' : 'focus-pause');
+                  focus.togglePause();
+                }}
               >
                 {focus.paused ? <PlayIcon weight="fill" /> : <PauseIcon weight="fill" />}
               </button>
-              <button className="icon-button" aria-label="End focus session" onClick={focus.stop}>
+              <button
+                className="icon-button"
+                aria-label="End focus session"
+                onClick={() => {
+                  playSound('focus-pause');
+                  focus.stop();
+                }}
+              >
                 <XIcon />
               </button>
             </motion.div>
@@ -1100,8 +1106,11 @@ export default function TallyApp() {
               lesson={active}
               day={today}
               onComplete={complete}
+              onCelebrate={celebrate}
+              onCue={playSound}
               onClose={() => setActive(null)}
               onFocus={() => {
+                playSound('focus-start');
                 focus.start();
                 showToast('Focus is on. Take a breath, then take your next step.');
               }}
@@ -1312,9 +1321,44 @@ export default function TallyApp() {
               </span>
               <Switch
                 checked={p.sound}
-                onChange={(v) => patch({ sound: v })}
+                onChange={(v) => {
+                  patch({ sound: v });
+                  if (v) playSound('correct', { force: true });
+                }}
                 label="Sound effects"
               />
+            </div>
+            <div className="setting-row sound-volume-row">
+              <span>
+                <strong>Sound volume</strong>
+                <small>Gentle, short cues. No background music.</small>
+              </span>
+              <div className="sound-volume-control">
+                <input
+                  aria-label="Sound volume"
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="5"
+                  value={p.soundVolume}
+                  disabled={!p.sound}
+                  onChange={(e) => patch({ soundVolume: Number(e.target.value) })}
+                  onPointerUp={() => playSound('select')}
+                  onKeyUp={() => playSound('select')}
+                />
+                <span className="mono" aria-hidden="true">
+                  {p.soundVolume}%
+                </span>
+                <button
+                  className="small-button"
+                  type="button"
+                  disabled={!p.sound || p.soundVolume === 0}
+                  aria-label="Preview sounds"
+                  onClick={() => playSound('complete')}
+                >
+                  <SpeakerHighIcon /> Try
+                </button>
+              </div>
             </div>
             <h3 className="settings-section-title">App &amp; data</h3>
             <div className="setting-row">

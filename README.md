@@ -23,7 +23,7 @@ npm run dev
 - Interactive 3D comparison bars for profit, inventory, depreciation, accruals, ratios, budgeting, contribution margin, deferrals, and consolidation. Sliders and values share the same model.
 - Date-seeded three-part daily challenges; first completion earns 90 XP and repeats earn 15 XP. Lessons earn 60 XP initially and 10 XP on review.
 - Real local-calendar streaks, daily activity, achievements, and a five-minute focus timer. The timer pauses in hidden tabs and awards 10 XP once per day.
-- System/light/dark themes, optional sound, supported-device haptics, exportable local progress, and an explicit reset flow.
+- System/light/dark themes, opt-in interaction soundscape with per-device volume, supported-device haptics, exportable local progress, and an explicit reset flow. Audio cues cover navigation, selection, correct/incorrect answers, lessons, and focus sessions; the sound setting includes a preview. Sounds are short original Web Audio synth patches informed by React Bits Sound Lab categories, not external audio samples.
 - Installable PWA with icons, maskable icon, app shortcuts, screenshots, offline shell/assets, and update notification. Offline availability requires one online visit and successful service-worker installation.
 - A public `/learn` shelf and 15 statically rendered lesson guides, with unique metadata, canonical URLs, breadcrumbs and structured data. Guides work without JavaScript and link to the matching interactive lesson.
 - `robots.txt` advertises the 17-page sitemap. `/llms.txt` and `/llm.txt` share a generated source, and `/llms-full.txt` exposes the authored explanations and examples.
