@@ -1,7 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import {
   initialProgress,
-  localDay,
   previousDay,
   streak,
   accepts,
