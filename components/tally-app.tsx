@@ -9,7 +9,6 @@ import {
   UserIcon,
   ArrowRightIcon,
   ArrowUpRightIcon,
-  ArrowLeftIcon,
   GearSixIcon,
   PencilSimpleIcon,
   FireIcon,
@@ -61,12 +60,20 @@ import { LessonPlayer } from './lesson-player';
 import { Segmented, Switch } from './ui/controls';
 import { MotionPage } from './motion-page';
 import { PracticeStudio } from './practice-studio';
+import { readBackup } from '@/lib/backup';
+import { scheduleReview, weakestReviews } from '@/lib/reviews';
+import {
+  matchesDraft,
+  sessionId,
+  type LessonDraft,
+  type Session,
+  type SessionResult,
+} from '@/lib/session';
 const Scene = dynamic(() => import('./scene'), {
   ssr: false,
   loading: () => <div className="scene scene-loading" />,
 });
 type Tab = 'home' | 'learn' | 'practice' | 'me';
-type Review = { due: string; confidence: string; mistakes: number };
 type InstallEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: string }>;
@@ -102,28 +109,24 @@ function lessonIcon(icon: string, size = 25) {
               : LockKeyIcon;
   return <Icon size={size} weight="duotone" />;
 }
-const enter = {
-  initial: { opacity: 0, y: 16 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.45 },
-};
 export default function TallyApp() {
   const { progress: p, setProgress, ready, storageError, today } = useTally();
   const [tab, setTab] = useState<Tab>('home');
   const [settings, setSettings] = useState(false);
-  const [active, setActive] = useState<Lesson | 'daily' | null>(null);
+  const [active, setActive] = useState<Session | null>(null);
   const [onboarding, setOnboarding] = useState(false);
-  const [onboardStep, setOnboardStep] = useState(0);
   const [draftName, setDraftName] = useState('');
   const [draftGoal, setDraftGoal] = useState(5);
-  const [pending, setPending] = useState<Lesson | 'daily' | null>(null);
   const [toast, setToast] = useState('');
   const [filter, setFilter] = useState('all');
   const [install, setInstall] = useState<InstallEvent | null>(null);
   const [installInfo, setInstallInfo] = useState(false);
   const [online, setOnline] = useState(true);
   const [reset, setReset] = useState(false);
-  const [reviews, setReviews] = useState<Record<string, Review>>({});
+  const reviews = p.reviews;
+  const [imported, setImported] = useState<Progress | null>(null);
+  const [importError, setImportError] = useState('');
+  const importInput = useRef<HTMLInputElement | null>(null);
   const [about, setAbout] = useState(false);
   const [updateReady, setUpdateReady] = useState(false);
   const sw = useRef<ServiceWorkerRegistration | null>(null);
@@ -158,35 +161,9 @@ export default function TallyApp() {
     const lesson = lessons.find((item) => item.id === id && !item.locked);
     if (!lesson) return;
     setTab('learn');
-    if (p.onboarded) setActive(lesson);
-    else {
-      setPending(lesson);
-      setDraftName(p.name);
-      setDraftGoal(p.goal);
-      setOnboardStep(0);
-      setOnboarding(true);
-    }
-  }, [ready, p.onboarded, p.name, p.goal]);
+    setActive(lesson);
+  }, [ready]);
   useEffect(() => {
-    try {
-      const raw = JSON.parse(localStorage.getItem('tally-reviews-v1') || '{}');
-      if (raw && typeof raw === 'object') {
-        const safe = Object.fromEntries(
-          Object.entries(raw).filter(
-            ([id, v]) =>
-              lessons.some((l) => l.id === id) &&
-              v &&
-              typeof v === 'object' &&
-              'due' in v &&
-              typeof v.due === 'string' &&
-              /^\d{4}-\d{2}-\d{2}$/.test(v.due),
-          ),
-        );
-        setReviews(safe as Record<string, Review>);
-      }
-    } catch {
-      /* A fresh review schedule will be created. */
-    }
     const params = new URLSearchParams(location.search);
     const t = params.get('tab');
     if (navItems.some((i) => i.id === t)) setTab(t as Tab);
@@ -283,61 +260,96 @@ export default function TallyApp() {
     if (p.haptics && 'vibrate' in navigator) navigator.vibrate([12, 40, 16, 55, 22]);
     playSound('complete');
   }
-  function launch(lesson: Lesson | 'daily') {
-    if (lesson !== 'daily' && lesson.locked) {
-      showToast('Cash Flow is coming soon. There’s plenty to discover in the meantime.');
-      return;
-    }
+  function launch(lesson: Session) {
     playSound('open');
-    if (!p.onboarded) {
-      setPending(lesson);
+    setActive(lesson);
+  }
+  function resumeLesson() {
+    const draft = p.draft;
+    if (!draft) return;
+    if (draft.lessonId === 'review') launch({ kind: 'review', ids: draft.reviewIds });
+    else if (draft.lessonId === 'daily' && draft.day === today) launch('daily');
+    else {
+      const lesson = lessons.find((l) => l.id === draft.lessonId);
+      if (lesson) launch(lesson);
+    }
+  }
+  function closeLesson() {
+    setActive(null);
+    if (!p.onboarded && !p.draft) {
       setDraftName(p.name);
       setDraftGoal(p.goal);
-      setOnboardStep(0);
       setOnboarding(true);
-    } else setActive(lesson);
+    }
   }
   function finishOnboarding() {
     patch({ name: draftName.trim(), goal: draftGoal, onboarded: true });
     setOnboarding(false);
-    if (pending) setActive(pending);
   }
-  function complete(mistakes: number, confidence: string) {
+  const saveDraft = useCallback(
+    (draft: LessonDraft) => {
+      setProgress((old) => ({ ...old, draft }));
+    },
+    [setProgress],
+  );
+  function complete(result: SessionResult) {
+    if (!active) return 0;
     const day = localDay();
     const daily = active === 'daily';
-    const lesson = active !== 'daily' ? active : null;
+    const challengeDay = daily ? result.day : day;
+    const review = typeof active === 'object' && 'kind' in active;
+    const lesson = typeof active === 'object' && !('kind' in active) ? active : null;
     const amount = daily
-      ? p.dailyRuns[day]
+      ? p.dailyRuns[challengeDay]
         ? 15
         : 90
-      : p.completed.includes(lesson?.id || '')
-        ? 10
-        : 60;
-    setProgress((old) => ({
-      ...old,
-      xp: old.xp + amount,
-      completed:
-        lesson && !old.completed.includes(lesson.id)
-          ? [...old.completed, lesson.id]
-          : old.completed,
-      activity: {
-        ...old.activity,
-        [day]: (old.activity[day] || 0) + (daily ? 5 : lesson?.minutes || 4),
-      },
-      dailyRuns: daily ? { ...old.dailyRuns, [day]: (old.dailyRuns[day] || 0) + 1 } : old.dailyRuns,
-    }));
-    if (lesson) {
-      const d = new Date();
-      d.setDate(d.getDate() + (mistakes || confidence === 'Still learning' ? 1 : 3));
-      const next = { ...reviews, [lesson.id]: { due: localDay(d), confidence, mistakes } };
-      setReviews(next);
-      try {
-        localStorage.setItem('tally-reviews-v1', JSON.stringify(next));
-      } catch {
-        showToast('Review reminders are available for this visit. Device storage is full.');
+      : review
+        ? result.concepts.length * 10
+        : p.completed.includes(lesson?.id || '')
+          ? 10
+          : 60;
+    setProgress((old) => {
+      const nextReviews = { ...old.reviews };
+      for (const concept of result.concepts) {
+        nextReviews[concept.id] = scheduleReview(
+          old.reviews[concept.id],
+          concept,
+          result.confidence,
+          day,
+        );
       }
-    }
+      return {
+        ...old,
+        xp: old.xp + amount,
+        draft: null,
+        reviews: nextReviews,
+        notes: lesson ? { ...old.notes, [lesson.id]: result.note } : old.notes,
+        completed:
+          lesson && !old.completed.includes(lesson.id)
+            ? [...old.completed, lesson.id]
+            : old.completed,
+        activity: {
+          ...old.activity,
+          [day]:
+            (old.activity[day] || 0) +
+            (daily ? 5 : review ? result.concepts.length : lesson?.minutes || 4),
+        },
+        dailyRuns: daily
+          ? { ...old.dailyRuns, [challengeDay]: (old.dailyRuns[challengeDay] || 0) + 1 }
+          : old.dailyRuns,
+      };
+    });
     return amount;
+  }
+  async function readImport(file: File) {
+    setImportError('');
+    setImported(null);
+    try {
+      if (file.size > 1000000) throw new Error('Choose a Tally backup smaller than 1 MB.');
+      setImported(readBackup(await file.text()));
+    } catch (error) {
+      setImportError(error instanceof Error ? error.message : 'This backup could not be read.');
+    }
   }
   async function installApp() {
     if (install) {
@@ -350,9 +362,12 @@ export default function TallyApp() {
     } else setInstallInfo(true);
   }
   function exportProgress() {
-    const blob = new BlobConstructor([JSON.stringify({ progress: p, reviews }, null, 2)], {
-      type: 'application/json',
-    });
+    const blob = new BlobConstructor(
+      [JSON.stringify({ version: 2, exportedAt: new Date().toISOString(), progress: p }, null, 2)],
+      {
+        type: 'application/json',
+      },
+    );
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -364,7 +379,27 @@ export default function TallyApp() {
   const count = p.completed.length;
   const nextLesson = lessons.find((l) => !l.locked && !p.completed.includes(l.id)) || lessons[0];
   const dayStreak = streak(p.activity, today);
-  const due = lessons.filter((l) => reviews[l.id] && reviews[l.id].due <= today);
+  const dueIds = weakestReviews(reviews, today);
+  const due = lessons.filter((l) => dueIds.includes(l.id));
+  const reviewIds = dueIds.slice(0, 2);
+  const resumable = p.draft && (p.draft.lessonId !== 'daily' || p.draft.day === today);
+  const reviewAction = reviewIds.length ? (
+    <section className="next-action review-action" aria-label="Your next review">
+      <div>
+        <span className="eyebrow">A LITTLE RECALL GOES A LONG WAY</span>
+        <h2>
+          {reviewIds.length === 1 ? 'One concept to strengthen.' : 'Your two weakest concepts.'}
+        </h2>
+        <p>
+          {reviewIds.map((id) => lessons.find((l) => l.id === id)?.title).join(' · ')} · about{' '}
+          {reviewIds.length} min
+        </p>
+      </div>
+      <button className="button primary" onClick={() => launch({ kind: 'review', ids: reviewIds })}>
+        Review {reviewIds.length === 1 ? 'this concept' : 'these concepts'} <ArrowRightIcon />
+      </button>
+    </section>
+  ) : null;
   const todayMinutes = p.activity[today] || 0;
   const level = Math.floor(p.xp / 200) + 1;
   const week = Array.from({ length: 7 }, (_, i) => {
@@ -515,6 +550,30 @@ export default function TallyApp() {
                           : 'A new day to learn'}
                       </div>
                     </section>
+                    {resumable && (
+                      <section
+                        className="next-action resume-action"
+                        aria-label="Unfinished session"
+                      >
+                        <div>
+                          <span className="eyebrow">PICK UP WHERE YOU LEFT OFF</span>
+                          <h2>
+                            {p.draft?.lessonId === 'review'
+                              ? 'Your targeted review'
+                              : p.draft?.lessonId === 'daily'
+                                ? 'The Daily Mix'
+                                : lessons.find((l) => l.id === p.draft?.lessonId)?.title}
+                          </h2>
+                          <p>
+                            Your place and takeaway are saved. Continue with the current activity.
+                          </p>
+                        </div>
+                        <button className="button dark" onClick={resumeLesson}>
+                          Resume learning <ArrowRightIcon />
+                        </button>
+                      </section>
+                    )}
+                    {reviewAction}
                     <div className="welcome-grid">
                       <section className="hero-card">
                         <div className="hero-text">
@@ -823,6 +882,7 @@ export default function TallyApp() {
                   </>
                 ) : tab === 'practice' ? (
                   <>
+                    {reviewAction}
                     <PageHeading
                       eyebrow="MAKE IT STICK"
                       title="Make a little room for play."
@@ -864,15 +924,19 @@ export default function TallyApp() {
                         </div>
                         <span className="count-badge mono">{due.length} DUE</span>
                       </div>
-                      {p.completed.length ? (
+                      {p.completed.length || Object.keys(reviews).length ? (
                         <div className="review-list">
                           {lessons
-                            .filter((l) => p.completed.includes(l.id))
+                            .filter((l) => p.completed.includes(l.id) || reviews[l.id])
                             .sort((a, b) =>
                               (reviews[a.id]?.due || '').localeCompare(reviews[b.id]?.due || ''),
                             )
                             .map((l) => (
-                              <button key={l.id} className="review-row" onClick={() => launch(l)}>
+                              <button
+                                key={l.id}
+                                className="review-row"
+                                onClick={() => launch({ kind: 'review', ids: [l.id] })}
+                              >
                                 <span className={`lesson-icon ${l.color}`}>
                                   {lessonIcon(l.icon)}
                                 </span>
@@ -885,6 +949,18 @@ export default function TallyApp() {
                                         ? `Next gentle review: ${new Date(reviews[l.id].due + 'T12:00:00').toLocaleDateString('en', { month: 'short', day: 'numeric' })}`
                                         : 'Practice whenever you like'}
                                   </small>
+                                  {reviews[l.id]?.total > 0 && (
+                                    <small>
+                                      {reviews[l.id].firstTry} of {reviews[l.id].total} activities
+                                      without hints or retries · {reviews[l.id].interval || 1}-day
+                                      spacing
+                                    </small>
+                                  )}
+                                  {p.notes[l.id] && (
+                                    <small className="saved-takeaway">
+                                      My takeaway: {p.notes[l.id]}
+                                    </small>
+                                  )}
                                 </span>
                                 <span className="review-status">
                                   {reviews[l.id]?.confidence || 'Keep growing'}
@@ -1096,19 +1172,46 @@ export default function TallyApp() {
         </AnimatePresence>
         <Modal
           open={!!active}
-          onClose={() => setActive(null)}
-          title={active === 'daily' ? 'The Daily Mix' : active?.title || 'Your lesson'}
+          onClose={closeLesson}
+          title={
+            active === 'daily'
+              ? 'The Daily Mix'
+              : active && 'kind' in active
+                ? 'Your targeted review'
+                : active?.title || 'Your lesson'
+          }
           wide
         >
           {active && (
             <LessonPlayer
-              key={active === 'daily' ? `daily-${today}` : active.id}
+              key={`${sessionId(active)}-${active !== 'daily' && 'kind' in active ? active.ids.join('-') : ''}`}
+              draft={matchesDraft(p.draft, active, today) ? p.draft : null}
+              attempt={
+                active === 'daily'
+                  ? p.dailyRuns[today] || 0
+                  : 'kind' in active
+                    ? active.ids.reduce((n, id) => n + (reviews[id]?.attempts || 0), 0)
+                    : reviews[active.id]?.attempts || 0
+              }
+              reviewAttempts={
+                active !== 'daily' && 'kind' in active
+                  ? Object.fromEntries(active.ids.map((id) => [id, reviews[id]?.attempts || 0]))
+                  : {}
+              }
+              savedNote={active !== 'daily' && !('kind' in active) ? p.notes[active.id] : ''}
+              quickStart={
+                !p.onboarded &&
+                active !== 'daily' &&
+                !('kind' in active) &&
+                active.id === 'equation'
+              }
+              onDraft={saveDraft}
               lesson={active}
               day={today}
               onComplete={complete}
               onCelebrate={celebrate}
               onCue={playSound}
-              onClose={() => setActive(null)}
+              onClose={closeLesson}
               onFocus={() => {
                 playSound('focus-start');
                 focus.start();
@@ -1120,125 +1223,59 @@ export default function TallyApp() {
         </Modal>
         <Modal
           open={onboarding}
-          onClose={() => setOnboarding(false)}
+          onClose={() => {
+            patch({ onboarded: true });
+            setOnboarding(false);
+          }}
           title="A little hello."
           description="Let’s make this your kind of learning."
         >
           <div className="onboarding">
-            <div className="onboarding-dots">
-              {[0, 1, 2].map((i) => (
-                <span key={i} className={i === onboardStep ? 'active' : ''} />
+            <Blob happy />
+            <h2>Your own learning rhythm.</h2>
+            <p>Make this your learning space. You can change these preferences anytime.</p>
+            <label htmlFor="first-name">
+              What should I call you? <span className="muted">(optional)</span>
+            </label>
+            <input
+              id="first-name"
+              maxLength={30}
+              value={draftName}
+              onChange={(e) => setDraftName(e.target.value)}
+              placeholder="Your first name"
+            />
+            <p>Choose a daily rhythm.</p>
+            <div className="goal-options">
+              {[
+                { n: 3, title: 'A tiny spark' },
+                { n: 5, title: 'A steady glow' },
+                { n: 10, title: 'A brighter light' },
+              ].map((g) => (
+                <button
+                  key={g.n}
+                  className={draftGoal === g.n ? 'selected' : ''}
+                  aria-pressed={draftGoal === g.n}
+                  onClick={() => setDraftGoal(g.n)}
+                >
+                  <strong>{g.title}</strong>
+                  <span className="mono">
+                    {g.n} min {draftGoal === g.n && <CheckIcon />}
+                  </span>
+                </button>
               ))}
             </div>
-            <AnimatePresence mode="wait">
-              <motion.div key={onboardStep} {...enter}>
-                {onboardStep === 0 ? (
-                  <>
-                    <Blob happy />
-                    <h2>
-                      Numbers are for everyone.
-                      <br />
-                      You included.
-                    </h2>
-                    <p>
-                      I’m Tali, your little learning companion. We’ll turn big accounting ideas into
-                      small, satisfying discoveries.
-                    </p>
-                    <label htmlFor="first-name">
-                      What should I call you? <span className="muted">(optional)</span>
-                    </label>
-                    <input
-                      id="first-name"
-                      maxLength={30}
-                      value={draftName}
-                      onChange={(e) => setDraftName(e.target.value)}
-                      placeholder="Your first name"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') setOnboardStep(1);
-                      }}
-                    />
-                  </>
-                ) : onboardStep === 1 ? (
-                  <>
-                    <span className="onboarding-symbol">
-                      <ClockIcon size={48} weight="duotone" />
-                    </span>
-                    <h2>
-                      A little time,
-                      <br />
-                      just for you.
-                    </h2>
-                    <p>
-                      Choose a daily rhythm. You can change it anytime. There’s no penalty for
-                      taking a break.
-                    </p>
-                    <div className="goal-options">
-                      {[
-                        { n: 3, title: 'A tiny spark', sub: 'Just getting curious' },
-                        { n: 5, title: 'A steady glow', sub: 'A little every day' },
-                        { n: 10, title: 'A brighter light', sub: 'Room to go deeper' },
-                      ].map((g) => (
-                        <button
-                          key={g.n}
-                          className={draftGoal === g.n ? 'selected' : ''}
-                          onClick={() => setDraftGoal(g.n)}
-                        >
-                          <span>
-                            <strong>{g.title}</strong>
-                            <small>{g.sub}</small>
-                          </span>
-                          <span className="mono">
-                            {g.n} min {draftGoal === g.n && <CheckIcon />}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <span className="onboarding-symbol">
-                      <ScalesIcon size={48} weight="duotone" />
-                    </span>
-                    <h2>
-                      See it. Try it.
-                      <br />
-                      Make it click.
-                    </h2>
-                    <p>
-                      Play with the idea, try an answer, and discover why it works. Mistakes are
-                      welcome here. Hints, too.
-                    </p>
-                    <div className="onboarding-promises">
-                      <span>
-                        <CheckIcon /> Clear, everyday examples
-                      </span>
-                      <span>
-                        <CheckIcon /> Playful practice, at your pace
-                      </span>
-                      <span>
-                        <CheckIcon /> Gentle reviews to make it stick
-                      </span>
-                    </div>
-                  </>
-                )}
-              </motion.div>
-            </AnimatePresence>
-            <button
-              className="button primary full"
-              onClick={() =>
-                onboardStep < 2 ? setOnboardStep(onboardStep + 1) : finishOnboarding()
-              }
-            >
-              {onboardStep === 2
-                ? 'Let’s find your first lightbulb moment'
-                : 'A little more about you'}
-              <ArrowRightIcon />
+            <button className="button primary full" onClick={finishOnboarding}>
+              Save my preferences <ArrowRightIcon />
             </button>
-            {onboardStep > 0 && (
-              <button className="text-button" onClick={() => setOnboardStep(onboardStep - 1)}>
-                <ArrowLeftIcon /> Back
-              </button>
-            )}
+            <button
+              className="text-button"
+              onClick={() => {
+                patch({ onboarded: true });
+                setOnboarding(false);
+              }}
+            >
+              Maybe later
+            </button>
           </div>
         </Modal>
         <Modal
@@ -1376,13 +1413,26 @@ export default function TallyApp() {
               <button onClick={exportProgress}>
                 <ExportIcon /> Export my progress <ArrowUpRightIcon />
               </button>
+              <input
+                ref={importInput}
+                type="file"
+                accept=".json,application/json"
+                aria-label="Tally progress backup"
+                hidden
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) void readImport(file);
+                  e.target.value = '';
+                }}
+              />
+              <button onClick={() => importInput.current?.click()}>
+                <DownloadSimpleIcon /> Import my progress <ArrowRightIcon />
+              </button>
               <button
                 onClick={() => {
                   setSettings(false);
-                  setPending(null);
                   setDraftName(p.name);
                   setDraftGoal(p.goal);
-                  setOnboardStep(0);
                   setOnboarding(true);
                 }}
               >
@@ -1397,6 +1447,38 @@ export default function TallyApp() {
                 <InfoIcon /> How learning works <ArrowRightIcon />
               </button>
             </div>
+            {importError && (
+              <p role="alert" className="import-error">
+                {importError}
+              </p>
+            )}
+            {imported && (
+              <div className="import-confirm" role="region" aria-label="Review imported progress">
+                <h3>Restore this backup?</h3>
+                <p>
+                  {imported.name || 'Learner'} · {imported.xp} XP · {imported.completed.length}{' '}
+                  completed lessons.
+                </p>
+                <p>
+                  This replaces the progress and preferences on this device. Export your current
+                  progress first if you want to keep both.
+                </p>
+                <button
+                  className="button primary"
+                  onClick={() => {
+                    setProgress(imported);
+                    setImported(null);
+                    setImportError('');
+                    showToast('Your progress, takeaways, and review schedule have been restored.');
+                  }}
+                >
+                  Restore this progress
+                </button>
+                <button className="text-button" onClick={() => setImported(null)}>
+                  Keep current progress
+                </button>
+              </div>
+            )}
             <div className="privacy-note">
               <LockKeyIcon /> Your progress lives on this device. No account, no tracking.
             </div>
@@ -1407,7 +1489,6 @@ export default function TallyApp() {
                   className="small-button"
                   onClick={() => {
                     setProgress({ ...initialProgress, theme: p.theme });
-                    setReviews({});
                     localStorage.removeItem('tally-reviews-v1');
                     setReset(false);
                     showToast('A fresh page. Your next chapter is waiting.');
@@ -1474,8 +1555,8 @@ export default function TallyApp() {
                 penalties.
               </li>
               <li>
-                <strong>Make it stick.</strong> Explain it in your own words. Reviews return after 1
-                or 3 days, based on your experience.
+                <strong>Make it stick.</strong> Save your own takeaway. Reviews return after 1 to 30
+                days, adapting to your answers, hints, and confidence.
               </li>
             </ul>
             <p>

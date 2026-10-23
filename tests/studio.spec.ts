@@ -16,7 +16,7 @@ async function finish(page: Page) {
   await expect(page.locator('.earned-xp')).toContainText('+60');
 }
 test('all formats have complete, playable lesson data; existing progress remains valid', () => {
-  expect(lessons).toHaveLength(15);
+  expect(lessons).toHaveLength(16);
   expect(lessons.every((l) => !l.locked && l.concept && l.example)).toBe(true);
   for (const format of ['journal', 'recall', 'detective', 'story'])
     expect(lessons.some((l) => l.format === format && l.activities?.length)).toBe(true);
@@ -110,10 +110,10 @@ test('reduced-motion studio is readable, keyboard accessible, and has no AA viol
 test('lesson filters recalculate scroll entrances and preserve all chapters', async ({ page }) => {
   await page.goto('/?tab=learn');
   for (const [filter, count] of [
-    ['Deeper', 4],
+    ['Deeper', 5],
     ['Basics', 4],
     ['Next level', 7],
-    ['All lessons', 15],
+    ['All lessons', 16],
   ] as const) {
     await page.getByRole('button', { name: filter, exact: true }).click();
     await expect(page.locator('.path-section').first()).toHaveCSS('opacity', '1');

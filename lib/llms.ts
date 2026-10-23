@@ -29,14 +29,17 @@ ${available.map((lesson) => `- [${guideTitle(lesson)}](${absoluteUrl(`/learn/${l
 - Recall cards ask learners to remember before revealing an answer. Difficult cards can be requeued.
 - Story decisions and error-spotting exercises explain every selection.
 - Daily challenges contain three date-based tasks. Repeat runs earn less XP.
-- Spaced review returns after one day or three days according to mistakes and confidence.
+- Fresh question variants test concepts beyond worked examples. Short reviews target up to two weak due concepts.
+- Spaced review adapts from one to 30 days according to mistakes, hints, confidence, and successful recall on separate days.
+- A connected bakery scenario follows journal entries through profit to the balance sheet.
+- Unfinished sessions and written takeaways are saved; optional profile preferences follow the first learning session.
 - Focus mode runs a five-minute timer, pauses when the tab is hidden, and awards focus XP once per day.
 
 ## Audience and teaching approach
 For curious beginners, students and adults revisiting accounting. Starts with foundations and progresses to intermediate concepts and simplified introductions to consolidation, revenue timing and break-even analysis. Uses concrete examples, worked examples, retrieval practice, interleaving, self-explanation, immediate explanatory feedback and spaced review. Self-paced practice does not certify mastery or guarantee learning outcomes. Content is educational, not personalized financial, tax or investment advice.
 
 ## Privacy, accessibility and platform
-No sign-in, subscription or payment is required. Progress, preferences and review schedules are stored in this browser's local storage. They can be exported or reset in Settings; there is no automatic cloud sync. The app has no built-in analytics. Installable PWA; interactive lessons work offline after an initial online visit and caching. Public guides become available offline only after being visited. Supports system/light/dark themes, reduced motion, tap alternatives to gestures and a fallback without WebGL. Haptics and installation depend on browser/device support.
+No sign-in, subscription or payment is required. Progress, preferences and review schedules are stored in this browser's local storage. They can be exported, restored from a validated Tally backup, or reset in Settings; there is no automatic cloud sync. The app has no built-in analytics. Installable PWA; interactive lessons work offline after an initial online visit and caching. Public guides become available offline only after being visited. Supports system/light/dark themes, reduced motion, tap alternatives to gestures and a fallback without WebGL. Haptics and installation depend on browser/device support.
 
 ## Brand and site files
 - Name: Tally. The lowercase wordmark is styled tally.; the product name in prose is Tally.

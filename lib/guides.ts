@@ -18,6 +18,7 @@ const topics: Record<string, string> = {
   recall: 'Accounting flashcards and retrieval practice',
   'journal-lab': 'How to build a balanced journal entry',
   'spot-the-slip': 'Find accounting errors beyond balanced totals',
+  bakery: 'Run a bakery: journal entries, profit and the balance sheet',
 };
 
 export const guideTitle = (lesson: Lesson) => topics[lesson.id] || lesson.title;

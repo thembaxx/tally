@@ -7,6 +7,7 @@ import {
   readProgress,
   dailyTasks,
 } from '../lib/learning';
+import { practiceEntry } from '../lib/questions';
 async function returning(page: Page) {
   await page.addInitScript(
     (p) => {
@@ -45,12 +46,7 @@ test('onboarding, swipe sorting, loose answer, XP and review persistence', async
   await page.goto('/');
   await page.getByRole('button', { name: 'Let’s make it click' }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
-  await page.getByLabel('What should I call you?').fill('Sam');
-  await page.getByRole('button', { name: 'A little more about you' }).click();
-  await page.getByRole('button', { name: /A steady glow/ }).click();
-  await page.getByRole('button', { name: 'A little more about you' }).click();
-  await page.getByRole('button', { name: 'Let’s find your first lightbulb moment' }).click();
-  await page.getByRole('button', { name: 'I’m ready to try' }).click();
+  await expect(page.getByLabel('What should I call you?')).toHaveCount(0);
   await page.getByRole('button', { name: 'Liability', exact: true }).click();
   await expect(page.getByText('Let’s think it through')).toBeVisible();
   await page.getByRole('button', { name: 'Asset', exact: true }).click();
@@ -71,15 +67,22 @@ test('onboarding, swipe sorting, loose answer, XP and review persistence', async
     pointerId: 1,
   });
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
-  await page.getByLabel('Owner’s equity ($)').fill('$40.00');
+  await page
+    .getByLabel('Owner’s equity ($)')
+    .fill(`$${practiceEntry('equation').answers[0][0]}.00`);
   await page.getByRole('button', { name: 'Check my answer' }).click();
-  await expect(page.getByText(/\$100 − \$60 = \$40/)).toBeVisible();
+  await expect(
+    page.getByText(practiceEntry('equation').explanation, { exact: true }),
+  ).toBeVisible();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByLabel('My takeaway').fill('What we own equals what we owe plus our share.');
   await page.getByRole('button', { name: 'Still learning', exact: true }).click();
   await page.getByRole('button', { name: 'Finish lesson' }).click();
   await expect(page.locator('.earned-xp')).toContainText('+60');
   await page.getByRole('button', { name: 'Keep the good feeling' }).click();
+  await page.getByLabel('What should I call you?').fill('Sam');
+  await page.getByRole('button', { name: /A steady glow/ }).click();
+  await page.getByRole('button', { name: 'Save my preferences' }).click();
   await expect(page.getByRole('heading', { name: 'A little wiser, Sam.' })).toBeVisible();
   await page.reload();
   await expect(page.locator('.xp-chip')).toContainText('60');
@@ -92,6 +95,8 @@ test('onboarding, swipe sorting, loose answer, XP and review persistence', async
     JSON.parse(localStorage.getItem('tally-progress-v1') || '{}'),
   );
   expect(saved.completed).toContain('equation');
+  expect(saved.notes.equation).toBe('What we own equals what we owe plus our share.');
+  expect(saved.reviews.equation.interval).toBe(1);
   expect(errors).toEqual([]);
 });
 test('debit synonyms, Enter advance, accessible reorder, and reduced repeat XP', async ({
@@ -118,8 +123,8 @@ test('debit synonyms, Enter advance, accessible reorder, and reduced repeat XP',
   await page.getByRole('button', { name: 'Keep the good feeling' }).click();
   await page.getByRole('button', { name: 'Debit & Credit, review lesson', exact: true }).click();
   await page.getByRole('button', { name: 'I’m ready to try' }).click();
-  await page.getByLabel('Debit account').fill('equipment');
-  await page.getByLabel('Credit account').fill('cash');
+  await page.getByLabel('Debit account').fill(practiceEntry('debit', 1).answers[0][0]);
+  await page.getByLabel('Credit account').fill(practiceEntry('debit', 1).answers[1][0]);
   await page.getByRole('button', { name: 'Check my answer' }).click();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   for (let i = 0; i < 3; i++)
@@ -175,11 +180,12 @@ test('navigation and responsive layouts at five widths', async ({ page }) => {
 
 test('daily mix completes all three tasks and repeat rewards decrease', async ({ page }) => {
   test.setTimeout(120000);
-  // Pin the device's clock so the date-seeded activity cannot change between
-  // test process and browser, including across time-zone or midnight boundaries.
-  const day = '2026-10-23';
-  await page.clock.setFixedTime(new Date('2026-10-23T12:00:00Z'));
+  // Read the browser's own calendar; keep native animation timers running.
   await returning(page);
+  const day = await page.evaluate(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  });
   const tasks = dailyTasks(day);
   for (const expected of [90, 15]) {
     await page

@@ -312,7 +312,7 @@ export default function Scene({
   maxValue,
 }: Props) {
   const [capable, setCapable] = useState<boolean | null>(null);
-  const [active, setActive] = useState(true);
+  const [active, setActive] = useState(false);
   const [still, setStill] = useState(false);
   const holder = useRef<HTMLDivElement>(null);
   const orbit = useRef<ComponentRef<typeof OrbitControls>>(null);
@@ -330,10 +330,30 @@ export default function Scene({
     const change = () => setStill(q.matches);
     q.addEventListener('change', change);
     const el = holder.current;
-    const io = new IntersectionObserver((e) => setActive(e[e.length - 1].isIntersecting));
+    let inView = false;
+    const update = () => {
+      const dialog = document.querySelector('[role="dialog"][data-state="open"]');
+      setActive(inView && !document.hidden && (!dialog || (!!el && dialog.contains(el))));
+    };
+    const io = new IntersectionObserver((entries) => {
+      inView = entries[entries.length - 1].isIntersecting;
+      update();
+    });
+    // IntersectionObserver still considers a scene behind a dialog visible.
+    // Let the foreground activity use the GPU while background scenes pause.
+    const dialogs = new MutationObserver(update);
+    dialogs.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['data-state'],
+    });
+    document.addEventListener('visibilitychange', update);
     if (el) io.observe(el);
     return () => {
       io.disconnect();
+      dialogs.disconnect();
+      document.removeEventListener('visibilitychange', update);
       q.removeEventListener('change', change);
     };
   }, []);
