@@ -34,6 +34,10 @@ test('accounting model, loose checks, daily variation, and real streaks', () => 
   expect(dailyTasks(day)).toEqual(dailyTasks(day));
   expect(dailyTasks(day)).not.toEqual(dailyTasks(previousDay(day)));
   expect(readProgress('{broken').xp).toBe(0);
+  expect(readProgress('{"sound":true,"soundVolume":900}').soundVolume).toBe(100);
+  expect(readProgress('{"sound":true,"soundVolume":-2}').soundVolume).toBe(0);
+  expect(readProgress('{"sound":true,"soundVolume":"loud"}').soundVolume).toBe(45);
+  expect(readProgress('{"sound":false}').sound).toBe(false);
   expect(readProgress('{"xp":"fake","completed":["bad"]}').completed).toEqual([]);
 });
 test('onboarding, swipe sorting, loose answer, XP and review persistence', async ({ page }) => {
@@ -224,4 +228,32 @@ test('Me shows personal progress while appearance and other preferences live in 
   await page.getByRole('button', { name: 'Close', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Your little corner of Tally.' })).toBeVisible();
   await expect(page.getByRole('group', { name: 'Choose theme' })).toHaveCount(0);
+});
+
+test('sound is opt-in with accessible volume, preview and persisted preference', async ({ page }) => {
+  await returning(page);
+  await page.getByRole('button', { name: 'Open settings' }).click();
+  const sound = page.getByRole('switch', { name: 'Sound effects' });
+  const volume = page.getByRole('slider', { name: 'Sound volume' });
+  const preview = page.getByRole('button', { name: 'Preview sounds' });
+  await expect(sound).toHaveAttribute('aria-checked', 'false');
+  await expect(volume).toBeDisabled();
+  await expect(preview).toBeDisabled();
+
+  await sound.click();
+  await expect(sound).toHaveAttribute('aria-checked', 'true');
+  await expect(volume).toBeEnabled();
+  await expect(preview).toBeEnabled();
+  await volume.fill('65');
+  await preview.click();
+  await page.getByRole('button', { name: 'Close', exact: true }).click();
+  await page.reload();
+  await page.getByRole('button', { name: 'Open settings' }).click();
+  await expect(page.getByRole('switch', { name: 'Sound effects' })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+  await expect(page.getByRole('slider', { name: 'Sound volume' })).toHaveValue('65');
+  await page.getByRole('switch', { name: 'Sound effects' }).click();
+  await expect(page.getByRole('button', { name: 'Preview sounds' })).toBeDisabled();
 });
