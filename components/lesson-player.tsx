@@ -502,6 +502,7 @@ function EntryTask({
       )}
       <button
         className="text-button hint-button"
+        data-tally-sound="hint"
         aria-expanded={hint}
         onClick={() => setHint(!hint)}
       >
@@ -543,6 +544,7 @@ function OrderRow({
       <span>{value}</span>
       <div className="order-arrows">
         <button
+          data-tally-sound="select"
           aria-label={`Move ${value} up`}
           disabled={index === 0}
           onClick={() => move(index, -1)}
@@ -550,6 +552,7 @@ function OrderRow({
           <ArrowUpIcon />
         </button>
         <button
+          data-tally-sound="select"
           aria-label={`Move ${value} down`}
           disabled={index === total - 1}
           onClick={() => move(index, 1)}
@@ -628,6 +631,7 @@ function OrderTask({
       )}
       <button
         className="text-button hint-button"
+        data-tally-sound="hint"
         aria-expanded={hint}
         onClick={() => setHint(!hint)}
       >
