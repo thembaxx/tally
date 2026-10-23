@@ -1,7 +1,7 @@
 'use client';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { AnimatePresence, motion, Reorder, useDragControls } from 'motion/react';
+import { AnimatePresence, motion, Reorder, useDragControls, useReducedMotion } from 'motion/react';
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -13,7 +13,6 @@ import {
   DotsSixVerticalIcon,
   SparkleIcon,
   TargetIcon,
-  ArrowCounterClockwiseIcon,
 } from '@phosphor-icons/react';
 import {
   accepts,
@@ -25,11 +24,15 @@ import {
 } from '@/lib/learning';
 import { Blob } from './brand';
 import { ConceptExplorer } from './concept-explorer';
+import type { StudioActivity } from '@/lib/activity-types';
+import { ChoiceTask, JournalTask, RecallTask } from './studio-activities';
+import { AnswerFeedback } from './answer-feedback';
 const Scene = dynamic(() => import('./scene'), {
   ssr: false,
   loading: () => <div className="scene scene-loading" />,
 });
 type Task =
+  | StudioActivity
   | { type: 'sort'; items: SortItem[] }
   | { type: 'entry'; entry: Entry }
   | { type: 'order'; items: string[]; tip: string };
@@ -42,6 +45,7 @@ type Props = {
   feedback: (success: boolean) => void;
 };
 export function LessonPlayer({ lesson, day, onComplete, onClose, onFocus, feedback }: Props) {
+  const still = useReducedMotion();
   const daily = lesson === 'daily';
   const data = dailyTasks(day);
   const tasks: Task[] = daily
@@ -50,15 +54,16 @@ export function LessonPlayer({ lesson, day, onComplete, onClose, onFocus, feedba
         { type: 'entry', entry: data.entry },
         { type: 'order', items: data.order, tip: data.orderTip },
       ]
-    : lesson.id === 'equation'
-      ? [
-          { type: 'sort', items: requireSort() },
-          { type: 'entry', entry: lesson.entry },
-        ]
-      : [
-          { type: 'entry', entry: lesson.entry },
-          { type: 'order', items: lesson.order, tip: lesson.orderTip },
-        ];
+    : (lesson.activities ??
+      (lesson.id === 'equation'
+        ? [
+            { type: 'sort', items: requireSort() },
+            { type: 'entry', entry: lesson.entry },
+          ]
+        : [
+            { type: 'entry', entry: lesson.entry },
+            { type: 'order', items: lesson.order, tip: lesson.orderTip },
+          ]));
   const [intro, setIntro] = useState(!daily);
   const [step, setStep] = useState(0);
   const [mistakes, setMistakes] = useState(0);
@@ -68,6 +73,25 @@ export function LessonPlayer({ lesson, day, onComplete, onClose, onFocus, feedba
   const [earned, setEarned] = useState(0);
   const [note, setNote] = useState('');
   const task = tasks[step];
+  const player = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const reset = () => {
+      if (
+        player.current?.contains(document.activeElement) &&
+        document.activeElement?.matches('input, textarea, select, button')
+      )
+        return;
+      const dialog = player.current?.closest<HTMLElement>('[role="dialog"]');
+      dialog?.scrollTo({ top: 0, behavior: 'instant' });
+      const heading = player.current?.querySelector<HTMLElement>('h2');
+      if (heading) {
+        heading.tabIndex = -1;
+        heading.focus({ preventScroll: true });
+      }
+    };
+    const id = setTimeout(reset, still ? 0 : 350);
+    return () => clearTimeout(id);
+  }, [intro, step, reflect, done, still]);
   function next() {
     if (step < tasks.length - 1) setStep(step + 1);
     else if (!daily) setReflect(true);
@@ -80,13 +104,18 @@ export function LessonPlayer({ lesson, day, onComplete, onClose, onFocus, feedba
   }
   if (done)
     return (
-      <div className="lesson-complete">
+      <div className="lesson-complete" ref={player}>
+        <div className="celebration" aria-hidden="true">
+          {Array.from({ length: 12 }, (_, i) => (
+            <i key={i} style={{ '--i': i } as React.CSSProperties} />
+          ))}
+        </div>
         <div className="confetti-stars">
           <SparkleIcon size={32} weight="fill" />
           <Blob happy />
           <SparkleIcon size={22} weight="fill" />
         </div>
-        <span className="eyebrow">A LITTLE WISER ALREADY</span>
+        <span className="eyebrow">LOOK AT THAT. YOU MADE IT CLICK.</span>
         <h2>{daily ? 'Daily challenge, done.' : 'That’s a lightbulb moment.'}</h2>
         <p>
           {daily
@@ -114,7 +143,7 @@ export function LessonPlayer({ lesson, day, onComplete, onClose, onFocus, feedba
       </div>
     );
   return (
-    <div className="lesson-player">
+    <div className="lesson-player" ref={player}>
       <div className="lesson-toolbar">
         <span className="pill">{daily ? 'DAILY MIX' : lesson.level.toUpperCase()}</span>
         <button className="text-button" onClick={onFocus}>
@@ -129,10 +158,10 @@ export function LessonPlayer({ lesson, day, onComplete, onClose, onFocus, feedba
       <AnimatePresence mode="wait">
         <motion.div
           key={intro ? 'intro' : reflect ? 'reflect' : step}
-          initial={{ opacity: 0, y: 14 }}
+          initial={still ? false : { opacity: 0, y: 20, scale: 0.985 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.25 }}
+          exit={still ? {} : { opacity: 0, y: -12 }}
+          transition={{ duration: still ? 0 : 0.32, ease: [0.22, 1, 0.36, 1] }}
         >
           {intro && !daily ? (
             <div className="lesson-intro">
@@ -205,7 +234,31 @@ export function LessonPlayer({ lesson, day, onComplete, onClose, onFocus, feedba
                   0{step + 1} / 0{tasks.length}
                 </span>
               </div>
-              {task.type === 'sort' ? (
+              {task.type === 'choice' ? (
+                <ChoiceTask
+                  key={`choice-${step}`}
+                  challenge={task.challenge}
+                  onNext={next}
+                  feedback={feedback}
+                  onMistake={() => setMistakes((n) => n + 1)}
+                />
+              ) : task.type === 'journal' ? (
+                <JournalTask
+                  key={`journal-${step}`}
+                  challenge={task.challenge}
+                  onNext={next}
+                  feedback={feedback}
+                  onMistake={() => setMistakes((n) => n + 1)}
+                />
+              ) : task.type === 'recall' ? (
+                <RecallTask
+                  key={`recall-${step}`}
+                  cards={task.cards}
+                  onNext={next}
+                  feedback={feedback}
+                  onMistake={() => setMistakes((n) => n + 1)}
+                />
+              ) : task.type === 'sort' ? (
                 <SortTask
                   key={`sort-${step}`}
                   items={task.items}
@@ -259,42 +312,6 @@ function requireSort(): SortItem[] {
       explanation: 'The owner contributed $400. Assets $1,200 = Liabilities $800 + Equity $400.',
     },
   ];
-}
-function Feedback({
-  correct,
-  text,
-  onNext,
-}: {
-  correct: boolean;
-  text: string;
-  onNext: () => void;
-}) {
-  return (
-    <motion.div
-      className={`answer-feedback ${correct ? 'correct' : 'retry'}`}
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      role="status"
-    >
-      <strong>
-        {correct ? (
-          <>
-            <CheckIcon /> That’s it!
-          </>
-        ) : (
-          <>
-            <ArrowCounterClockwiseIcon /> Let’s think it through
-          </>
-        )}
-      </strong>
-      <p>{text}</p>
-      {correct && (
-        <button className="button primary full" onClick={onNext}>
-          Continue <ArrowRightIcon />
-        </button>
-      )}
-    </motion.div>
-  );
 }
 function SortTask({
   items,
@@ -384,7 +401,7 @@ function SortTask({
         ))}
       </div>
       {answer && (
-        <Feedback
+        <AnswerFeedback
           correct={correct}
           text={
             correct
@@ -472,7 +489,7 @@ function EntryTask({
         )}
       </form>
       {result !== null && (
-        <Feedback
+        <AnswerFeedback
           correct={result}
           text={result ? entry.explanation : `Not quite yet. ${entry.tip} Give it another try.`}
           onNext={onNext}
@@ -594,7 +611,7 @@ function OrderTask({
         </button>
       )}
       {result !== null && (
-        <Feedback
+        <AnswerFeedback
           correct={result}
           text={
             result

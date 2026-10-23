@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import './expressive.css';
 export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL ||
@@ -24,7 +25,7 @@ export const metadata: Metadata = {
   formatDetection: { telephone: false },
   icons: {
     icon: [
-      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/icons/icon-32.png', type: 'image/png', sizes: '32x32' },
       { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
     ],
     apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180' }],
@@ -56,10 +57,10 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#f8f7f3',
+  themeColor: '#faf8f2',
   colorScheme: 'light dark',
 };
-const themeScript = `try{let t=localStorage.getItem('tally-theme')||'system';let d=t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';document.documentElement.style.colorScheme=d?'dark':'light';document.querySelector('meta[name="theme-color"]')?.setAttribute('content',d?'#181a1b':'#f8f7f3')}catch{}`;
+const themeScript = `try{let t=localStorage.getItem('tally-theme')||'system';let d=t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';document.documentElement.style.colorScheme=d?'dark':'light';document.querySelector('meta[name="theme-color"]')?.setAttribute('content',d?'#111524':'#faf8f2')}catch{}`;
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>

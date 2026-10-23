@@ -1,3 +1,5 @@
+import type { StudioActivity } from './activity-types';
+import { studioLessons, cashFlowLesson } from './studio-lessons';
 export type Category = 'Asset' | 'Liability' | 'Equity';
 export type SortItem = { name: string; category: Category; amount: number; explanation: string };
 export type Entry = {
@@ -22,6 +24,8 @@ export type Lesson = {
   order: string[];
   orderTip: string;
   locked?: boolean;
+  format?: 'recall' | 'journal' | 'detective' | 'story';
+  activities?: StudioActivity[];
 };
 export const sortItems: SortItem[] = [
   {
@@ -392,6 +396,8 @@ lessons.splice(
       'Define the group before combining it. Internal activity is eliminated before presenting one set of statements.',
   },
 );
+lessons[lessons.findIndex((l) => l.id === 'cashflow')] = cashFlowLesson;
+lessons.splice(lessons.length - 1, 0, ...studioLessons);
 export function localDay(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
