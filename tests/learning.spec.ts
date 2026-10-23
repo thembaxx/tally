@@ -175,7 +175,11 @@ test('navigation and responsive layouts at five widths', async ({ page }) => {
 });
 
 test('daily mix completes all three tasks and repeat rewards decrease', async ({ page }) => {
-  const day = localDay();
+  test.setTimeout(120000);
+  // Pin the device's clock so the date-seeded activity cannot change between
+  // test process and browser, including across time-zone or midnight boundaries.
+  const day = '2026-10-23';
+  await page.clock.setFixedTime(new Date('2026-10-23T12:00:00Z'));
   await returning(page);
   const tasks = dailyTasks(day);
   for (const expected of [90, 15]) {
