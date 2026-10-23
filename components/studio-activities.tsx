@@ -182,7 +182,7 @@ export function JournalTask({
               <button
                 type="button"
                 className={`journal-slot ${selected ? 'ready' : ''}`}
-                data-tally-sound="select"
+                data-tally-sound={selected ? 'select' : undefined}
                 disabled={locked}
                 aria-label={`Place account on ${side}${accounts[side] ? `: ${accounts[side]}` : ''}`}
                 onClick={() => put(side)}
