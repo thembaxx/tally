@@ -1,7 +1,7 @@
 'use client';
 import * as Dialog from '@radix-ui/react-dialog';
 import { XIcon } from '@phosphor-icons/react';
-import { type ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 export function Modal({
   open,
   onClose,
@@ -17,11 +17,24 @@ export function Modal({
   children: ReactNode;
   wide?: boolean;
 }) {
+  const opener = useRef<HTMLElement | null>(null);
   return (
     <Dialog.Root open={open} onOpenChange={(v) => !v && onClose()}>
       <Dialog.Portal>
         <Dialog.Overlay className="modal-overlay" />
-        <Dialog.Content className={`modal ${wide ? 'wide' : ''}`}>
+        <Dialog.Content
+          className={`modal ${wide ? 'wide' : ''}`}
+          onOpenAutoFocus={() => {
+            opener.current =
+              document.activeElement instanceof HTMLElement ? document.activeElement : null;
+          }}
+          onCloseAutoFocus={(event) => {
+            if (opener.current?.isConnected) {
+              event.preventDefault();
+              opener.current.focus({ preventScroll: true });
+            }
+          }}
+        >
           <div className="modal-handle" />
           <div className="modal-top">
             <div>

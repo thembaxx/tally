@@ -116,13 +116,13 @@ function Pan({
               <Box
                 position={[0, 0, 0]}
                 scale={[0.7, 0.55, 0.63]}
-                color="#84b5a2"
+                color="#77c7a4"
                 rotation={[0, 0.2, 0]}
               />
               <Box
                 position={[0, 0.3, 0]}
                 scale={[0.75, 0.08, 0.67]}
-                color="#a4d0b9"
+                color="#a4e0c2"
                 rotation={[0, 0.2, 0]}
               />
             </group>
@@ -135,7 +135,7 @@ function Pan({
               <Box
                 position={[0.26, -0.66, 0.03]}
                 scale={[0.4, 0.45, 0.43]}
-                color="#b5a0d1"
+                color="#b99ae9"
                 rotation={[0, -0.3, 0]}
               />
             </Falling>
@@ -197,7 +197,7 @@ function Scale({
         <meshStandardMaterial color="#fa9c79" roughness={0.3} />
       </mesh>
       <group ref={beam} position={[0, 0.86, 0]}>
-        <Box position={[0, 0, 0]} scale={[3.65, 0.15, 0.23]} color="#e28266" />
+        <Box position={[0, 0, 0]} scale={[3.65, 0.15, 0.23]} color="#7184ed" />
         <Box position={[0, 0.06, 0]} scale={[0.43, 0.29, 0.38]} color="#f4b88f" />
         <mesh position={[0, 0.07, 0.23]} rotation={[Math.PI / 2, 0, 0]}>
           <cylinderGeometry args={[0.085, 0.085, 0.12, 24]} />
@@ -217,7 +217,7 @@ function Scale({
   );
 }
 function Tower({ order = [] }: { order: string[] }) {
-  const colors = ['#d9967c', '#ae9bc9', '#eac767', '#8db8a2', '#8bacc5'];
+  const colors = ['#7a94ed', '#ba96e4', '#eac767', '#7ac6a1', '#8bacc5'];
   const originals = useRef(order.slice());
   return (
     <group position={[0, -0.8, 0]} rotation={[0, 0.3, 0]}>
@@ -245,13 +245,13 @@ function Bars({ values, maxValue }: { values: number[]; maxValue?: number }) {
   const maximum = maxValue || Math.max(1, ...values);
   return (
     <group position={[0, -1.1, 0]}>
-      <Box position={[0, -0.13, 0]} scale={[3.2, 0.18, 1.4]} color="#dfc5a5" />
+      <Box position={[0, -0.13, 0]} scale={[3.2, 0.18, 1.4]} color="#d6d9e5" />
       {values.map((v, i) => (
         <Bar
           key={i}
           value={(v / maximum) * 2}
           x={(i - (values.length - 1) / 2) * 1.02}
-          color={['#d9967c', '#ae9bc9', '#8db8a2'][i % 3]}
+          color={['#7a94ed', '#ba96e4', '#7ac6a1'][i % 3]}
         />
       ))}
       {Array.from({ length: 9 }, (_, i) => (

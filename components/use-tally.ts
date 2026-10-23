@@ -51,7 +51,7 @@ export function useTheme(theme: Progress['theme'], focus: boolean) {
       document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
       document
         .querySelector('meta[name="theme-color"]')
-        ?.setAttribute('content', dark ? '#181a1b' : '#f8f7f3');
+        ?.setAttribute('content', dark ? '#111524' : '#faf8f2');
       try {
         localStorage.setItem('tally-theme', theme);
       } catch {

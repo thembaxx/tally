@@ -14,9 +14,10 @@ npm run dev
 ## What's included
 
 - Four screens: Home, Learn, Practice, and Me. Responsive sidebar on larger screens and a spring-animated floating mobile navigation pill.
-- Eleven playable lessons across foundations, intermediate concepts, and introductions to advanced topics. Cash Flow is clearly marked as upcoming.
+- Fifteen playable lessons across foundations, intermediate concepts, and introductions to advanced topics. Follow the Cash replaces the previous Cash Flow placeholder with two story-based challenges.
 - Worked examples, interactive numerical explorations, specific explanatory feedback, optional hints, ungraded self-explanation, and confidence-based review scheduling after one or three days.
 - Swipe/tap sorting of assets, liabilities, and equity. The 3D beam tilts according to the amounts sorted, with a live equation readout.
+- A learning studio with four new lesson formats: journal-entry building with tappable/draggable account chips, accounting detective scenarios, branching story choices, and 3D flip cards that requeue uncertain ideas. All use the existing XP and review schedule.
 - Text and numeric entry with recognized synonyms, loose number formatting, and Enter-to-next-field behavior.
 - Drag-reordered statements and processes with a live animated 3D tower and accessible move buttons.
 - Interactive 3D comparison bars for profit, inventory, depreciation, accruals, ratios, budgeting, contribution margin, deferrals, and consolidation. Sliders and values share the same model.
@@ -38,13 +39,15 @@ npm run build
 npm test
 ```
 
+The suite also covers complete journal, recall, detective, and cash-flow story flows, existing-progress compatibility, reduced motion, and automated AA checks.
+
 Tests use Playwright and `/usr/bin/chromium` in this workspace. For another machine, set `executablePath` in `playwright.config.ts` or install Playwright's Chromium. Start the app before running tests; `BASE_URL` can point the suite at a deployed app. The suite covers the accounting model, onboarding, swipes, answers, feedback, reordering, XP, review persistence, streaks, themes, focus timing, navigation, and five viewport widths.
 
 `oxlint` and `oxfmt` handle linting and formatting. Dependencies are pinned and committed with the npm lockfile.
 
 ## Design and sources
 
-Warm ivory, coral, sage, and lilac; Outfit headings; DM Sans text; DM Mono numbers; Phosphor icons; Motion springs; and procedural Three.js models. Controls adapted from EasyUI are credited in `THIRD_PARTY_NOTICES.md`. Anatomy informed the explanatory-object approach. Applama could not be located in npm or the connected tools, so it is not an app dependency.
+Cobalt, apricot, lilac, mint, and lemon on warm cream, with a navy dark theme; Outfit headings; DM Sans text; DM Mono numbers; Phosphor icons; Motion springs, GSAP scroll entrances, and procedural Three.js models. The original folded-ribbon logo was generated from the supplied visual inspiration and normalized for the app, favicon, install icons, and sharing image. Controls adapted from EasyUI are credited in `THIRD_PARTY_NOTICES.md`. Anatomy informed the explanatory-object approach. Applama could not be located in npm or the connected tools, so it is not an app dependency.
 
 Learning methods are informed by The Learning Scientists' retrieval practice, spacing, interleaving, elaboration, concrete examples, and dual coding. Theming follows the supplied web.dev guidance, with browser theme color, safe-area support, and an early theme script.
 

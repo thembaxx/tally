@@ -39,6 +39,10 @@ import {
   InfoIcon,
   ExportIcon,
   LeafIcon,
+  CardsIcon,
+  NotebookIcon,
+  MagnifyingGlassIcon,
+  PathIcon,
 } from '@phosphor-icons/react';
 import {
   initialProgress,
@@ -53,6 +57,8 @@ import { Logo, Blob } from './brand';
 import { Modal } from './modal';
 import { LessonPlayer } from './lesson-player';
 import { Segmented, Switch } from './ui/controls';
+import { MotionPage } from './motion-page';
+import { PracticeStudio } from './practice-studio';
 const Scene = dynamic(() => import('./scene'), {
   ssr: false,
   loading: () => <div className="scene scene-loading" />,
@@ -70,6 +76,16 @@ const navItems = [
   { id: 'me' as Tab, label: 'Me', icon: UserIcon },
 ];
 function lessonIcon(icon: string, size = 25) {
+  const studioIcons = {
+    cards: CardsIcon,
+    journal: NotebookIcon,
+    detective: MagnifyingGlassIcon,
+    flow: PathIcon,
+  };
+  if (icon in studioIcons) {
+    const Icon = studioIcons[icon as keyof typeof studioIcons];
+    return <Icon size={size} weight="duotone" />;
+  }
   const Icon =
     icon === 'scale'
       ? ScalesIcon
@@ -465,7 +481,7 @@ export default function TallyApp() {
           )}
           <main id="main" className="main-content">
             <AnimatePresence mode="wait">
-              <motion.div key={tab} {...enter}>
+              <MotionPage key={tab} ready={ready} revealKey={tab === 'learn' ? filter : tab}>
                 {tab === 'home' ? (
                   <>
                     <section className="page-heading">
@@ -475,7 +491,7 @@ export default function TallyApp() {
                           {p.name ? `A little wiser, ${p.name}.` : 'Hey, future numbers person.'}
                           <SparkleIcon className="greeting-spark" weight="duotone" />
                         </h1>
-                        <p>You don’t need to be a numbers person. Just a curious one.</p>
+                        <p>Big accounting ideas. Tiny, satisfying discoveries.</p>
                       </div>
                       <div className="date-display">
                         <CalendarDotsIcon size={18} />
@@ -492,21 +508,20 @@ export default function TallyApp() {
                       <section className="hero-card">
                         <div className="hero-text">
                           <span className="hero-tag">
-                            <span /> A SMALL STEP, EVERY DAY
+                            <span /> YOUR DAILY DOSE OF “I GET IT”
                           </span>
                           <h2>
-                            Small lessons.
+                            Small steps.
                             <br />
-                            Big{' '}
                             <span>
-                              lightbulb
-                              <br className="desktop-break" /> moments.
+                              Big “aha!”
+                              <br className="desktop-break" /> energy.
                             </span>
                           </h2>
                           <p>
                             Make sense of money.
                             <br />
-                            One little discovery at a time.
+                            Have a little fun figuring it out.
                           </p>
                           <button className="button dark" onClick={() => launch(nextLesson)}>
                             {count ? 'Continue learning' : 'Let’s make it click'}
@@ -517,6 +532,7 @@ export default function TallyApp() {
                           </div>
                         </div>
                         <div className="hero-visual">
+                          <span className="hero-orbit" aria-hidden="true" />
                           <span className="floating-equation mono">A = L + E</span>
                           <Scene />
                           <span className="scene-hint">
@@ -538,7 +554,7 @@ export default function TallyApp() {
                         <h2>
                           Three tiny challenges.
                           <br />
-                          One sharper you.
+                          One happy brain.
                         </h2>
                         <p>
                           A fresh mix to stretch your
@@ -576,7 +592,7 @@ export default function TallyApp() {
                       <div className="section-heading">
                         <div>
                           <span className="eyebrow">BUILD YOUR FOUNDATION</span>
-                          <h2>Your next lightbulb moment</h2>
+                          <h2>Your next “aha!” moment</h2>
                         </div>
                         <button className="text-button" onClick={() => navigate('learn')}>
                           Explore the path <ArrowRightIcon />
@@ -671,6 +687,16 @@ export default function TallyApp() {
                         <span className="focus-decoration" />
                       </section>
                     </div>
+                    <button className="studio-invitation" onClick={() => navigate('practice')}>
+                      <span className="invitation-cards">
+                        <CardsIcon size={26} weight="duotone" />
+                      </span>
+                      <span>
+                        <strong>A different kind of brain break.</strong>
+                        <small>Build an entry, play detective, or turn a card.</small>
+                      </span>
+                      <ArrowUpRightIcon size={22} />
+                    </button>
                     <div className="billi-note">
                       <Blob small />
                       <p>
@@ -730,11 +756,14 @@ export default function TallyApp() {
                     </div>
                     {['Foundations', 'Next level', 'Going deeper']
                       .filter((g) => filter === 'all' || filter === g)
-                      .map((group, i) => (
+                      .map((group) => (
                         <section className="path-section" key={group}>
                           <div className="section-heading">
                             <div>
-                              <span className="eyebrow">CHAPTER 0{i + 1}</span>
+                              <span className="eyebrow">
+                                {group.toUpperCase()} ·{' '}
+                                {lessons.filter((l) => l.level === group).length} LESSONS
+                              </span>
                               <h2>
                                 {group === 'Foundations'
                                   ? 'First, find your footing.'
@@ -781,8 +810,8 @@ export default function TallyApp() {
                   <>
                     <PageHeading
                       eyebrow="MAKE IT STICK"
-                      title="A little practice. A deeper click."
-                      description="Remember it, remix it, and make it yours. Small returns build lasting understanding."
+                      title="Make a little room for play."
+                      description="Different ways to learn. The same lovely feeling when it clicks."
                     />
                     <div className="practice-hero">
                       <div>
@@ -790,9 +819,9 @@ export default function TallyApp() {
                           <LightningIcon weight="fill" /> TODAY’S DAILY MIX
                         </span>
                         <h2>
-                          Meet your brain’s
+                          Find your
                           <br />
-                          new favorite habit.
+                          learning groove.
                         </h2>
                         <p>
                           Sort, type, and build. Three different ways
@@ -806,6 +835,7 @@ export default function TallyApp() {
                       </div>
                       <Scene kind="tower" order={['Sort', 'Type', 'Build', 'Understand']} />
                     </div>
+                    <PracticeStudio onLaunch={launch} completed={p.completed} />
                     <section className="path-section">
                       <div className="section-heading">
                         <div>
@@ -1017,7 +1047,7 @@ export default function TallyApp() {
                     Made for curious minds <ArrowUpRightIcon />
                   </button>
                 </footer>
-              </motion.div>
+              </MotionPage>
             </AnimatePresence>
           </main>
         </div>
@@ -1498,7 +1528,7 @@ function LessonCard({
           <ClockIcon />
           {l.locked
             ? 'Coming soon'
-            : `${l.minutes} min · ${completed ? 'Review' : 'Bite-sized lesson'}`}
+            : `${l.minutes} min · ${completed ? 'Review' : l.format === 'recall' ? 'Recall cards' : l.format === 'journal' ? 'Journal lab' : l.format === 'detective' ? 'Spot the slip' : l.format === 'story' ? 'Story lesson' : 'Bite-sized lesson'}`}
         </span>
         <span className={`lesson-arrow ${completed ? 'completed' : ''}`}>
           {completed ? <CheckIcon /> : <ArrowUpRightIcon />}

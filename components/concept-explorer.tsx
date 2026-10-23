@@ -2,7 +2,12 @@
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import type { Lesson } from '@/lib/learning';
-import { ArrowsOutSimpleIcon } from '@phosphor-icons/react';
+import {
+  ArrowsOutSimpleIcon,
+  CardsIcon,
+  NotebookIcon,
+  MagnifyingGlassIcon,
+} from '@phosphor-icons/react';
 const Scene = dynamic(() => import('./scene'), {
   ssr: false,
   loading: () => <div className="scene scene-loading" />,
@@ -32,7 +37,52 @@ export function ConceptExplorer({ lesson }: { lesson: Lesson }) {
     max = 10,
     step = 1,
     readout = '';
-  if (id === 'debit') {
+  if (lesson.format && id !== 'cashflow') {
+    const Icon =
+      lesson.format === 'journal'
+        ? NotebookIcon
+        : lesson.format === 'recall'
+          ? CardsIcon
+          : MagnifyingGlassIcon;
+    return (
+      <div className="activity-preview">
+        <Icon weight="duotone" />
+        <h3>
+          {lesson.format === 'journal'
+            ? 'One story. Two sides.'
+            : lesson.format === 'recall'
+              ? 'Give the idea a little room.'
+              : 'Your curious eye is a superpower.'}
+        </h3>
+        <p>
+          {lesson.format === 'journal'
+            ? 'Pick the accounts, build the entry, and watch the two sides come together.'
+            : lesson.format === 'recall'
+              ? 'Try to remember. Turn the card. Bring the fuzzy ones back for another little look.'
+              : 'Read a real-life story, spot what needs another look, and discover why.'}
+        </p>
+        <span>
+          {lesson.format === 'recall'
+            ? '3 cards · your pace · no pressure'
+            : 'Try it next. Hints are always here.'}
+        </span>
+      </div>
+    );
+  }
+  if (id === 'cashflow') {
+    labels = ['Starting cash', 'Cash after this step'];
+    values = [1000, [1000, 1500, 600, 1200][value]];
+    control = 'Follow the cash story';
+    min = 0;
+    max = 3;
+    readout = [
+      'Start with $1,000 in cash',
+      'Operating: collect $500 → $1,500 cash',
+      'Investing: buy a $900 oven → $600 cash',
+      'Financing: borrow $600 → $1,200 cash',
+    ][value];
+    caption = 'The same cash takes three different paths. The net change is +$200.';
+  } else if (id === 'debit') {
     labels = ['Debit equipment', 'Credit cash'];
     values = [value, value];
     control = 'Laptop purchase ($)';
@@ -143,6 +193,7 @@ export function ConceptExplorer({ lesson }: { lesson: Lesson }) {
         values={values}
         maxValue={
           {
+            cashflow: 1600,
             debit: 1000,
             statements: 1000,
             depreciation: 1200,
@@ -160,7 +211,7 @@ export function ConceptExplorer({ lesson }: { lesson: Lesson }) {
       <div className="bar-legend">
         {labels.map((l, i) => (
           <span key={l}>
-            <i style={{ background: ['#d9967c', '#ae9bc9', '#8db8a2'][i % 3] }} />
+            <i style={{ background: ['#7a94ed', '#ba96e4', '#7ac6a1'][i % 3] }} />
             <span>
               {l}
               <strong className="mono">${values[i].toLocaleString()}</strong>

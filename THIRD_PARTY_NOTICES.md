@@ -11,3 +11,5 @@ The interactive scale applies the physical-explainer and time-based-motion princ
 The teaching sequence is informed by [The Learning Scientists: Six Strategies for Effective Learning](https://www.learningscientists.org/blog/2019/11/28-1): retrieval, spacing, interleaving, elaboration, concrete examples, and dual coding.
 
 DM Sans, DM Mono, and Outfit are distributed under the SIL Open Font License. Font license files are in public/fonts.
+
+The new original folded-ribbon Tally mark was generated with Image Gen using the supplied colorful app-icon and ribbon photographs as visual inspiration. It does not use existing brand artwork. Motion composition uses GSAP and @gsap/react alongside the existing Motion interactions.

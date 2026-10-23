@@ -1,6 +1,7 @@
 export default function Loading() {
   return (
     <div className="app-loading" aria-label="Getting your learning space ready">
+      <img src="/brand-mark.webp" alt="" width={52} height={56} />
       <span>
         tally<span style={{ color: 'var(--coral)' }}>.</span>
       </span>
