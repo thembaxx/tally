@@ -488,6 +488,7 @@ export type Progress = {
   theme: 'system' | 'light' | 'dark';
   haptics: boolean;
   sound: boolean;
+  soundVolume: number;
 };
 export const initialProgress: Progress = {
   name: '',
@@ -501,6 +502,7 @@ export const initialProgress: Progress = {
   theme: 'system',
   haptics: true,
   sound: false,
+  soundVolume: 45,
 };
 export function readProgress(raw: string | null): Progress {
   try {
@@ -525,6 +527,10 @@ export function readProgress(raw: string | null): Progress {
       theme: ['system', 'light', 'dark'].includes(p.theme) ? p.theme : 'system',
       haptics: p.haptics !== false,
       sound: p.sound === true,
+      soundVolume:
+        typeof p.soundVolume === 'number' && Number.isFinite(p.soundVolume)
+          ? Math.round(Math.max(0, Math.min(100, p.soundVolume)))
+          : 45,
     };
   } catch {
     return initialProgress;
