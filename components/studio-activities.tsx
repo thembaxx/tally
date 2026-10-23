@@ -32,6 +32,7 @@ function Nudge({ text }: { text: string }) {
     <>
       <button
         className="text-button hint-button"
+        data-tally-sound="hint"
         aria-expanded={open}
         onClick={() => setOpen(!open)}
       >
@@ -164,6 +165,7 @@ export function JournalTask({
             key={account}
             disabled={locked}
             draggable={!locked}
+            data-tally-sound="select"
             onDragStart={(e) => e.dataTransfer.setData('text/plain', account)}
             aria-pressed={selected === account}
             className={selected === account ? 'selected' : ''}
@@ -180,6 +182,7 @@ export function JournalTask({
               <button
                 type="button"
                 className={`journal-slot ${selected ? 'ready' : ''}`}
+                data-tally-sound="select"
                 disabled={locked}
                 aria-label={`Place account on ${side}${accounts[side] ? `: ${accounts[side]}` : ''}`}
                 onClick={() => put(side)}
@@ -307,6 +310,7 @@ export function RecallTask({
             <motion.button
               className="recall-card"
               type="button"
+              data-tally-sound="flip"
               onClick={() => setFlipped((v) => !v)}
               aria-label={
                 flipped
@@ -360,7 +364,7 @@ export function RecallTask({
               placeholder="I think it’s…"
             />
           </label>
-          <button className="button primary full" onClick={() => setFlipped(true)}>
+          <button className="button primary full" data-tally-sound="flip" onClick={() => setFlipped(true)}>
             Turn the card <ArrowRightIcon />
           </button>
         </>
