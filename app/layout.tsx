@@ -1,25 +1,14 @@
 import type { Metadata, Viewport } from 'next';
+import { absoluteUrl, brand, isPreview, jsonLd, siteUrl } from '@/lib/site';
 import './globals.css';
 import './expressive.css';
+import './guides.css';
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ||
-      (process.env.VERCEL_PROJECT_PRODUCTION_URL
-        ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-        : 'http://localhost:3000'),
-  ),
-  title: { default: 'Tally — A little learning. A lot of understanding.', template: '%s · Tally' },
-  description:
-    'Accounting, one lightbulb moment at a time. Learn with interactive 3D models, bite-sized lessons, daily challenges, and a patient little tutor. At your pace.',
-  applicationName: 'Tally',
-  keywords: [
-    'learn accounting',
-    'accounting for students',
-    'interactive accounting',
-    'microlearning',
-    'debit and credit',
-    'accounting equation',
-  ],
+  metadataBase: new URL(siteUrl),
+  title: { default: brand.title, template: '%s · Tally' },
+  description: brand.description,
+  applicationName: brand.name,
+  alternates: { canonical: '/' },
   manifest: '/manifest.webmanifest',
   appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Tally' },
   formatDetection: { telephone: false },
@@ -32,26 +21,31 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: 'website',
-    title: 'Tally — Make accounting click.',
-    description:
-      'Small lessons. Big lightbulb moments. An interactive accounting tutor for curious minds.',
-    siteName: 'Tally',
+    url: '/',
+    title: brand.title,
+    description: brand.description,
+    siteName: brand.name,
+    locale: 'en_US',
     images: [
       {
-        url: '/og.png',
+        url: brand.image,
         width: 1200,
         height: 630,
-        alt: 'Tally — A little learning. A lot of understanding.',
+        alt: brand.imageAlt,
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Tally — Make accounting click.',
-    description: 'Learn accounting with interactive 3D lessons. A little better, every day.',
-    images: ['/og.png'],
+    title: brand.title,
+    description: brand.description,
+    images: [{ url: brand.image, alt: brand.imageAlt }],
   },
-  robots: { index: true, follow: true },
+  robots: {
+    index: !isPreview,
+    follow: true,
+    googleBot: { index: !isPreview, follow: true, 'max-image-preview': 'large' },
+  },
 };
 export const viewport: Viewport = {
   width: 'device-width',
@@ -66,23 +60,45 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <link
+          rel="alternate"
+          type="text/plain"
+          href="/llms.txt"
+          title="Tally for language models"
+        />
       </head>
       <body>
         {children}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
+            __html: jsonLd({
               '@context': 'https://schema.org',
-              '@type': 'EducationalApplication',
-              name: 'Tally',
-              applicationCategory: 'EducationalApplication',
-              operatingSystem: 'Web',
-              description:
-                'Interactive, self-paced accounting lessons with 3D practice and daily challenges.',
-              isAccessibleForFree: true,
-              educationalLevel: ['Beginner', 'Intermediate'],
-              offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+              '@graph': [
+                {
+                  '@type': 'Organization',
+                  '@id': absoluteUrl('/#organization'),
+                  name: brand.name,
+                  url: absoluteUrl('/'),
+                  slogan: brand.tagline,
+                  logo: {
+                    '@type': 'ImageObject',
+                    url: absoluteUrl('/icons/icon-512.png'),
+                    width: 512,
+                    height: 512,
+                  },
+                  description: 'Tally is a free, self-paced accounting learning app.',
+                },
+                {
+                  '@type': 'WebSite',
+                  '@id': absoluteUrl('/#website'),
+                  name: brand.name,
+                  url: absoluteUrl('/'),
+                  description: brand.description,
+                  inLanguage: 'en',
+                  publisher: { '@id': absoluteUrl('/#organization') },
+                },
+              ],
             }),
           }}
         />

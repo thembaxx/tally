@@ -2,7 +2,7 @@ import { SparkleIcon } from '@phosphor-icons/react';
 export function Logo() {
   return (
     <span className="brand">
-      <img className="brand-mark" src="/brand-mark.webp" alt="" width={40} height={44} />
+      <img className="brand-mark" src="/brand-mark.webp" alt="" width={40} height={40} />
       <span>
         tally<span className="brand-dot">.</span>
       </span>
