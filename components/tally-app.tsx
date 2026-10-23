@@ -60,6 +60,8 @@ import { LessonPlayer } from './lesson-player';
 import { Segmented, Switch } from './ui/controls';
 import { MotionPage } from './motion-page';
 import { PracticeStudio } from './practice-studio';
+import { SkillMap } from './skill-map';
+import { recallEvidence } from '@/lib/skills';
 import { readBackup } from '@/lib/backup';
 import { scheduleReview, weakestReviews } from '@/lib/reviews';
 import {
@@ -119,6 +121,7 @@ export default function TallyApp() {
   const [draftGoal, setDraftGoal] = useState(5);
   const [toast, setToast] = useState('');
   const [filter, setFilter] = useState('all');
+  const [learnView, setLearnView] = useState('lessons');
   const [install, setInstall] = useState<InstallEvent | null>(null);
   const [installInfo, setInstallInfo] = useState(false);
   const [online, setOnline] = useState(true);
@@ -167,9 +170,12 @@ export default function TallyApp() {
     const params = new URLSearchParams(location.search);
     const t = params.get('tab');
     if (navItems.some((i) => i.id === t)) setTab(t as Tab);
+    setLearnView(params.get('view') === 'skills' ? 'skills' : 'lessons');
     const pop = () => {
-      const value = new URLSearchParams(location.search).get('tab');
+      const params = new URLSearchParams(location.search);
+      const value = params.get('tab');
       setTab(navItems.some((i) => i.id === value) ? (value as Tab) : 'home');
+      setLearnView(params.get('view') === 'skills' ? 'skills' : 'lessons');
     };
     addEventListener('popstate', pop);
     return () => removeEventListener('popstate', pop);
@@ -239,13 +245,16 @@ export default function TallyApp() {
     addEventListener('keydown', key);
     return () => removeEventListener('keydown', key);
   }, []);
-  function navigate(next: Tab) {
+  function navigate(next: Tab, view = 'lessons') {
     if (next !== tab) playSound('navigate');
     setTab(next);
+    setLearnView(view);
     const url = new URL(location.href);
     url.searchParams.delete('lesson');
     if (next === 'home') url.searchParams.delete('tab');
     else url.searchParams.set('tab', next);
+    if (next === 'learn' && view === 'skills') url.searchParams.set('view', 'skills');
+    else url.searchParams.delete('view');
     history.pushState({}, '', url);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -394,6 +403,14 @@ export default function TallyApp() {
           {reviewIds.map((id) => lessons.find((l) => l.id === id)?.title).join(' · ')} · about{' '}
           {reviewIds.length} min
         </p>
+        <ul className="review-reasons">
+          {reviewIds.map((id) => (
+            <li key={id}>
+              <strong>{lessons.find((l) => l.id === id)?.title}:</strong>{' '}
+              {recallEvidence(reviews[id])} It’s due for another recall.
+            </li>
+          ))}
+        </ul>
       </div>
       <button className="button primary" onClick={() => launch({ kind: 'review', ids: reviewIds })}>
         Review {reviewIds.length === 1 ? 'this concept' : 'these concepts'} <ArrowRightIcon />
@@ -527,7 +544,11 @@ export default function TallyApp() {
           )}
           <main id="main" className="main-content">
             <AnimatePresence mode="wait">
-              <MotionPage key={tab} ready={ready} revealKey={tab === 'learn' ? filter : tab}>
+              <MotionPage
+                key={tab}
+                ready={ready}
+                revealKey={tab === 'learn' ? `${learnView}-${filter}` : tab}
+              >
                 {tab === 'home' ? (
                   <>
                     <section className="page-heading">
@@ -680,6 +701,14 @@ export default function TallyApp() {
                         ))}
                       </div>
                     </section>
+                    <button className="skill-map-link" onClick={() => navigate('learn', 'skills')}>
+                      <PathIcon size={28} weight="duotone" />
+                      <span>
+                        <strong>See how your skills are growing.</strong>
+                        <small>What’s steady, what needs practice, and your next step.</small>
+                      </span>
+                      <ArrowRightIcon size={22} />
+                    </button>
                     <div className="home-bottom">
                       <section className="weekly-card">
                         <div className="section-heading">
@@ -793,92 +822,110 @@ export default function TallyApp() {
                       title="Little steps. Lasting skills."
                       description="From your first equation to the stories behind the statements. Go at your pace."
                     />
-                    <div className="path-summary">
-                      <div className="path-progress">
-                        <GraduationCapIcon size={30} weight="duotone" />
-                        <div>
-                          <h3>Your accounting journey</h3>
-                          <p>
-                            {count} of {lessons.filter((l) => !l.locked).length} lessons explored
-                          </p>
-                        </div>
-                      </div>
-                      <span className="mono">
-                        {Math.round((count / lessons.filter((l) => !l.locked).length) * 100)}%
-                      </span>
-                      <div className="thin-progress">
-                        <div
-                          style={{
-                            width: `${(count / lessons.filter((l) => !l.locked).length) * 100}%`,
-                          }}
-                        />
-                      </div>
-                    </div>
-                    <div className="learn-toolbar">
+                    <div className="learn-view-switch">
                       <Segmented
-                        label="Lesson level"
+                        label="Learn view"
                         items={[
-                          { id: 'all', label: 'All lessons' },
-                          { id: 'Foundations', label: 'Basics' },
-                          { id: 'Next level', label: 'Next level' },
-                          { id: 'Going deeper', label: 'Deeper' },
+                          { id: 'lessons', label: 'Lessons' },
+                          { id: 'skills', label: 'Skill map' },
                         ]}
-                        value={filter}
-                        onChange={setFilter}
+                        value={learnView}
+                        onChange={(view) => navigate('learn', view)}
                       />
-                      <span className="fine">No rush. No finish line.</span>
                     </div>
-                    {['Foundations', 'Next level', 'Going deeper']
-                      .filter((g) => filter === 'all' || filter === g)
-                      .map((group) => (
-                        <section className="path-section" key={group}>
-                          <div className="section-heading">
+                    {learnView === 'skills' ? (
+                      <SkillMap progress={p} today={today} onLaunch={launch} />
+                    ) : (
+                      <>
+                        <div className="path-summary">
+                          <div className="path-progress">
+                            <GraduationCapIcon size={30} weight="duotone" />
                             <div>
-                              <span className="eyebrow">
-                                {group.toUpperCase()} ·{' '}
-                                {lessons.filter((l) => l.level === group).length} LESSONS
-                              </span>
-                              <h2>
-                                {group === 'Foundations'
-                                  ? 'First, find your footing.'
-                                  : group === 'Next level'
-                                    ? 'Now, connect the dots.'
-                                    : 'Think like an accountant.'}
-                              </h2>
+                              <h3>Your accounting journey</h3>
                               <p>
-                                {group === 'Foundations'
-                                  ? 'Every great accountant started right here.'
-                                  : group === 'Next level'
-                                    ? 'Make the leap from recording numbers to understanding them.'
-                                    : 'Explore decisions, timing, and the bigger financial picture.'}
+                                {count} of {lessons.filter((l) => !l.locked).length} lessons
+                                explored
                               </p>
                             </div>
-                            <span className="chapter-tag">
-                              {group === 'Foundations' ? 'START HERE' : 'A LITTLE DEEPER'}
-                            </span>
                           </div>
-                          <div className="lesson-grid">
-                            {lessons
-                              .filter((l) => l.level === group)
-                              .map((l, i) => (
-                                <LessonCard
-                                  key={l.id}
-                                  lesson={l}
-                                  index={i}
-                                  completed={p.completed.includes(l.id)}
-                                  onClick={() => launch(l)}
-                                />
-                              ))}
+                          <span className="mono">
+                            {Math.round((count / lessons.filter((l) => !l.locked).length) * 100)}%
+                          </span>
+                          <div className="thin-progress">
+                            <div
+                              style={{
+                                width: `${(count / lessons.filter((l) => !l.locked).length) * 100}%`,
+                              }}
+                            />
                           </div>
-                        </section>
-                      ))}
-                    <div className="tutor-tip wide-tip">
-                      <Blob small />
-                      <p>
-                        You can explore any open lesson. If an idea feels new, come back to the
-                        foundations for a little boost.
-                      </p>
-                    </div>
+                        </div>
+                        <div className="learn-toolbar">
+                          <Segmented
+                            label="Lesson level"
+                            items={[
+                              { id: 'all', label: 'All lessons' },
+                              { id: 'Foundations', label: 'Basics' },
+                              { id: 'Next level', label: 'Next level' },
+                              { id: 'Going deeper', label: 'Deeper' },
+                            ]}
+                            value={filter}
+                            onChange={setFilter}
+                          />
+                          <span className="fine">No rush. No finish line.</span>
+                        </div>
+                        {['Foundations', 'Next level', 'Going deeper']
+                          .filter((g) => filter === 'all' || filter === g)
+                          .map((group) => (
+                            <section className="path-section" key={group}>
+                              <div className="section-heading">
+                                <div>
+                                  <span className="eyebrow">
+                                    {group.toUpperCase()} ·{' '}
+                                    {lessons.filter((l) => l.level === group).length} LESSONS
+                                  </span>
+                                  <h2>
+                                    {group === 'Foundations'
+                                      ? 'First, find your footing.'
+                                      : group === 'Next level'
+                                        ? 'Now, connect the dots.'
+                                        : 'Think like an accountant.'}
+                                  </h2>
+                                  <p>
+                                    {group === 'Foundations'
+                                      ? 'Every great accountant started right here.'
+                                      : group === 'Next level'
+                                        ? 'Make the leap from recording numbers to understanding them.'
+                                        : 'Explore decisions, timing, and the bigger financial picture.'}
+                                  </p>
+                                </div>
+                                <span className="chapter-tag">
+                                  {group === 'Foundations' ? 'START HERE' : 'A LITTLE DEEPER'}
+                                </span>
+                              </div>
+                              <div className="lesson-grid">
+                                {lessons
+                                  .filter((l) => l.level === group)
+                                  .map((l, i) => (
+                                    <LessonCard
+                                      key={l.id}
+                                      lesson={l}
+                                      index={i}
+                                      completed={p.completed.includes(l.id)}
+                                      onClick={() => launch(l)}
+                                    />
+                                  ))}
+                              </div>
+                            </section>
+                          ))}
+                        <div className="tutor-tip wide-tip">
+                          <Blob small />
+                          <p>
+                            You can explore any open lesson. If an idea feels new, come back to the
+                            foundations for a little boost.
+                          </p>
+                        </div>
+                      </>
+                    )}
                   </>
                 ) : tab === 'practice' ? (
                   <>
