@@ -244,7 +244,9 @@ test('sound is opt-in with accessible volume, preview and persisted preference',
   await expect(sound).toHaveAttribute('aria-checked', 'true');
   await expect(volume).toBeEnabled();
   await expect(preview).toBeEnabled();
-  await volume.fill('65');
+  await volume.press('End');
+  for (let i = 0; i < 7; i++) await volume.press('ArrowLeft');
+  await expect(volume).toHaveValue('65');
   await preview.click();
   await page.getByRole('button', { name: 'Close', exact: true }).click();
   await page.reload();
