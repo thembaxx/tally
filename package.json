@@ -2,7 +2,7 @@
   "name": "tally",
   "version": "1.0.0",
   "private": true,
-  "description": "A little learning. A lot of understanding. Interactive accounting for everyone.",
+  "description": "Make accounting click. Free interactive accounting lessons at your pace.",
   "scripts": {
     "dev": "next dev --hostname 0.0.0.0",
     "build": "next build",

@@ -1,4 +1,4 @@
-# Tally expressive learning studio QA
+# Tally brand, discovery and learning studio QA
 
 **final result: passed**
 
@@ -42,3 +42,34 @@ Targeted browser tests cover complete journal, recall, detective, and cash-flow 
 Automated axe A/AA checks reported no violations on the four main screens in light mode, Home and Settings in dark mode, and the reduced-motion detective exercise. Page errors were checked during visual reviews and none were observed.
 
 Physical Safari/iOS/Android hardware was not available. Native haptics and installation remain browser-dependent; keyboard and tap alternatives are available. Progress stays on the device, and the tutor uses authored content rather than generative chat.
+
+## SEO and branding revision — October 23, 2026
+
+**final result: passed**
+
+The latest attached references show rounded, colorful productivity and native app icons. The new original layered t keeps that simple silhouette and restrained depth, with a cobalt stem, apricot/gold ribbon, coral end and violet overlap. It replaces the previous more rounded render. Existing app layout, lesson behavior and interface palette remain the grounding for the integration.
+
+Visual evidence reviewed directly:
+
+- Generated source: `/workspace/generated_images/exec-56c6dcf2-e450-4eec-bcf9-bdbd205d135f.png`.
+- Transparent normalized master: `public/brand/logo-1024.png`.
+- Actual revised mobile app: `public/screenshots/home-mobile.png` (390 × 844); desktop: `public/screenshots/home-desktop.png` (1440 × 1000).
+- Full public shelf captures: `/workspace/scratch/tally-seo-shelf-mobile.png` and `/workspace/scratch/tally-seo-shelf-desktop.png`.
+- Full lesson guide captures: `/workspace/scratch/tally-seo-equation-mobile.png` and `/workspace/scratch/tally-seo-equation-desktop.png`.
+- Social card: `public/og.png` (1200 × 630); the 32 px favicon was also opened and inspected at its actual resolution.
+
+The public shelf and article match the existing visual system: Outfit hierarchy, DM Sans reading text, DM Mono values, quiet paper surfaces, colored lesson cards, rounded controls and generous whitespace. Guides keep the authored teaching material readable and provide a direct route into the matching interactive lesson. The new logo remains distinct at small size; all app assets and social sharing use the same symbol and wordmark treatment. `public/brand/brand-guide.md` and the downloadable kit document its use.
+
+One P1 was found and fixed: the shared root loading boundary left public guides hidden without JavaScript. Moving the interactive app and its loading boundary into `app/(app)/` makes guide content and links directly readable without scripts. No actionable P0/P1/P2 issues remain in this scope.
+
+Validation:
+
+- All **18** production-build Playwright tests passed in **3.4 minutes**, including all 14 existing learning regressions and four new discovery/guide tests.
+- All 17 canonical URLs, 15 lesson-resource graphs, breadcrumbs, text-file parity, full-reference explanations and all links in the LLM overview passed checks. Unknown guide slugs return 404.
+- No-JavaScript shelf → guide → explanation navigation passed. A guide opened the correct journal lesson after onboarding; a returning learner opened Cash Flow with existing XP intact.
+- Shelf and guide passed overflow checks at 320, 390, 768 and 1440 px, and axe WCAG A/AA checks in both light and dark themes.
+- TypeScript, oxlint, oxfmt and the optimized Next.js build passed. JSON-LD parses successfully and uses valid Schema.org types; search-engine rich-result eligibility is not asserted.
+- Offline reload opened the new recall lesson, displayed its answer, retained 120 XP and used only `tally-offline-v3`; no page errors were observed.
+- Icon dimensions and social-card dimensions match metadata. A pixel check found **zero** non-background pixels outside the maskable icon's central safe-area circle.
+
+Search ranking, actual indexing and AI citation outcomes were not measured. The asset/reference photographs are inspiration for the original logo, not a pixel-fidelity target for the entire app.

@@ -125,6 +125,7 @@ export default function TallyApp() {
   const [about, setAbout] = useState(false);
   const [updateReady, setUpdateReady] = useState(false);
   const sw = useRef<ServiceWorkerRegistration | null>(null);
+  const lessonLinkOpened = useRef(false);
   const showToast = useCallback((s: string) => setToast(s), []);
   const focus = useFocus(() => {
     const day = localDay();
@@ -146,6 +147,22 @@ export default function TallyApp() {
     );
   });
   useTheme(p.theme, focus.active);
+  useEffect(() => {
+    if (!ready || lessonLinkOpened.current) return;
+    lessonLinkOpened.current = true;
+    const id = new URLSearchParams(location.search).get('lesson');
+    const lesson = lessons.find((item) => item.id === id && !item.locked);
+    if (!lesson) return;
+    setTab('learn');
+    if (p.onboarded) setActive(lesson);
+    else {
+      setPending(lesson);
+      setDraftName(p.name);
+      setDraftGoal(p.goal);
+      setOnboardStep(0);
+      setOnboarding(true);
+    }
+  }, [ready, p.onboarded, p.name, p.goal]);
   useEffect(() => {
     try {
       const raw = JSON.parse(localStorage.getItem('tally-reviews-v1') || '{}');
@@ -244,6 +261,7 @@ export default function TallyApp() {
   function navigate(next: Tab) {
     setTab(next);
     const url = new URL(location.href);
+    url.searchParams.delete('lesson');
     if (next === 'home') url.searchParams.delete('tab');
     else url.searchParams.set('tab', next);
     history.pushState({}, '', url);
@@ -491,7 +509,7 @@ export default function TallyApp() {
                           {p.name ? `A little wiser, ${p.name}.` : 'Hey, future numbers person.'}
                           <SparkleIcon className="greeting-spark" weight="duotone" />
                         </h1>
-                        <p>Big accounting ideas. Tiny, satisfying discoveries.</p>
+                        <p>Learn accounting through tiny, satisfying discoveries.</p>
                       </div>
                       <div className="date-display">
                         <CalendarDotsIcon size={18} />
@@ -1043,6 +1061,9 @@ export default function TallyApp() {
                   <span>
                     <Logo /> <span>A little better, every day.</span>
                   </span>
+                  <a className="public-guides-link" href="/learn">
+                    Learn accounting · Free guides
+                  </a>
                   <button onClick={() => setAbout(true)}>
                     Made for curious minds <ArrowUpRightIcon />
                   </button>

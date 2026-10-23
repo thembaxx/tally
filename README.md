@@ -25,7 +25,8 @@ npm run dev
 - Real local-calendar streaks, daily activity, achievements, and a five-minute focus timer. The timer pauses in hidden tabs and awards 10 XP once per day.
 - System/light/dark themes, optional sound, supported-device haptics, exportable local progress, and an explicit reset flow.
 - Installable PWA with icons, maskable icon, app shortcuts, screenshots, offline shell/assets, and update notification. Offline availability requires one online visit and successful service-worker installation.
-- SEO metadata, structured data, Open Graph image, robots, sitemap, `llms.txt`, and `llm.txt`.
+- A public `/learn` shelf and 15 statically rendered lesson guides, with unique metadata, canonical URLs, breadcrumbs and structured data. Guides work without JavaScript and link to the matching interactive lesson.
+- `robots.txt` advertises the 17-page sitemap. `/llms.txt` and `/llm.txt` share a generated source, and `/llms-full.txt` exposes the authored explanations and examples.
 
 Progress is stored on the current browser/device. There is no account, server database, analytics, cross-device synchronization, or generative AI chat. The tutor uses authored accounting content and feedback. Introductory advanced-topic lessons are not a comprehensive professional accounting qualification.
 
@@ -39,7 +40,7 @@ npm run build
 npm test
 ```
 
-The suite also covers complete journal, recall, detective, and cash-flow story flows, existing-progress compatibility, reduced motion, and automated AA checks.
+The suite also covers complete journal, recall, detective, and cash-flow story flows, existing-progress compatibility, reduced motion, automated AA checks, no-JavaScript guides, all public guide URLs, structured data, crawler files, and onboarding from a lesson deep link.
 
 Tests use Playwright and `/usr/bin/chromium` in this workspace. For another machine, set `executablePath` in `playwright.config.ts` or install Playwright's Chromium. Start the app before running tests; `BASE_URL` can point the suite at a deployed app. The suite covers the accounting model, onboarding, swipes, answers, feedback, reordering, XP, review persistence, streaks, themes, focus timing, navigation, and five viewport widths.
 
@@ -53,4 +54,10 @@ Learning methods are informed by The Learning Scientists' retrieval practice, sp
 
 ## Deployment
 
-This project is connected to `thembaxx/tally` on GitHub and the `tally` Vercel project. Vercel builds with Next.js on Node.js 24. No secrets or environment variables are needed. `NEXT_PUBLIC_SITE_URL` may optionally set the canonical origin; otherwise Vercel's production domain is used.
+This project is connected to `thembaxx/tally` on GitHub and the `tally` Vercel project. Vercel builds with Next.js on Node.js 24. No secrets are needed. `NEXT_PUBLIC_SITE_URL` sets the canonical origin; it defaults to `https://tally-wine-alpha.vercel.app` so local and preview builds never become canonical. Copy `.env.example` when changing the primary domain. Vercel previews carry `noindex` metadata and an `X-Robots-Tag` header, while permitting crawling so the directive can be read.
+
+## Brand and discovery maintenance
+
+The master logo and usage guide live in `public/brand/`. Run `node scripts/build-brand.mjs` to rebuild icon sizes and the web mark from the master (uses Sharp, installed with Next.js). The dedicated maskable icon keeps the full mark within its central safe area. `/og.png` is a 1200 × 630 social card using the same logo, fonts and tagline.
+
+Update lesson content in `lib/learning.ts` and `lib/studio-lessons.ts`; public guides, LLM references and the sitemap derive from those lessons. Search-friendly topic names live in `lib/guides.ts`. See `docs/seo.md` for validation and domain migration notes. Search indexing and AI citations are controlled by external services and are not implied by the presence of these files.
