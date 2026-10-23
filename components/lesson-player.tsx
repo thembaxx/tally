@@ -96,10 +96,13 @@ export function LessonPlayer({ lesson, day, onComplete, onCelebrate, onCue, onCl
     return () => clearTimeout(id);
   }, [intro, step, reflect, done, still]);
   function next() {
-    onCue('navigate');
-    if (step < tasks.length - 1) setStep(step + 1);
-    else if (!daily) setReflect(true);
-    else finish();
+    if (step < tasks.length - 1) {
+      onCue('navigate');
+      setStep(step + 1);
+    } else if (!daily) {
+      onCue('navigate');
+      setReflect(true);
+    } else finish();
   }
   function finish() {
     setEarned(onComplete(mistakes, confidence));
