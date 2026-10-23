@@ -9,7 +9,6 @@ export default defineConfig({
     headless: true,
     viewport: { width: 390, height: 844 },
     launchOptions: {
-      ...(process.env.CI ? {} : { executablePath: '/usr/bin/chromium' }),
       args: [
         '--no-sandbox',
         '--enable-unsafe-swiftshader',

@@ -131,9 +131,17 @@ test('the 3D recall flip shows a readable answer face and restores focus on clos
   await page.getByRole('button', { name: 'Turn the card', exact: true }).click();
   const flippedCard = page.locator('.recall-card');
   await expect(flippedCard).toHaveAttribute('aria-label', /Answer:/);
-  // The spring-driven 3D card needs to settle before Playwright tries to
-  // scroll and capture its visual baseline on slower GitHub runners.
-  await page.waitForTimeout(1500);
+  // Observe the completed flip instead of assuming a fixed spring duration.
+  await expect
+    .poll(
+      () =>
+        flippedCard.evaluate((element) => {
+          const transform = new DOMMatrixReadOnly(getComputedStyle(element).transform);
+          return Math.abs(transform.m11 + 1) < 0.000001 && Math.abs(transform.m13) < 0.000001;
+        }),
+      { timeout: 15000 },
+    )
+    .toBe(true);
   await expect(flippedCard).toHaveScreenshot('recall-answer.png', {
     animations: 'disabled',
     maxDiffPixelRatio: 0.01,

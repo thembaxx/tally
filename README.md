@@ -45,7 +45,7 @@ npm test
 
 The suite also covers complete journal, recall, detective, and cash-flow story flows, existing-progress compatibility, reduced motion, automated AA checks, no-JavaScript guides, all public guide URLs, structured data, crawler files, immediate practice from lesson deep links, adaptive review, backup restore, saved takeaways, and session recovery.
 
-Tests use Playwright and `/usr/bin/chromium` in this workspace. For another machine, set `executablePath` in `playwright.config.ts` or install Playwright's Chromium. Start the app before running tests; `BASE_URL` can point the suite at a deployed app. The suite covers the accounting model, onboarding, swipes, answers, feedback, reordering, XP, review persistence, streaks, themes, focus timing, navigation, and five viewport widths.
+Tests use Playwright’s lockfile-pinned Chromium in both local and CI runs. Install it with `npx playwright install --with-deps chromium`. Start the app before running tests; `BASE_URL` can point the suite at a deployed app. The suite covers the accounting model, onboarding, swipes, answers, feedback, reordering, XP, review persistence, streaks, themes, focus timing, navigation, and five viewport widths.
 
 `oxlint` and `oxfmt` handle linting and formatting. Dependencies are pinned and committed with the npm lockfile.
 

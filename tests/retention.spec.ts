@@ -44,7 +44,8 @@ async function saved(page: Page) {
 }
 async function answer(page: Page, id: string, attempt = 0) {
   const entry = practiceEntry(id, attempt);
-  await expect(page.locator('.entry-question')).toHaveText(entry.prompt);
+  // The outgoing 3D activity can take longer to settle on software-rendered CI.
+  await expect(page.locator('.entry-question')).toHaveText(entry.prompt, { timeout: 15000 });
   for (let i = 0; i < entry.labels.length; i++)
     await page.getByLabel(entry.labels[i], { exact: true }).fill(entry.answers[i][0]);
   await page.getByRole('button', { name: 'Check my answer' }).click();
