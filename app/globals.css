@@ -1582,30 +1582,6 @@ strong {
   margin-top: 5px;
   max-width: 95px;
 }
-.me-settings {
-  margin-top: 25px;
-  display: flex;
-  align-items: center;
-  gap: 25px;
-  border: 1px solid var(--line);
-  background: var(--surface);
-  border-radius: 14px;
-  padding: 24px;
-}
-.me-settings h3 {
-  font-size: 18px;
-}
-.me-settings p {
-  font-size: 10px;
-  margin-top: 5px;
-}
-.me-settings > .segmented {
-  margin-left: auto;
-}
-.me-settings > .text-button {
-  font-size: 10px;
-  white-space: nowrap;
-}
 .connection-banner {
   background: var(--butter);
   font-size: 11px;
@@ -2209,6 +2185,28 @@ textarea {
   flex-direction: column;
   gap: 0;
 }
+.settings-section-title {
+  padding-top: 20px;
+  margin-top: 6px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+  font-weight: 650;
+}
+.settings-section-title:first-child {
+  border-top: 0;
+  margin-top: 0;
+  padding-top: 0;
+}
+.settings-section-note {
+  color: var(--muted);
+  font-size: 11px;
+  margin: 8px 0 12px;
+  line-height: 1.7;
+}
+.settings-section-title + .setting-row {
+  border-top: 0;
+  padding-top: 12px;
+}
 .settings-body > label {
   margin-bottom: 22px;
 }
@@ -2680,12 +2678,6 @@ textarea {
   }
   .focus-bar {
     left: calc(50% + 92px);
-  }
-  .me-settings {
-    flex-wrap: wrap;
-  }
-  .me-settings > .segmented {
-    margin-left: auto;
   }
   .profile-card h2 {
     font-size: 25px;
@@ -3577,24 +3569,6 @@ textarea {
   .badge-item > span {
     font-size: 8px;
     line-height: 1.6;
-  }
-  .me-settings {
-    padding: 21px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-  }
-  .me-settings > div:first-child {
-    width: 100%;
-  }
-  .me-settings h3 {
-    font-size: 20px;
-  }
-  .me-settings > .segmented {
-    margin-left: 0;
-  }
-  .me-settings > .text-button {
-    font-size: 9px;
   }
   .lesson-complete {
     padding: 10px 0 0;

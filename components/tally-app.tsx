@@ -11,6 +11,7 @@ import {
   ArrowUpRightIcon,
   ArrowLeftIcon,
   GearSixIcon,
+  PencilSimpleIcon,
   FireIcon,
   SparkleIcon,
   TargetIcon,
@@ -946,7 +947,7 @@ export default function TallyApp() {
                         aria-label="Edit profile"
                         onClick={() => setSettings(true)}
                       >
-                        <GearSixIcon size={22} />
+                        <PencilSimpleIcon size={22} />
                       </button>
                     </section>
                     <div className="stats-grid">
@@ -1036,25 +1037,6 @@ export default function TallyApp() {
                         ))}
                       </div>
                     </section>
-                    <div className="me-settings">
-                      <div>
-                        <h3>A space that feels like you.</h3>
-                        <p>Your pace. Your theme. Your little preferences.</p>
-                      </div>
-                      <Segmented
-                        label="Theme"
-                        value={p.theme}
-                        onChange={(v) => patch({ theme: v as Progress['theme'] })}
-                        items={[
-                          { id: 'system', label: 'Auto', icon: <MonitorIcon /> },
-                          { id: 'light', label: 'Light', icon: <SunIcon /> },
-                          { id: 'dark', label: 'Dark', icon: <MoonIcon /> },
-                        ]}
-                      />
-                      <button className="text-button" onClick={() => setSettings(true)}>
-                        All settings <ArrowRightIcon />
-                      </button>
-                    </div>
                   </>
                 )}
                 <footer className="page-footer">
@@ -1256,10 +1238,11 @@ export default function TallyApp() {
             setSettings(false);
             setReset(false);
           }}
-          title="Your little preferences."
-          description="Make Tally feel a little more like you."
+          title="Settings"
+          description="Make Tally work your way."
         >
           <div className="settings-body">
+            <h3 className="settings-section-title">Profile</h3>
             <label htmlFor="profile-name">
               Your name
               <input
@@ -1270,18 +1253,12 @@ export default function TallyApp() {
                 placeholder="What should we call you?"
               />
             </label>
-            <div className="setting-row">
-              <span>
-                <strong>
-                  <SunIcon /> Appearance
-                </strong>
-                <small>
-                  {focus.active
-                    ? 'Focus is keeping things calm and dark.'
-                    : 'Follow your system, or set your own mood.'}
-                </small>
-              </span>
-            </div>
+            <h3 className="settings-section-title">Appearance</h3>
+            <p className="settings-section-note">
+              {focus.active
+                ? 'Focus is keeping things calm and dark.'
+                : 'Follow your system, or set your own mood.'}
+            </p>
             <Segmented
               label="Choose theme"
               value={p.theme}
@@ -1292,6 +1269,7 @@ export default function TallyApp() {
                 { id: 'dark', label: 'Dark', icon: <MoonIcon /> },
               ]}
             />
+            <h3 className="settings-section-title">Learning</h3>
             <div className="setting-row">
               <span>
                 <strong>
@@ -1311,6 +1289,7 @@ export default function TallyApp() {
                 ))}
               </select>
             </div>
+            <h3 className="settings-section-title">Feedback</h3>
             <div className="setting-row">
               <span>
                 <strong>
@@ -1337,6 +1316,7 @@ export default function TallyApp() {
                 label="Sound effects"
               />
             </div>
+            <h3 className="settings-section-title">App &amp; data</h3>
             <div className="setting-row">
               <span>
                 <strong>
