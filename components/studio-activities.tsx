@@ -24,9 +24,10 @@ const Scene = dynamic(() => import('./scene'), {
 type TaskCallbacks = {
   onNext: () => void;
   onMistake: () => void;
+  onHint?: () => void;
   feedback: (success: boolean) => void;
 };
-function Nudge({ text }: { text: string }) {
+function Nudge({ text, onHint }: { text: string; onHint?: () => void }) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -34,7 +35,10 @@ function Nudge({ text }: { text: string }) {
         className="text-button hint-button"
         data-tally-sound="hint"
         aria-expanded={open}
-        onClick={() => setOpen(!open)}
+        onClick={() => {
+          if (!open) onHint?.();
+          setOpen(!open);
+        }}
       >
         <LightbulbIcon weight="duotone" />
         {open ? 'Keep going' : 'A little nudge?'}
@@ -49,6 +53,7 @@ function Nudge({ text }: { text: string }) {
   );
 }
 export function ChoiceTask({
+  onHint,
   challenge: c,
   onNext,
   onMistake,
@@ -97,11 +102,12 @@ export function ChoiceTask({
         ))}
       </div>
       {option && <AnswerFeedback correct={correct} text={option.explanation} onNext={onNext} />}
-      <Nudge text={c.tip} />
+      <Nudge text={c.tip} onHint={onHint} />
     </div>
   );
 }
 export function JournalTask({
+  onHint,
   challenge: c,
   onNext,
   onMistake,
@@ -246,7 +252,7 @@ export function JournalTask({
           onNext={onNext}
         />
       )}
-      <Nudge text={c.tip} />
+      <Nudge text={c.tip} onHint={onHint} />
     </div>
   );
 }

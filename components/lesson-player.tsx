@@ -14,20 +14,24 @@ import {
   SparkleIcon,
   TargetIcon,
 } from '@phosphor-icons/react';
-import {
-  accepts,
-  dailyTasks,
-  type Lesson,
-  type SortItem,
-  type Entry,
-  type Category,
-} from '@/lib/learning';
+import { accepts, dailyTasks, type SortItem, type Entry, type Category } from '@/lib/learning';
 import { Blob } from './brand';
 import { ConceptExplorer } from './concept-explorer';
 import type { StudioActivity } from '@/lib/activity-types';
 import { ChoiceTask, JournalTask, RecallTask } from './studio-activities';
 import { AnswerFeedback } from './answer-feedback';
 import type { SoundCue } from './use-soundscape';
+import { practiceEntry } from '@/lib/questions';
+import { createBakeryLesson } from '@/lib/bakery';
+import {
+  matchesDraft,
+  sessionId,
+  type LessonDraft,
+  type Session,
+  type SessionResult,
+  type TaskResult,
+} from '@/lib/session';
+import { confidenceOptions, type ConceptResult } from '@/lib/reviews';
 const Scene = dynamic(() => import('./scene'), {
   ssr: false,
   loading: () => <div className="scene scene-loading" />,
@@ -38,9 +42,15 @@ type Task =
   | { type: 'entry'; entry: Entry }
   | { type: 'order'; items: string[]; tip: string };
 type Props = {
-  lesson: Lesson | 'daily';
+  lesson: Session;
   day: string;
-  onComplete: (mistakes: number, confidence: string) => number;
+  attempt: number;
+  reviewAttempts: Record<string, number>;
+  draft: LessonDraft | null;
+  savedNote?: string;
+  quickStart?: boolean;
+  onDraft: (draft: LessonDraft) => void;
+  onComplete: (result: SessionResult) => number;
   onCelebrate: () => void;
   onCue: (cue: SoundCue) => void;
   onClose: () => void;
@@ -50,6 +60,12 @@ type Props = {
 export function LessonPlayer({
   lesson,
   day,
+  attempt: nextAttempt,
+  reviewAttempts: nextReviewAttempts,
+  draft,
+  savedNote = '',
+  quickStart = false,
+  onDraft,
   onComplete,
   onCelebrate,
   onCue,
@@ -59,33 +75,90 @@ export function LessonPlayer({
 }: Props) {
   const still = useReducedMotion();
   const daily = lesson === 'daily';
-  const data = dailyTasks(day);
-  const tasks: Task[] = daily
+  const review = typeof lesson === 'object' && 'kind' in lesson ? lesson : null;
+  const sourceLesson = typeof lesson === 'object' && !('kind' in lesson) ? lesson : null;
+  const [checkpoint] = useState(() => (matchesDraft(draft, lesson, day) ? draft : null));
+  const [attempt] = useState(checkpoint?.attempt ?? nextAttempt);
+  const fullLesson = sourceLesson?.id === 'bakery' ? createBakeryLesson(attempt) : sourceLesson;
+  const [reviewAttempts] = useState(checkpoint?.reviewAttempts ?? nextReviewAttempts);
+  const [sessionDay] = useState(checkpoint?.day ?? day);
+  const data = dailyTasks(sessionDay);
+  const tasks: { task: Task; conceptId: string }[] = daily
     ? [
-        { type: 'sort', items: data.sort },
-        { type: 'entry', entry: data.entry },
-        { type: 'order', items: data.order, tip: data.orderTip },
+        { task: { type: 'sort', items: data.sort }, conceptId: 'equation' },
+        { task: { type: 'entry', entry: data.entry }, conceptId: data.entryId },
+        { task: { type: 'order', items: data.order, tip: data.orderTip }, conceptId: data.orderId },
       ]
-    : (lesson.activities ??
-      (lesson.id === 'equation'
-        ? [
-            { type: 'sort', items: requireSort() },
-            { type: 'entry', entry: lesson.entry },
-          ]
-        : [
-            { type: 'entry', entry: lesson.entry },
-            { type: 'order', items: lesson.order, tip: lesson.orderTip },
-          ]));
-  const [intro, setIntro] = useState(!daily);
-  const [step, setStep] = useState(0);
-  const [mistakes, setMistakes] = useState(0);
-  const [reflect, setReflect] = useState(false);
+    : review
+      ? review.ids.map((id) => ({
+          task: { type: 'entry', entry: practiceEntry(id, reviewAttempts[id] ?? attempt) },
+          conceptId: id,
+        }))
+      : fullLesson
+        ? (
+            fullLesson.activities ??
+            ((fullLesson.id === 'equation'
+              ? [
+                  { type: 'sort', items: requireSort() },
+                  { type: 'entry', entry: practiceEntry(fullLesson.id, attempt) },
+                ]
+              : [
+                  { type: 'entry', entry: practiceEntry(fullLesson.id, attempt) },
+                  { type: 'order', items: fullLesson.order, tip: fullLesson.orderTip },
+                ]) as Task[])
+          ).map((task) => ({ task, conceptId: fullLesson.id }))
+        : [];
+  const [intro, setIntro] = useState(checkpoint?.intro ?? (!daily && !review && !quickStart));
+  const [step, setStep] = useState(Math.min(checkpoint?.step || 0, tasks.length - 1));
+  const [results, setResults] = useState<Record<string, TaskResult>>(checkpoint?.results ?? {});
+  const mistakes = Object.values(results).reduce((sum, result) => sum + result.mistakes, 0);
+  const hints = Object.values(results).reduce((sum, result) => sum + result.hints, 0);
+  const [reflect, setReflect] = useState(checkpoint?.reflect ?? false);
   const [done, setDone] = useState(false);
-  const [confidence, setConfidence] = useState('Getting there');
+  const [confidence, setConfidence] = useState(checkpoint?.confidence ?? 'Getting there');
   const [earned, setEarned] = useState(0);
-  const [note, setNote] = useState('');
-  const task = tasks[step];
+  const [note, setNote] = useState(checkpoint?.note ?? savedNote);
+  const task = tasks[step]?.task;
   const player = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (done) return;
+    onDraft({
+      lessonId: sessionId(lesson),
+      reviewIds: review?.ids ?? [],
+      day: sessionDay,
+      attempt,
+      reviewAttempts,
+      intro,
+      step,
+      reflect,
+      confidence,
+      note,
+      results,
+    });
+  }, [
+    lesson,
+    review,
+    sessionDay,
+    attempt,
+    reviewAttempts,
+    intro,
+    step,
+    reflect,
+    confidence,
+    note,
+    results,
+    done,
+    onDraft,
+  ]);
+  function record(kind: 'mistakes' | 'hints') {
+    setResults((old) => ({
+      ...old,
+      [step]: {
+        mistakes: (old[step]?.mistakes || 0) + (kind === 'mistakes' ? 1 : 0),
+        hints: (old[step]?.hints || 0) + (kind === 'hints' ? 1 : 0),
+      },
+    }));
+  }
   useEffect(() => {
     const reset = () => {
       if (
@@ -108,13 +181,38 @@ export function LessonPlayer({
     if (step < tasks.length - 1) {
       onCue('navigate');
       setStep(step + 1);
-    } else if (!daily) {
+    } else if (!daily && !review) {
       onCue('navigate');
       setReflect(true);
     } else finish();
   }
   function finish() {
-    setEarned(onComplete(mistakes, confidence));
+    const concepts: Record<string, ConceptResult> = {};
+    tasks.forEach(({ conceptId }, index) => {
+      const result = results[index] ?? { mistakes: 0, hints: 0 };
+      const previous = concepts[conceptId] ?? {
+        id: conceptId,
+        total: 0,
+        firstTry: 0,
+        mistakes: 0,
+        hints: 0,
+      };
+      concepts[conceptId] = {
+        id: conceptId,
+        total: previous.total + 1,
+        firstTry: previous.firstTry + (result.mistakes === 0 && result.hints === 0 ? 1 : 0),
+        mistakes: previous.mistakes + result.mistakes,
+        hints: previous.hints + result.hints,
+      };
+    });
+    setEarned(
+      onComplete({
+        day: sessionDay,
+        confidence,
+        note: fullLesson ? note : '',
+        concepts: Object.values(concepts),
+      }),
+    );
     setDone(true);
     onCelebrate();
   }
@@ -132,7 +230,13 @@ export function LessonPlayer({
           <SparkleIcon size={22} weight="fill" />
         </div>
         <span className="eyebrow">LOOK AT THAT. YOU MADE IT CLICK.</span>
-        <h2>{daily ? 'Daily challenge, done.' : 'That’s a lightbulb moment.'}</h2>
+        <h2>
+          {review
+            ? 'A little stronger in your memory.'
+            : daily
+              ? 'Daily challenge, done.'
+              : 'That’s a lightbulb moment.'}
+        </h2>
         <p>
           {daily
             ? 'Three ways to think. One stronger accounting brain.'
@@ -144,14 +248,16 @@ export function LessonPlayer({
         </div>
         <div className="completion-detail">
           <CheckIcon />
-          {mistakes === 0
-            ? 'You got every answer on your first try.'
-            : `You worked through ${mistakes} ${mistakes === 1 ? 'tricky moment' : 'tricky moments'}. That’s how learning happens.`}
+          {mistakes === 0 && hints === 0
+            ? 'You worked through every activity without hints or retries.'
+            : mistakes === 0
+              ? 'A little guidance helped you make the connection.'
+              : `You worked through ${mistakes} ${mistakes === 1 ? 'tricky moment' : 'tricky moments'}. That’s how learning happens.`}
         </div>
         <p className="fine">
           {daily
             ? 'Come back tomorrow for a fresh mix. Repeat runs earn 15 XP.'
-            : 'A quick review will be waiting for you in Practice.'}
+            : 'Your next review is scheduled around how this session went.'}
         </p>
         <button className="button primary full" onClick={onClose}>
           Keep the good feeling <ArrowRightIcon />
@@ -161,7 +267,9 @@ export function LessonPlayer({
   return (
     <div className="lesson-player" ref={player}>
       <div className="lesson-toolbar">
-        <span className="pill">{daily ? 'DAILY MIX' : lesson.level.toUpperCase()}</span>
+        <span className="pill">
+          {review ? 'TARGETED REVIEW' : daily ? 'DAILY MIX' : fullLesson?.level.toUpperCase()}
+        </span>
         <button className="text-button" onClick={onFocus}>
           <TargetIcon /> Focus
         </button>
@@ -179,21 +287,21 @@ export function LessonPlayer({
           exit={still ? {} : { opacity: 0, y: -12 }}
           transition={{ duration: still ? 0 : 0.32, ease: [0.22, 1, 0.36, 1] }}
         >
-          {intro && !daily ? (
+          {intro && fullLesson ? (
             <div className="lesson-intro">
               <span className="eyebrow">LET’S MAKE IT CLICK</span>
-              <h2>{lesson.title}</h2>
-              <p className="concept">{lesson.concept}</p>
-              <ConceptExplorer lesson={lesson} />
+              <h2>{fullLesson.title}</h2>
+              <p className="concept">{fullLesson.concept}</p>
+              <ConceptExplorer lesson={fullLesson} />
               <div className="worked-example">
                 <span>
                   <LightbulbIcon weight="duotone" /> A real-life example
                 </span>
-                <p>{lesson.example}</p>
+                <p>{fullLesson.example}</p>
               </div>
               <div className="tutor-tip">
                 <Blob small />
-                <p>{lesson.tip}</p>
+                <p>{fullLesson.tip}</p>
               </div>
               <button
                 className="button primary full"
@@ -220,10 +328,11 @@ export function LessonPlayer({
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="The way I think about it is…"
                 rows={3}
+                maxLength={2000}
               />
               <p>How does it feel now?</p>
               <div className="confidence-options">
-                {['Still learning', 'Getting there', 'It clicked!'].map((c) => (
+                {confidenceOptions.map((c) => (
                   <button
                     aria-pressed={confidence === c}
                     className={confidence === c ? 'selected' : ''}
@@ -240,7 +349,7 @@ export function LessonPlayer({
                 <p>
                   {confidence === 'Still learning'
                     ? 'That’s okay. I’ll bring this back for a gentle review tomorrow.'
-                    : 'Lovely. We’ll revisit this in a few days to help it stay with you.'}
+                    : 'Your answers and hint use will help choose when this returns.'}
                 </p>
               </div>
               <button className="button primary full" onClick={finish}>
@@ -250,26 +359,33 @@ export function LessonPlayer({
           ) : task ? (
             <>
               <div className="task-label">
-                {daily ? 'CHALLENGE' : 'PRACTICE'}{' '}
+                {review ? 'RECALL' : daily ? 'CHALLENGE' : 'PRACTICE'}{' '}
                 <span className="mono">
                   0{step + 1} / 0{tasks.length}
                 </span>
               </div>
+              {review && (
+                <p className="fine">
+                  A fresh problem to strengthen this concept. Hints are here whenever you need them.
+                </p>
+              )}
               {task.type === 'choice' ? (
                 <ChoiceTask
+                  onHint={() => record('hints')}
                   key={`choice-${step}`}
                   challenge={task.challenge}
                   onNext={next}
                   feedback={feedback}
-                  onMistake={() => setMistakes((n) => n + 1)}
+                  onMistake={() => record('mistakes')}
                 />
               ) : task.type === 'journal' ? (
                 <JournalTask
+                  onHint={() => record('hints')}
                   key={`journal-${step}`}
                   challenge={task.challenge}
                   onNext={next}
                   feedback={feedback}
-                  onMistake={() => setMistakes((n) => n + 1)}
+                  onMistake={() => record('mistakes')}
                 />
               ) : task.type === 'recall' ? (
                 <RecallTask
@@ -277,7 +393,7 @@ export function LessonPlayer({
                   cards={task.cards}
                   onNext={next}
                   feedback={feedback}
-                  onMistake={() => setMistakes((n) => n + 1)}
+                  onMistake={() => record('mistakes')}
                 />
               ) : task.type === 'sort' ? (
                 <SortTask
@@ -285,24 +401,26 @@ export function LessonPlayer({
                   items={task.items}
                   onNext={next}
                   feedback={feedback}
-                  onMistake={() => setMistakes((n) => n + 1)}
+                  onMistake={() => record('mistakes')}
                 />
               ) : task.type === 'entry' ? (
                 <EntryTask
+                  onHint={() => record('hints')}
                   key={`entry-${step}`}
                   entry={task.entry}
                   onNext={next}
                   feedback={feedback}
-                  onMistake={() => setMistakes((n) => n + 1)}
+                  onMistake={() => record('mistakes')}
                 />
               ) : (
                 <OrderTask
+                  onHint={() => record('hints')}
                   key={`order-${step}`}
                   items={task.items}
                   tip={task.tip}
                   onNext={next}
                   feedback={feedback}
-                  onMistake={() => setMistakes((n) => n + 1)}
+                  onMistake={() => record('mistakes')}
                 />
               )}
             </>
@@ -440,12 +558,14 @@ function SortTask({
   );
 }
 function EntryTask({
+  onHint,
   entry,
   onNext,
   onMistake,
   feedback,
 }: {
   entry: Entry;
+  onHint: () => void;
   onNext: () => void;
   onMistake: () => void;
   feedback: (v: boolean) => void;
@@ -520,7 +640,10 @@ function EntryTask({
         className="text-button hint-button"
         data-tally-sound="hint"
         aria-expanded={hint}
-        onClick={() => setHint(!hint)}
+        onClick={() => {
+          if (!hint) onHint();
+          setHint(!hint);
+        }}
       >
         <LightbulbIcon weight="duotone" />
         {hint ? 'Hide hint' : 'A little nudge?'}
@@ -580,6 +703,7 @@ function OrderRow({
   );
 }
 function OrderTask({
+  onHint,
   items,
   tip,
   onNext,
@@ -588,6 +712,7 @@ function OrderTask({
 }: {
   items: string[];
   tip: string;
+  onHint: () => void;
   onNext: () => void;
   onMistake: () => void;
   feedback: (v: boolean) => void;
@@ -649,7 +774,10 @@ function OrderTask({
         className="text-button hint-button"
         data-tally-sound="hint"
         aria-expanded={hint}
-        onClick={() => setHint(!hint)}
+        onClick={() => {
+          if (!hint) onHint();
+          setHint(!hint);
+        }}
       >
         <LightbulbIcon /> A little nudge?
       </button>

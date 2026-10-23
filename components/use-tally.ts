@@ -16,7 +16,9 @@ export function useTally() {
   const [today, setToday] = useState('2000-01-01');
   useEffect(() => {
     try {
-      setProgress(readProgress(localStorage.getItem(STORAGE_KEY)));
+      setProgress(
+        readProgress(localStorage.getItem(STORAGE_KEY), localStorage.getItem('tally-reviews-v1')),
+      );
     } catch {
       setStorageError(true);
     }

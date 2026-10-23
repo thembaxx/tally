@@ -1,4 +1,70 @@
 /* Tally's expressive layer: cobalt ink, warm paper, and purposeful color. */
+.next-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px;
+  margin-bottom: 24px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--surface);
+}
+.review-action {
+  background: var(--mint);
+}
+.resume-action {
+  background: var(--blue);
+}
+.next-action > div {
+  min-width: 0;
+}
+.next-action h2 {
+  font-size: clamp(22px, 3vw, 30px);
+  margin: 6px 0;
+}
+.next-action p {
+  color: var(--muted);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.next-action .button {
+  flex-shrink: 0;
+}
+.saved-takeaway {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin-top: 6px;
+}
+.import-confirm {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--raised);
+  margin: 16px 0;
+}
+.import-confirm .button {
+  margin: 8px 12px 8px 0;
+}
+.import-error {
+  color: var(--text);
+  border-left: 3px solid var(--coral);
+  padding-left: 12px;
+}
+@media (max-width: 700px) {
+  .next-action {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 20px;
+    gap: 16px;
+  }
+  .next-action .button {
+    width: 100%;
+  }
+  .review-row .saved-takeaway {
+    max-width: 100%;
+  }
+}
 :root {
   --bg: #faf8f2;
   --surface: #fffefa;

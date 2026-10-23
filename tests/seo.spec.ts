@@ -28,7 +28,7 @@ test('canonical pages, structured data, robots, sitemap and LLM files agree', as
   expect(robots).toContain(`Sitemap: ${absoluteUrl('/sitemap.xml')}`);
   const sitemap = await (await request.get('/sitemap.xml')).text();
   const urls = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
-  expect(urls).toHaveLength(17);
+  expect(urls).toHaveLength(18);
   expect(urls.every((url) => url.startsWith(siteUrl) && !url.includes('?'))).toBe(true);
   const response = await request.get('/llms.txt');
   expect(response.headers()['content-type']).toContain('text/plain');
@@ -69,7 +69,7 @@ test('public guides work without JavaScript and have readable responsive themes'
   });
   const page = await context.newPage();
   await page.goto('/learn');
-  await expect(page.locator('.guide-card')).toHaveCount(15);
+  await expect(page.locator('.guide-card')).toHaveCount(16);
   await page.getByRole('link', { name: /The accounting equation: assets/ }).click();
   await expect(page.locator('h1')).toHaveText(guideTitle(lessons[0]));
   await expect(page.getByText(lessons[0].example, { exact: true })).toBeVisible();
@@ -78,16 +78,12 @@ test('public guides work without JavaScript and have readable responsive themes'
   await context.close();
 });
 
-test('guide navigation opens the right practice and respects onboarding', async ({ page }) => {
+test('guide navigation opens practice immediately and preserves progress', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/learn/journal-lab');
   await page.getByRole('link', { name: 'Try the interactive lesson' }).click();
-  await expect(page.getByLabel('What should I call you?')).toBeVisible();
-  await page.getByLabel('What should I call you?').fill('Kit');
-  await page.getByRole('button', { name: 'A little more about you' }).click();
-  await page.getByRole('button', { name: 'A little more about you' }).click();
-  await page.getByRole('button', { name: 'Let’s find your first lightbulb moment' }).click();
+  await expect(page.getByLabel('What should I call you?')).toHaveCount(0);
   await expect(page.getByRole('dialog').locator('.lesson-player h2').first()).toHaveText(
     'The Journal Lab',
   );

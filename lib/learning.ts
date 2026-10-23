@@ -1,5 +1,9 @@
 import type { StudioActivity } from './activity-types';
 import { studioLessons, cashFlowLesson } from './studio-lessons';
+import { createBakeryLesson } from './bakery';
+import { practiceEntry } from './questions';
+import { readReviews, type Review } from './reviews';
+import { readDraft, type LessonDraft } from './session';
 export type Category = 'Asset' | 'Liability' | 'Equity';
 export type SortItem = { name: string; category: Category; amount: number; explanation: string };
 export type Entry = {
@@ -398,6 +402,7 @@ lessons.splice(
 );
 lessons[lessons.findIndex((l) => l.id === 'cashflow')] = cashFlowLesson;
 lessons.splice(lessons.length - 1, 0, ...studioLessons);
+lessons.push(createBakeryLesson());
 export function localDay(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
@@ -457,7 +462,9 @@ export function dailyTasks(day: string) {
   ];
   return {
     sort: sets[i % sets.length],
-    entry: l.entry,
+    entry: practiceEntry(l.id, i % 24),
+    entryId: l.id,
+    orderId: lessons[i % 3].id,
     order: lessons[i % 3].order,
     orderTip: lessons[i % 3].orderTip,
   };
@@ -489,6 +496,9 @@ export type Progress = {
   haptics: boolean;
   sound: boolean;
   soundVolume: number;
+  reviews: Record<string, Review>;
+  notes: Record<string, string>;
+  draft: LessonDraft | null;
 };
 export const initialProgress: Progress = {
   name: '',
@@ -503,11 +513,22 @@ export const initialProgress: Progress = {
   haptics: true,
   sound: false,
   soundVolume: 45,
+  reviews: {},
+  notes: {},
+  draft: null,
 };
-export function readProgress(raw: string | null): Progress {
+export function readProgress(raw: string | null, legacyReviews?: string | null): Progress {
   try {
     const p = JSON.parse(raw || 'null');
     if (!p || typeof p !== 'object') return initialProgress;
+    let reviewData = p.reviews;
+    if (reviewData === undefined) {
+      try {
+        reviewData = JSON.parse(legacyReviews || '{}');
+      } catch {
+        reviewData = {};
+      }
+    }
     return {
       ...initialProgress,
       name: typeof p.name === 'string' ? p.name.slice(0, 30) : '',
@@ -515,9 +536,13 @@ export function readProgress(raw: string | null): Progress {
       goal: [3, 5, 10].includes(p.goal) ? p.goal : 5,
       xp: typeof p.xp === 'number' && Number.isFinite(p.xp) ? Math.max(0, p.xp) : 0,
       completed: Array.isArray(p.completed)
-        ? p.completed.filter(
-            (x: unknown) => typeof x === 'string' && lessons.some((l) => l.id === x),
-          )
+        ? [
+            ...new Set<string>(
+              p.completed.filter(
+                (x: unknown) => typeof x === 'string' && lessons.some((l) => l.id === x),
+              ),
+            ),
+          ]
         : [],
       activity: validRecord(p.activity),
       dailyRuns: validRecord(p.dailyRuns),
@@ -531,6 +556,24 @@ export function readProgress(raw: string | null): Progress {
         typeof p.soundVolume === 'number' && Number.isFinite(p.soundVolume)
           ? Math.round(Math.max(0, Math.min(100, p.soundVolume)))
           : 45,
+      reviews: readReviews(
+        reviewData,
+        lessons.map((l) => l.id),
+      ),
+      notes:
+        p.notes && typeof p.notes === 'object' && !Array.isArray(p.notes)
+          ? Object.fromEntries(
+              Object.entries(p.notes)
+                .filter(
+                  ([id, value]) => lessons.some((l) => l.id === id) && typeof value === 'string',
+                )
+                .map(([id, value]) => [id, (value as string).slice(0, 2000)]),
+            )
+          : {},
+      draft: readDraft(
+        p.draft,
+        lessons.map((l) => l.id),
+      ),
     };
   } catch {
     return initialProgress;

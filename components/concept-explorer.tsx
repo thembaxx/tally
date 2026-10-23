@@ -37,6 +37,19 @@ export function ConceptExplorer({ lesson }: { lesson: Lesson }) {
     max = 10,
     step = 1,
     readout = '';
+  if (id === 'bakery') {
+    return (
+      <div className="activity-preview">
+        <NotebookIcon weight="duotone" />
+        <h3>From your first sale to balanced statements.</h3>
+        <p>
+          Follow the same cash, inventory, and equipment through journal entries, profit, and the
+          balance sheet.
+        </p>
+        <span>6 connected activities · your own bakery</span>
+      </div>
+    );
+  }
   if (lesson.format && id !== 'cashflow') {
     const Icon =
       lesson.format === 'journal'
