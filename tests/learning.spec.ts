@@ -230,7 +230,9 @@ test('Me shows personal progress while appearance and other preferences live in 
   await expect(page.getByRole('group', { name: 'Choose theme' })).toHaveCount(0);
 });
 
-test('sound is opt-in with accessible volume, preview and persisted preference', async ({ page }) => {
+test('sound is opt-in with accessible volume, preview and persisted preference', async ({
+  page,
+}) => {
   await returning(page);
   await page.getByRole('button', { name: 'Open settings' }).click();
   const sound = page.getByRole('switch', { name: 'Sound effects' });

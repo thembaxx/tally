@@ -47,7 +47,16 @@ type Props = {
   onFocus: () => void;
   feedback: (success: boolean) => void;
 };
-export function LessonPlayer({ lesson, day, onComplete, onCelebrate, onCue, onClose, onFocus, feedback }: Props) {
+export function LessonPlayer({
+  lesson,
+  day,
+  onComplete,
+  onCelebrate,
+  onCue,
+  onClose,
+  onFocus,
+  feedback,
+}: Props) {
   const still = useReducedMotion();
   const daily = lesson === 'daily';
   const data = dailyTasks(day);
@@ -186,7 +195,11 @@ export function LessonPlayer({ lesson, day, onComplete, onCelebrate, onCue, onCl
                 <Blob small />
                 <p>{lesson.tip}</p>
               </div>
-              <button className="button primary full" data-tally-sound="open" onClick={() => setIntro(false)}>
+              <button
+                className="button primary full"
+                data-tally-sound="open"
+                onClick={() => setIntro(false)}
+              >
                 I’m ready to try <ArrowRightIcon />
               </button>
               <p className="fine center">Take your time. Hints are always here.</p>

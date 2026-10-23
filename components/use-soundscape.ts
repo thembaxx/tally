@@ -74,8 +74,7 @@ export function useSoundscape(enabled: boolean, volume: number) {
 
   const play = useCallback(
     (cue: SoundCue, options?: { force?: boolean; volume?: number }) => {
-      if ((!enabled && !options?.force) || typeof window === 'undefined' || document.hidden)
-        return;
+      if ((!enabled && !options?.force) || typeof window === 'undefined' || document.hidden) return;
       const loudness = Math.max(0, Math.min(100, options?.volume ?? volume)) / 100;
       if (!loudness) return;
 

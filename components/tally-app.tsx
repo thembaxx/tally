@@ -1081,10 +1081,14 @@ export default function TallyApp() {
               >
                 {focus.paused ? <PlayIcon weight="fill" /> : <PauseIcon weight="fill" />}
               </button>
-              <button className="icon-button" aria-label="End focus session" onClick={() => {
-                playSound('focus-pause');
-                focus.stop();
-              }}>
+              <button
+                className="icon-button"
+                aria-label="End focus session"
+                onClick={() => {
+                  playSound('focus-pause');
+                  focus.stop();
+                }}
+              >
                 <XIcon />
               </button>
             </motion.div>
@@ -1342,7 +1346,9 @@ export default function TallyApp() {
                   onPointerUp={() => playSound('select')}
                   onKeyUp={() => playSound('select')}
                 />
-                <span className="mono" aria-hidden="true">{p.soundVolume}%</span>
+                <span className="mono" aria-hidden="true">
+                  {p.soundVolume}%
+                </span>
                 <button
                   className="small-button"
                   type="button"

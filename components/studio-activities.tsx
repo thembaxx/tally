@@ -364,7 +364,11 @@ export function RecallTask({
               placeholder="I think it’s…"
             />
           </label>
-          <button className="button primary full" data-tally-sound="flip" onClick={() => setFlipped(true)}>
+          <button
+            className="button primary full"
+            data-tally-sound="flip"
+            onClick={() => setFlipped(true)}
+          >
             Turn the card <ArrowRightIcon />
           </button>
         </>
