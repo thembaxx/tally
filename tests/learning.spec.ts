@@ -198,3 +198,30 @@ test('daily mix completes all three tasks and repeat rewards decrease', async ({
   }
   await expect(page.locator('.xp-chip')).toContainText('105');
 });
+
+test('Me shows personal progress while appearance and other preferences live in Settings', async ({
+  page,
+}) => {
+  await returning(page);
+  await page.getByRole('button', { name: 'Me', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Your little corner of Tally.' })).toBeVisible();
+  await expect(page.getByText('Total XP', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'A few things to be proud of.' })).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Theme' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'All settings' })).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Edit profile' }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
+  await expect(page.getByLabel('Your name')).toHaveValue('Alex');
+  await expect(page.getByRole('group', { name: 'Choose theme' })).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Daily goal' })).toBeVisible();
+  await expect(page.getByRole('switch', { name: 'Haptic feedback' })).toBeVisible();
+  await expect(page.getByRole('switch', { name: 'Sound effects' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Export my progress' })).toBeVisible();
+  await page.getByRole('button', { name: 'Dark', exact: true }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await page.getByRole('button', { name: 'Close', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Your little corner of Tally.' })).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Choose theme' })).toHaveCount(0);
+});
