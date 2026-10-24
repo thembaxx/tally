@@ -1,5 +1,6 @@
 import type { Lesson } from './learning';
 import { confidenceOptions, isDay, natural, type ConceptResult } from './reviews';
+import { challengeLevels, type Challenge } from './challenge-questions';
 
 export type ReviewSession = { kind: 'review'; ids: string[] };
 export type Session = Lesson | 'daily' | ReviewSession;
@@ -16,6 +17,8 @@ export type LessonDraft = {
   confidence: string;
   note: string;
   results: Record<string, TaskResult>;
+  reviewPlan?: Challenge[];
+  dailyChallenge?: Challenge;
 };
 export type SessionResult = {
   day: string;
@@ -48,6 +51,65 @@ export function readDraft(raw: unknown, ids: string[]): LessonDraft | null {
       ].slice(0, 2)
     : [];
   if (d.lessonId === 'review' && !reviewIds.length) return null;
+  function challenge(raw: unknown, allowed: string[]): Challenge | null {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+    const c = raw as Record<string, unknown>;
+    if (
+      typeof c.id !== 'string' ||
+      !allowed.includes(c.id) ||
+      !challengeLevels.includes(c.level as Challenge['level']) ||
+      typeof c.attempt !== 'number' ||
+      !Number.isSafeInteger(c.attempt) ||
+      c.attempt < 0 ||
+      c.attempt > 1000000
+    )
+      return null;
+    return {
+      id: c.id,
+      attempt: c.attempt,
+      level: c.level as Challenge['level'],
+      ...(c.followUp === true ? { followUp: true } : {}),
+    };
+  }
+  let reviewPlan: Challenge[] | undefined;
+  if (d.reviewPlan !== undefined) {
+    if (
+      d.lessonId !== 'review' ||
+      !Array.isArray(d.reviewPlan) ||
+      !d.reviewPlan.length ||
+      d.reviewPlan.length > 4
+    )
+      return null;
+    const plan = d.reviewPlan.map((raw) => challenge(raw, reviewIds));
+    if (plan.some((c) => !c)) return null;
+    reviewPlan = plan as Challenge[];
+    if (
+      reviewPlan
+        .filter((c) => !c.followUp)
+        .map((c) => c.id)
+        .join(',') !== reviewIds.join(',')
+    )
+      return null;
+    for (let i = 0; i < reviewPlan.length; i++) {
+      const c = reviewPlan[i],
+        previous = reviewPlan[i - 1];
+      if (
+        c.followUp &&
+        (!previous ||
+          previous.followUp ||
+          previous.id !== c.id ||
+          c.attempt !== previous.attempt + 1)
+      )
+        return null;
+    }
+  }
+  const dailyChallenge =
+    d.dailyChallenge === undefined ? undefined : challenge(d.dailyChallenge, ids);
+  if (
+    d.dailyChallenge !== undefined &&
+    (d.lessonId !== 'daily' || !dailyChallenge || dailyChallenge.followUp)
+  )
+    return null;
   const results =
     d.results && typeof d.results === 'object'
       ? Object.fromEntries(
@@ -79,5 +141,7 @@ export function readDraft(raw: unknown, ids: string[]): LessonDraft | null {
         : 'Getting there',
     note: typeof d.note === 'string' ? d.note.slice(0, 2000) : '',
     results,
+    ...(reviewPlan ? { reviewPlan } : {}),
+    ...(dailyChallenge ? { dailyChallenge } : {}),
   };
 }

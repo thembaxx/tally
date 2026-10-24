@@ -4,6 +4,7 @@ import { createBakeryLesson } from './bakery';
 import { practiceEntry } from './questions';
 import { readReviews, type Review } from './reviews';
 import { readDraft, type LessonDraft } from './session';
+import { practiceTopics, recommendedChallenge } from './adaptive';
 export type Category = 'Asset' | 'Liability' | 'Equity';
 export type SortItem = { name: string; category: Category; amount: number; explanation: string };
 export type Entry = {
@@ -414,7 +415,7 @@ export function previousDay(day: string) {
 export function dailyIndex(day: string) {
   return [...day].reduce((n, c) => n * 31 + c.charCodeAt(0), 0) >>> 0;
 }
-export function dailyTasks(day: string) {
+export function dailyTasks(day: string, reviews?: Record<string, Review>) {
   const i = dailyIndex(day);
   const l = lessons[1 + (i % 7)];
   const sets: SortItem[][] = [
@@ -460,10 +461,24 @@ export function dailyTasks(day: string) {
       },
     ],
   ];
+  const entryId = reviews
+    ? practiceTopics(
+        reviews,
+        day,
+        Object.keys(reviews),
+        lessons.filter((l) => !l.locked).map((l) => l.id),
+      )[0] || l.id
+    : l.id;
+  const challenge = {
+    id: entryId,
+    attempt: (i + (reviews?.[entryId]?.nextQuestion ?? reviews?.[entryId]?.attempts ?? 0)) % 24,
+    level: reviews ? recommendedChallenge(reviews[entryId]).level : ('standard' as const),
+  };
   return {
     sort: sets[i % sets.length],
-    entry: practiceEntry(l.id, i % 24),
-    entryId: l.id,
+    entry: practiceEntry(challenge.id, challenge.attempt, challenge.level),
+    entryId,
+    challenge,
     orderId: lessons[i % 3].id,
     order: lessons[i % 3].order,
     orderTip: lessons[i % 3].orderTip,

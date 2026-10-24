@@ -1,8 +1,10 @@
 import type { Entry } from './learning';
+import { challengeEntry, type ChallengeLevel } from './challenge-questions';
 
 // Integer inputs keep every generated answer exact. Attempts are saved with the
 // session so reloads cannot change the question halfway through an activity.
-export function practiceEntry(id: string, attempt = 0): Entry {
+export function practiceEntry(id: string, attempt = 0, level: ChallengeLevel = 'standard'): Entry {
+  if (level !== 'standard') return challengeEntry(id, attempt, level);
   const n = Math.max(0, Math.floor(attempt)) % 24;
   const business = ['flower shop', 'bike workshop', 'coffee cart', 'bookshop'][n % 4];
   const money = (value: number) => `$${value.toLocaleString('en-US')}`;

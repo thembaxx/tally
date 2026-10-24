@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import { AnimatePresence, motion, Reorder, useDragControls, useReducedMotion } from 'motion/react';
 import {
@@ -14,7 +14,14 @@ import {
   SparkleIcon,
   TargetIcon,
 } from '@phosphor-icons/react';
-import { accepts, dailyTasks, type SortItem, type Entry, type Category } from '@/lib/learning';
+import {
+  accepts,
+  dailyTasks,
+  lessons,
+  type SortItem,
+  type Entry,
+  type Category,
+} from '@/lib/learning';
 import { Blob } from './brand';
 import { ConceptExplorer } from './concept-explorer';
 import type { StudioActivity } from '@/lib/activity-types';
@@ -22,6 +29,8 @@ import { ChoiceTask, JournalTask, RecallTask } from './studio-activities';
 import { AnswerFeedback } from './answer-feedback';
 import type { SoundCue } from './use-soundscape';
 import { practiceEntry } from '@/lib/questions';
+import { challengeLevels, type Challenge } from '@/lib/challenge-questions';
+import { followUp, recommendedChallenge } from '@/lib/adaptive';
 import { createBakeryLesson } from '@/lib/bakery';
 import {
   matchesDraft,
@@ -31,7 +40,7 @@ import {
   type SessionResult,
   type TaskResult,
 } from '@/lib/session';
-import { confidenceOptions, type ConceptResult } from '@/lib/reviews';
+import { confidenceOptions, type ConceptResult, type Review } from '@/lib/reviews';
 const Scene = dynamic(() => import('./scene'), {
   ssr: false,
   loading: () => <div className="scene scene-loading" />,
@@ -46,6 +55,7 @@ type Props = {
   day: string;
   attempt: number;
   reviewAttempts: Record<string, number>;
+  reviews: Record<string, Review>;
   draft: LessonDraft | null;
   savedNote?: string;
   quickStart?: boolean;
@@ -62,6 +72,7 @@ export function LessonPlayer({
   day,
   attempt: nextAttempt,
   reviewAttempts: nextReviewAttempts,
+  reviews,
   draft,
   savedNote = '',
   quickStart = false,
@@ -82,17 +93,44 @@ export function LessonPlayer({
   const fullLesson = sourceLesson?.id === 'bakery' ? createBakeryLesson(attempt) : sourceLesson;
   const [reviewAttempts] = useState(checkpoint?.reviewAttempts ?? nextReviewAttempts);
   const [sessionDay] = useState(checkpoint?.day ?? day);
+  const [history] = useState(reviews);
+  const [reviewPlan, setReviewPlan] = useState<Challenge[]>(
+    () =>
+      checkpoint?.reviewPlan ??
+      review?.ids.map((id) => ({
+        id,
+        attempt: reviewAttempts[id] ?? attempt,
+        level: checkpoint ? 'standard' : recommendedChallenge(history[id]).level,
+      })) ??
+      [],
+  );
+  const [dailyChallenge] = useState(
+    () =>
+      checkpoint?.dailyChallenge ??
+      dailyTasks(sessionDay, checkpoint ? undefined : history).challenge,
+  );
   const data = dailyTasks(sessionDay);
-  const tasks: { task: Task; conceptId: string }[] = daily
+  const tasks: { task: Task; conceptId: string; challenge?: Challenge }[] = daily
     ? [
         { task: { type: 'sort', items: data.sort }, conceptId: 'equation' },
-        { task: { type: 'entry', entry: data.entry }, conceptId: data.entryId },
+        {
+          task: {
+            type: 'entry',
+            entry: practiceEntry(dailyChallenge.id, dailyChallenge.attempt, dailyChallenge.level),
+          },
+          conceptId: dailyChallenge.id,
+          challenge: dailyChallenge,
+        },
         { task: { type: 'order', items: data.order, tip: data.orderTip }, conceptId: data.orderId },
       ]
     : review
-      ? review.ids.map((id) => ({
-          task: { type: 'entry', entry: practiceEntry(id, reviewAttempts[id] ?? attempt) },
-          conceptId: id,
+      ? reviewPlan.map((challenge) => ({
+          task: {
+            type: 'entry',
+            entry: practiceEntry(challenge.id, challenge.attempt, challenge.level),
+          },
+          conceptId: challenge.id,
+          challenge,
         }))
       : fullLesson
         ? (
@@ -118,8 +156,11 @@ export function LessonPlayer({
   const [confidence, setConfidence] = useState(checkpoint?.confidence ?? 'Getting there');
   const [earned, setEarned] = useState(0);
   const [note, setNote] = useState(checkpoint?.note ?? savedNote);
+  const [answeredStep, setAnsweredStep] = useState(-1);
   const task = tasks[step]?.task;
+  const currentChallenge = tasks[step]?.challenge;
   const player = useRef<HTMLDivElement>(null);
+  const finished = useRef(false);
   useEffect(() => {
     if (done) return;
     onDraft({
@@ -134,6 +175,8 @@ export function LessonPlayer({
       confidence,
       note,
       results,
+      ...(review ? { reviewPlan } : {}),
+      ...(daily ? { dailyChallenge } : {}),
     });
   }, [
     lesson,
@@ -147,6 +190,9 @@ export function LessonPlayer({
     confidence,
     note,
     results,
+    reviewPlan,
+    dailyChallenge,
+    daily,
     done,
     onDraft,
   ]);
@@ -178,6 +224,25 @@ export function LessonPlayer({
     return () => clearTimeout(id);
   }, [intro, step, reflect, done, still]);
   function next() {
+    const support =
+      (results[step]?.mistakes || 0) + (results[step]?.hints || 0) > 0 ||
+      confidence === 'Still learning';
+    if (
+      review &&
+      currentChallenge &&
+      !currentChallenge.followUp &&
+      support &&
+      !reviewPlan[step + 1]?.followUp
+    ) {
+      setReviewPlan((plan) => [
+        ...plan.slice(0, step + 1),
+        followUp(currentChallenge, 'guided'),
+        ...plan.slice(step + 1),
+      ]);
+      onCue('navigate');
+      setStep(step + 1);
+      return;
+    }
     if (step < tasks.length - 1) {
       onCue('navigate');
       setStep(step + 1);
@@ -186,9 +251,18 @@ export function LessonPlayer({
       setReflect(true);
     } else finish();
   }
+  function chooseFollowUp(level: Challenge['level']) {
+    if (!review || !currentChallenge || currentChallenge.followUp) return;
+    setReviewPlan((plan) => {
+      const rest = plan[step + 1]?.followUp ? plan.slice(step + 2) : plan.slice(step + 1);
+      return [...plan.slice(0, step + 1), followUp(currentChallenge, level), ...rest];
+    });
+  }
   function finish() {
+    if (finished.current) return;
+    finished.current = true;
     const concepts: Record<string, ConceptResult> = {};
-    tasks.forEach(({ conceptId }, index) => {
+    tasks.forEach(({ conceptId, challenge }, index) => {
       const result = results[index] ?? { mistakes: 0, hints: 0 };
       const previous = concepts[conceptId] ?? {
         id: conceptId,
@@ -200,9 +274,15 @@ export function LessonPlayer({
       concepts[conceptId] = {
         id: conceptId,
         total: previous.total + 1,
-        firstTry: previous.firstTry + (result.mistakes === 0 && result.hints === 0 ? 1 : 0),
+        firstTry:
+          previous.firstTry +
+          (challenge?.level !== 'guided' && result.mistakes === 0 && result.hints === 0 ? 1 : 0),
         mistakes: previous.mistakes + result.mistakes,
         hints: previous.hints + result.hints,
+        ...(previous.guided || challenge?.level === 'guided' ? { guided: true } : {}),
+        ...(challenge
+          ? { nextQuestion: Math.max(previous.nextQuestion || 0, challenge.attempt + 1) }
+          : {}),
       };
     });
     setEarned(
@@ -242,11 +322,13 @@ export function LessonPlayer({
         </div>
         <div className="completion-detail">
           <CheckIcon />
-          {mistakes === 0 && hints === 0
-            ? 'You worked through every activity without hints or retries.'
-            : mistakes === 0
-              ? `You used ${hints} ${hints === 1 ? 'hint' : 'hints'} and completed every activity without retries.`
-              : `You completed every activity with ${mistakes} ${mistakes === 1 ? 'retry' : 'retries'} and ${hints} ${hints === 1 ? 'hint' : 'hints'}.`}
+          {mistakes === 0 && hints === 0 && tasks.some((t) => t.challenge?.level === 'guided')
+            ? 'You completed practice with the method shown. Try without the steps when you’re ready.'
+            : mistakes === 0 && hints === 0
+              ? 'You worked through every activity without hints or retries.'
+              : mistakes === 0
+                ? `You used ${hints} ${hints === 1 ? 'hint' : 'hints'} and completed every activity without retries.`
+                : `You completed every activity with ${mistakes} ${mistakes === 1 ? 'retry' : 'retries'} and ${hints} ${hints === 1 ? 'hint' : 'hints'}.`}
         </div>
         <p className="fine">
           {daily
@@ -358,10 +440,25 @@ export function LessonPlayer({
                   0{step + 1} / 0{tasks.length}
                 </span>
               </div>
-              {review && (
-                <p className="fine">
-                  A fresh problem to strengthen this concept. Hints are here whenever you need them.
-                </p>
+              {currentChallenge && (
+                <div className="challenge-context" role="note" aria-label="Why this challenge">
+                  <strong>
+                    {lessons.find((l) => l.id === currentChallenge.id)?.title} ·{' '}
+                    {currentChallenge.level === 'guided'
+                      ? 'Guided practice'
+                      : currentChallenge.level === 'stretch'
+                        ? 'Stretch challenge'
+                        : 'Standard practice'}
+                  </strong>
+                  <p>
+                    {currentChallenge.followUp
+                      ? 'Practice the same topic with a fresh question. This extra question does not add XP.'
+                      : currentChallenge.level !==
+                          recommendedChallenge(history[currentChallenge.id]).level
+                        ? 'Continue with this saved question.'
+                        : recommendedChallenge(history[currentChallenge.id]).reason}
+                  </p>
+                </div>
               )}
               {task.type === 'choice' ? (
                 <ChoiceTask
@@ -405,7 +502,81 @@ export function LessonPlayer({
                   onNext={next}
                   feedback={feedback}
                   onMistake={() => record('mistakes')}
-                />
+                  onCorrect={() => setAnsweredStep(step)}
+                >
+                  {review && currentChallenge && answeredStep === step && (
+                    <div className="challenge-decisions">
+                      <fieldset>
+                        <legend>How confident do you feel about this session?</legend>
+                        <div className="confidence-options">
+                          {confidenceOptions.map((c) => (
+                            <button
+                              key={c}
+                              type="button"
+                              aria-pressed={confidence === c}
+                              className={confidence === c ? 'selected' : ''}
+                              onClick={() => setConfidence(c)}
+                            >
+                              {c}
+                            </button>
+                          ))}
+                        </div>
+                      </fieldset>
+                      {!currentChallenge.followUp && (
+                        <div
+                          role="group"
+                          aria-label="Choose a follow-up question"
+                          className="challenge-options"
+                        >
+                          {currentChallenge.level !== 'guided' && (
+                            <button
+                              type="button"
+                              className="text-button"
+                              aria-pressed={
+                                !!reviewPlan[step + 1]?.followUp &&
+                                reviewPlan[step + 1]?.level === 'guided'
+                              }
+                              onClick={() => chooseFollowUp('guided')}
+                            >
+                              Practice with guidance
+                            </button>
+                          )}
+                          {currentChallenge.level !== 'stretch' && (
+                            <button
+                              type="button"
+                              className="text-button"
+                              aria-pressed={
+                                !!reviewPlan[step + 1]?.followUp &&
+                                reviewPlan[step + 1]?.level !== 'guided'
+                              }
+                              onClick={() =>
+                                chooseFollowUp(
+                                  challengeLevels[
+                                    challengeLevels.indexOf(currentChallenge.level) + 1
+                                  ],
+                                )
+                              }
+                            >
+                              {currentChallenge.level === 'guided'
+                                ? 'Try without the steps'
+                                : 'Try a harder question'}
+                            </button>
+                          )}
+                        </div>
+                      )}
+                      <p className="fine" aria-live="polite">
+                        {reviewPlan[step + 1]?.followUp
+                          ? `Continue to a ${reviewPlan[step + 1].level} follow-up question.`
+                          : (results[step]?.mistakes ||
+                                results[step]?.hints ||
+                                confidence === 'Still learning') &&
+                              !currentChallenge.followUp
+                            ? 'Continue to a guided follow-up for this topic.'
+                            : 'Continue when you’re ready.'}
+                      </p>
+                    </div>
+                  )}
+                </EntryTask>
               ) : (
                 <OrderTask
                   onHint={() => record('hints')}
@@ -557,12 +728,16 @@ function EntryTask({
   onNext,
   onMistake,
   feedback,
+  onCorrect,
+  children,
 }: {
   entry: Entry;
   onHint: () => void;
   onNext: () => void;
   onMistake: () => void;
   feedback: (v: boolean) => void;
+  onCorrect?: () => void;
+  children?: ReactNode;
 }) {
   const [values, setValues] = useState<string[]>(entry.labels.map(() => ''));
   const [result, setResult] = useState<boolean | null>(null);
@@ -574,6 +749,7 @@ function EntryTask({
     setResult(ok);
     feedback(ok);
     if (!ok) onMistake();
+    else onCorrect?.();
   }
   return (
     <>
@@ -628,6 +804,7 @@ function EntryTask({
           correct={result}
           text={result ? entry.explanation : `Not quite yet. ${entry.tip} Give it another try.`}
           onNext={onNext}
+          children={children}
         />
       )}
       <button

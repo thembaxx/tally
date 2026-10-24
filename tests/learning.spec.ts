@@ -184,8 +184,11 @@ test('daily mix completes all three tasks and repeat rewards decrease', async ({
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   });
-  const tasks = dailyTasks(day);
   for (const expected of [90, 15]) {
+    const history = await page.evaluate(
+      () => JSON.parse(localStorage.getItem('tally-progress-v1') || '{}').reviews || {},
+    );
+    const tasks = dailyTasks(day, history);
     await page
       .getByRole('button', {
         name: expected === 90 ? 'Start daily mix' : 'Repeat daily mix',

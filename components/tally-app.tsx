@@ -64,6 +64,7 @@ import { SkillMap } from './skill-map';
 import { recallEvidence } from '@/lib/skills';
 import { readBackup } from '@/lib/backup';
 import { scheduleReview, weakestReviews } from '@/lib/reviews';
+import { practiceTopics, recommendedChallenge } from '@/lib/adaptive';
 import {
   matchesDraft,
   sessionId,
@@ -390,28 +391,38 @@ export default function TallyApp() {
   const dayStreak = streak(p.activity, today);
   const dueIds = weakestReviews(reviews, today);
   const due = lessons.filter((l) => dueIds.includes(l.id));
-  const reviewIds = dueIds.slice(0, 2);
+  const reviewIds = practiceTopics(
+    reviews,
+    today,
+    p.completed,
+    lessons.filter((l) => !l.locked).map((l) => l.id),
+  );
   const resumable = p.draft && (p.draft.lessonId !== 'daily' || p.draft.day === today);
   const reviewAction = reviewIds.length ? (
     <section className="next-action review-action" aria-label="Your next review">
       <div>
-        <span className="eyebrow">RECOMMENDED REVIEW</span>
+        <span className="eyebrow">PERSONALIZED PRACTICE</span>
         <h2>{reviewIds.length === 1 ? 'One topic to review.' : 'Two topics to review.'}</h2>
         <p>
           {reviewIds.map((id) => lessons.find((l) => l.id === id)?.title).join(' · ')} · about{' '}
-          {reviewIds.length} min
+          {reviewIds.length}–{reviewIds.length * 2} min
         </p>
         <ul className="review-reasons">
           {reviewIds.map((id) => (
             <li key={id}>
               <strong>{lessons.find((l) => l.id === id)?.title}:</strong>{' '}
-              {recallEvidence(reviews[id])} It’s due for another recall.
+              {(reviews[id] || p.completed.includes(id)) &&
+                `${recallEvidence(reviews[id], p.completed.includes(id))} `}
+              {recommendedChallenge(reviews[id]).reason}
             </li>
           ))}
         </ul>
       </div>
       <button className="button primary" onClick={() => launch({ kind: 'review', ids: reviewIds })}>
-        Review {reviewIds.length === 1 ? 'this concept' : 'these concepts'} <ArrowRightIcon />
+        {reviewIds.some((id) => p.completed.includes(id) || reviews[id]?.attempts)
+          ? `Review ${reviewIds.length === 1 ? 'this concept' : 'these concepts'}`
+          : 'Start guided practice'}{' '}
+        <ArrowRightIcon />
       </button>
     </section>
   ) : null;
@@ -994,7 +1005,7 @@ export default function TallyApp() {
                                   {reviews[l.id]?.total > 0 && (
                                     <small>
                                       {reviews[l.id].firstTry} of {reviews[l.id].total} activities
-                                      without hints or retries · {reviews[l.id].interval || 1}-day
+                                      answered independently · {reviews[l.id].interval || 1}-day
                                       spacing
                                     </small>
                                   )}
@@ -1230,14 +1241,23 @@ export default function TallyApp() {
                 active === 'daily'
                   ? p.dailyRuns[today] || 0
                   : 'kind' in active
-                    ? active.ids.reduce((n, id) => n + (reviews[id]?.attempts || 0), 0)
-                    : reviews[active.id]?.attempts || 0
+                    ? active.ids.reduce(
+                        (n, id) => n + (reviews[id]?.nextQuestion ?? reviews[id]?.attempts ?? 0),
+                        0,
+                      )
+                    : (reviews[active.id]?.nextQuestion ?? reviews[active.id]?.attempts ?? 0)
               }
               reviewAttempts={
                 active !== 'daily' && 'kind' in active
-                  ? Object.fromEntries(active.ids.map((id) => [id, reviews[id]?.attempts || 0]))
+                  ? Object.fromEntries(
+                      active.ids.map((id) => [
+                        id,
+                        reviews[id]?.nextQuestion ?? reviews[id]?.attempts ?? 0,
+                      ]),
+                    )
                   : {}
               }
+              reviews={reviews}
               savedNote={active !== 'daily' && !('kind' in active) ? p.notes[active.id] : ''}
               quickStart={
                 !p.onboarded &&
@@ -1591,6 +1611,12 @@ export default function TallyApp() {
               <li>
                 <strong>Make it stick.</strong> Save your own takeaway. Reviews return after 1 to 30
                 days, adapting to your answers, hints, and confidence.
+              </li>
+              <li>
+                <strong>Practice at the right difficulty.</strong> Guided questions show the method;
+                stretch questions ask you to apply it in more steps. Reviews use your practice
+                history and choices to select questions. You can ask for guidance or a harder
+                follow-up. Extra questions do not add XP.
               </li>
             </ul>
             <p>
