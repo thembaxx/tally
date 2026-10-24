@@ -28,7 +28,7 @@ export function SkillMap({
         </span>
         <div>
           <h2 id="skill-map-title">Your skill map</h2>
-          <p>See what’s taking root and where a little practice can help.</p>
+          <p>Check your practice history and choose a topic to review.</p>
         </div>
       </div>
       <dl className="skill-legend">
@@ -84,9 +84,6 @@ export function SkillMap({
                             year: 'numeric',
                           })}
                         </time>
-                        {review.due <= today && (
-                          <span> · A little time away makes recall useful.</span>
-                        )}
                       </p>
                     )}
                     <button

@@ -180,7 +180,7 @@ test('Home selects weak due concepts, records retries and hints, and persists th
   await page.getByLabel('Owner’s equity ($)').fill('0');
   await page.getByRole('button', { name: 'Check my answer' }).click();
   await answer(page, 'equation', 1);
-  await page.getByRole('button', { name: 'A little nudge?' }).click();
+  await page.getByRole('button', { name: 'Show hint' }).click();
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
     .analyze();
@@ -192,7 +192,7 @@ test('Home selects weak due concepts, records retries and hints, and persists th
   expect(p.draft).toBeNull();
   expect(p.reviews.equation).toMatchObject({ interval: 1, mistakes: 1, due: shiftDay(today, 1) });
   expect(p.reviews.debit).toMatchObject({ interval: 1, hints: 1, due: shiftDay(today, 1) });
-  await page.getByRole('button', { name: 'Keep the good feeling' }).click();
+  await page.getByRole('button', { name: 'Done' }).click();
   await page.reload();
   await expect(page.getByRole('region', { name: 'Your next review' })).toContainText('Statements');
 });
@@ -224,7 +224,7 @@ test('an unfinished lesson resumes its activity and takeaway across reloads, the
   await page.getByRole('button', { name: 'Finish lesson' }).click();
   await expect.poll(async () => (await saved(page)).xp).toBe(60);
   await expect.poll(async () => (await saved(page)).notes.statements).toBe(note);
-  await page.getByRole('button', { name: 'Keep the good feeling' }).click();
+  await page.getByRole('button', { name: 'Done' }).click();
   await page.getByRole('button', { name: 'Practice', exact: true }).click();
   // Practice enters after Home exits; software-rendered 3D can delay this on CI.
   await expect(page.locator('.saved-takeaway')).toHaveText(`My takeaway: ${note}`, {

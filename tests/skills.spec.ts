@@ -114,7 +114,7 @@ test('the map explains evidence and dates, then updates after a real targeted re
   await expect(ratios.locator('.skill-status')).toHaveText('Strengthening');
   await expect(ratios).toContainText('Next review');
   await expect(ratios.locator('time')).toHaveAttribute('datetime', day(3));
-  for (const title of ['Inventory Stories', 'A Little Over Time']) {
+  for (const title of ['Inventory Stories', 'Depreciation']) {
     const legacy = page.getByRole('article', { name: title, exact: true });
     await expect(legacy.locator('.skill-status')).toHaveText('Building');
     await expect(legacy).toContainText('A short review will show what you can recall.');
@@ -126,7 +126,7 @@ test('the map explains evidence and dates, then updates after a real targeted re
   await page.getByRole('button', { name: 'Check my answer' }).click();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await expect(page.locator('.earned-xp')).toContainText('+10');
-  await page.getByRole('button', { name: 'Keep the good feeling' }).click();
+  await page.getByRole('button', { name: 'Done' }).click();
   await expect(equation.locator('.skill-status')).toHaveText('Strengthening');
   await expect(equation).toContainText('1 separate day');
   await expect(equation.locator('time')).toHaveAttribute('datetime', day(3));

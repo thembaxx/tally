@@ -142,8 +142,8 @@ export default function TallyApp() {
     const alreadyEarned = p.focusDays.includes(day);
     showToast(
       alreadyEarned
-        ? 'Five calm minutes. Nicely done. Your focus XP is already collected today.'
-        : 'A little more focused. +10 XP earned.',
+        ? 'Focus session complete. You already earned focus XP today.'
+        : 'Focus session complete. +10 XP earned.',
     );
     setProgress((old) =>
       old.focusDays.includes(day)
@@ -395,10 +395,8 @@ export default function TallyApp() {
   const reviewAction = reviewIds.length ? (
     <section className="next-action review-action" aria-label="Your next review">
       <div>
-        <span className="eyebrow">A LITTLE RECALL GOES A LONG WAY</span>
-        <h2>
-          {reviewIds.length === 1 ? 'One concept to strengthen.' : 'Your two weakest concepts.'}
-        </h2>
+        <span className="eyebrow">RECOMMENDED REVIEW</span>
+        <h2>{reviewIds.length === 1 ? 'One topic to review.' : 'Two topics to review.'}</h2>
         <p>
           {reviewIds.map((id) => lessons.find((l) => l.id === id)?.title).join(' · ')} · about{' '}
           {reviewIds.length} min
@@ -438,7 +436,7 @@ export default function TallyApp() {
           <button className="brand-button" onClick={() => navigate('home')} aria-label="Tally home">
             <Logo />
           </button>
-          <div className="sidebar-caption">YOUR LITTLE LEARNING SPACE</div>
+          <div className="sidebar-caption">ACCOUNTING PRACTICE</div>
           <nav className="main-nav" aria-label="Main navigation">
             {navItems.map((item) => (
               <button
@@ -465,11 +463,11 @@ export default function TallyApp() {
             <div className="sidebar-mascot">
               <Blob />
               <p>
-                Big things start
+                Learn at
                 <br />
-                with little steps.
+                your pace.
               </p>
-              <span>A little better, every day.</span>
+              <span>Pick up where you left off.</span>
             </div>
             <button onClick={() => setSettings(true)} className="sidebar-settings">
               <GearSixIcon size={21} /> Settings <span>⌘ ,</span>
@@ -553,12 +551,12 @@ export default function TallyApp() {
                   <>
                     <section className="page-heading">
                       <div>
-                        <span className="eyebrow">YOUR NEXT CHAPTER STARTS HERE</span>
+                        <span className="eyebrow">YOUR LEARNING</span>
                         <h1>
-                          {p.name ? `A little wiser, ${p.name}.` : 'Hey, future numbers person.'}
+                          {p.name ? `Welcome back, ${p.name}.` : 'Welcome to Tally.'}
                           <SparkleIcon className="greeting-spark" weight="duotone" />
                         </h1>
-                        <p>Learn accounting through tiny, satisfying discoveries.</p>
+                        <p>Learn accounting with worked examples and hands-on practice.</p>
                       </div>
                       <div className="date-display">
                         <CalendarDotsIcon size={18} />
@@ -599,23 +597,23 @@ export default function TallyApp() {
                       <section className="hero-card">
                         <div className="hero-text">
                           <span className="hero-tag">
-                            <span /> YOUR DAILY DOSE OF “I GET IT”
+                            <span /> YOUR NEXT LESSON
                           </span>
                           <h2>
-                            Small steps.
+                            Accounting,
                             <br />
                             <span>
-                              Big “aha!”
-                              <br className="desktop-break" /> energy.
+                              one lesson
+                              <br className="desktop-break" /> at a time.
                             </span>
                           </h2>
                           <p>
-                            Make sense of money.
+                            Work through an example.
                             <br />
-                            Have a little fun figuring it out.
+                            Then try it yourself.
                           </p>
                           <button className="button dark" onClick={() => launch(nextLesson)}>
-                            {count ? 'Continue learning' : 'Let’s make it click'}
+                            {count ? 'Continue learning' : 'Start learning'}
                             <ArrowRightIcon />
                           </button>
                           <div className="hero-footnote">
@@ -627,7 +625,7 @@ export default function TallyApp() {
                           <span className="floating-equation mono">A = L + E</span>
                           <Scene />
                           <span className="scene-hint">
-                            <span className="tiny-dot" /> A little balance goes a long way
+                            <span className="tiny-dot" /> Assets = Liabilities + Equity
                           </span>
                           <span className="orbit-dot one" />
                           <span className="orbit-dot two" />
@@ -643,13 +641,13 @@ export default function TallyApp() {
                           </span>
                         </div>
                         <h2>
-                          Three tiny challenges.
+                          Three challenges.
                           <br />
-                          One happy brain.
+                          About five minutes.
                         </h2>
                         <p>
-                          A fresh mix to stretch your
-                          <br className="desktop-break" /> accounting brain.
+                          Sort accounts, answer a question,
+                          <br className="desktop-break" /> and order the steps.
                         </p>
                         <div className="daily-steps">
                           <span>
@@ -668,7 +666,7 @@ export default function TallyApp() {
                           </span>
                         </div>
                         <button className="button daily-button" onClick={() => launch('daily')}>
-                          {p.dailyRuns[today] ? 'Play it again' : 'Take the challenge'}
+                          {p.dailyRuns[today] ? 'Repeat daily mix' : 'Start daily mix'}
                           <ArrowUpRightIcon />
                         </button>
                         <div className="daily-reward">
@@ -683,10 +681,10 @@ export default function TallyApp() {
                       <div className="section-heading">
                         <div>
                           <span className="eyebrow">BUILD YOUR FOUNDATION</span>
-                          <h2>Your next “aha!” moment</h2>
+                          <h2>Foundation lessons</h2>
                         </div>
                         <button className="text-button" onClick={() => navigate('learn')}>
-                          Explore the path <ArrowRightIcon />
+                          View all lessons <ArrowRightIcon />
                         </button>
                       </div>
                       <div className="lesson-grid">
@@ -713,8 +711,8 @@ export default function TallyApp() {
                       <section className="weekly-card">
                         <div className="section-heading">
                           <div>
-                            <h2>A little consistency, a lot of growth.</h2>
-                            <p>Every small step counts. This is your week.</p>
+                            <h2>Your activity this week</h2>
+                            <p>Minutes spent learning over the last seven days.</p>
                           </div>
                           <span className="week-total mono">
                             {week.reduce((sum, d) => sum + (p.activity[d.key] || 0), 0)}
@@ -743,8 +741,8 @@ export default function TallyApp() {
                         <div className="goal-caption">
                           <span>
                             {todayMinutes >= p.goal
-                              ? 'Your daily goal? Beautifully done.'
-                              : `${todayMinutes} of ${p.goal} minutes today. Your future self says thanks.`}
+                              ? 'Daily goal reached.'
+                              : `${todayMinutes} of ${p.goal} minutes today.`}
                           </span>
                           <span className="mono">
                             {Math.min(100, Math.round((todayMinutes / p.goal) * 100))}%
@@ -762,9 +760,9 @@ export default function TallyApp() {
                             <TargetIcon size={22} weight="duotone" />
                           </span>
                           <span>
-                            Less noise.
+                            Focus mode.
                             <br />
-                            <strong>More you.</strong>
+                            <strong>Five minutes.</strong>
                           </span>
                           <Switch
                             checked={focus.active}
@@ -773,9 +771,9 @@ export default function TallyApp() {
                           />
                         </div>
                         <p>
-                          A calm space. Five minutes.
+                          Start a five-minute timer.
                           <br />
-                          One thing at a time.
+                          It pauses when you leave the tab.
                         </p>
                         <button
                           className="text-button"
@@ -785,7 +783,8 @@ export default function TallyApp() {
                             else focus.start();
                           }}
                         >
-                          {focus.active ? 'Leave focus mode' : 'Find your focus'} <ArrowRightIcon />
+                          {focus.active ? 'End focus session' : 'Start focus session'}{' '}
+                          <ArrowRightIcon />
                         </button>
                         <span className="focus-decoration" />
                       </section>
@@ -803,8 +802,8 @@ export default function TallyApp() {
                     <div className="billi-note">
                       <Blob small />
                       <p>
-                        <strong>A little note from Tali</strong>“An asset is just something that
-                        helps your business do its thing. Even a lemonade stand has them.”
+                        <strong>A note from Tali</strong>“An asset is a resource the business owns
+                        or controls, such as cash or equipment.”
                       </p>
                       <button
                         className="icon-button"
@@ -818,9 +817,9 @@ export default function TallyApp() {
                 ) : tab === 'learn' ? (
                   <>
                     <PageHeading
-                      eyebrow="UNDERSTANDING STARTS WITH CURIOSITY"
-                      title="Little steps. Lasting skills."
-                      description="From your first equation to the stories behind the statements. Go at your pace."
+                      eyebrow="LEARN ACCOUNTING"
+                      title="Lessons and skills"
+                      description="Choose a lesson or check your practice history in the skill map."
                     />
                     <div className="learn-view-switch">
                       <Segmented
@@ -841,7 +840,7 @@ export default function TallyApp() {
                           <div className="path-progress">
                             <GraduationCapIcon size={30} weight="duotone" />
                             <div>
-                              <h3>Your accounting journey</h3>
+                              <h3>Lesson progress</h3>
                               <p>
                                 {count} of {lessons.filter((l) => !l.locked).length} lessons
                                 explored
@@ -871,7 +870,7 @@ export default function TallyApp() {
                             value={filter}
                             onChange={setFilter}
                           />
-                          <span className="fine">No rush. No finish line.</span>
+                          <span className="fine">Choose any lesson.</span>
                         </div>
                         {['Foundations', 'Next level', 'Going deeper']
                           .filter((g) => filter === 'all' || filter === g)
@@ -885,21 +884,21 @@ export default function TallyApp() {
                                   </span>
                                   <h2>
                                     {group === 'Foundations'
-                                      ? 'First, find your footing.'
+                                      ? 'Accounting basics'
                                       : group === 'Next level'
-                                        ? 'Now, connect the dots.'
-                                        : 'Think like an accountant.'}
+                                        ? 'Apply the basics'
+                                        : 'More accounting topics'}
                                   </h2>
                                   <p>
                                     {group === 'Foundations'
-                                      ? 'Every great accountant started right here.'
+                                      ? 'Start with the accounting equation, entries, and statements.'
                                       : group === 'Next level'
                                         ? 'Make the leap from recording numbers to understanding them.'
                                         : 'Explore decisions, timing, and the bigger financial picture.'}
                                   </p>
                                 </div>
                                 <span className="chapter-tag">
-                                  {group === 'Foundations' ? 'START HERE' : 'A LITTLE DEEPER'}
+                                  {group === 'Foundations' ? 'START HERE' : 'MORE TOPICS'}
                                 </span>
                               </div>
                               <div className="lesson-grid">
@@ -921,7 +920,7 @@ export default function TallyApp() {
                           <Blob small />
                           <p>
                             You can explore any open lesson. If an idea feels new, come back to the
-                            foundations for a little boost.
+                            foundations for a refresher.
                           </p>
                         </div>
                       </>
@@ -932,8 +931,8 @@ export default function TallyApp() {
                     {reviewAction}
                     <PageHeading
                       eyebrow="MAKE IT STICK"
-                      title="Make a little room for play."
-                      description="Different ways to learn. The same lovely feeling when it clicks."
+                      title="Practice accounting"
+                      description="Try a daily mix, choose an activity, or review a topic."
                     />
                     <div className="practice-hero">
                       <div>
@@ -941,17 +940,17 @@ export default function TallyApp() {
                           <LightningIcon weight="fill" /> TODAY’S DAILY MIX
                         </span>
                         <h2>
-                          Find your
+                          Sort, answer,
                           <br />
-                          learning groove.
+                          and build.
                         </h2>
                         <p>
-                          Sort, type, and build. Three different ways
+                          Three activities from different topics
                           <br />
-                          to make accounting feel second nature.
+                          in today’s daily mix.
                         </p>
                         <button className="button dark" onClick={() => launch('daily')}>
-                          {p.dailyRuns[today] ? 'Try today’s mix again' : 'Let’s play'}{' '}
+                          {p.dailyRuns[today] ? 'Repeat daily mix' : 'Start daily mix'}{' '}
                           <ArrowRightIcon />
                         </button>
                       </div>
@@ -961,13 +960,9 @@ export default function TallyApp() {
                     <section className="path-section">
                       <div className="section-heading">
                         <div>
-                          <span className="eyebrow">YOUR MEMORY, A LITTLE STRONGER</span>
-                          <h2>
-                            {due.length ? 'Ready for a little refresh?' : 'Your review space'}
-                          </h2>
-                          <p>
-                            Revisit ideas after a little time away. That’s when the learning sticks.
-                          </p>
+                          <span className="eyebrow">SPACED REVIEW</span>
+                          <h2>{due.length ? 'Topics due for review' : 'Your review schedule'}</h2>
+                          <p>Review dates adapt to your answers, hints, and confidence.</p>
                         </div>
                         <span className="count-badge mono">{due.length} DUE</span>
                       </div>
@@ -993,7 +988,7 @@ export default function TallyApp() {
                                     {reviews[l.id]?.due <= today
                                       ? 'Ready to revisit'
                                       : reviews[l.id]?.due
-                                        ? `Next gentle review: ${new Date(reviews[l.id].due + 'T12:00:00').toLocaleDateString('en', { month: 'short', day: 'numeric' })}`
+                                        ? `Next review: ${new Date(reviews[l.id].due + 'T12:00:00').toLocaleDateString('en', { month: 'short', day: 'numeric' })}`
                                         : 'Practice whenever you like'}
                                   </small>
                                   {reviews[l.id]?.total > 0 && (
@@ -1021,14 +1016,14 @@ export default function TallyApp() {
                           <span className="empty-icon">
                             <LeafIcon size={35} weight="duotone" />
                           </span>
-                          <h3>A little learning goes a long way.</h3>
+                          <h3>No reviews scheduled yet</h3>
                           <p>
-                            Finish your first lesson and I’ll build you a gentle review rhythm.
+                            Complete a lesson to schedule your first review.
                             <br />
-                            Come back tomorrow to help the new ideas take root.
+                            Your review date will appear here.
                           </p>
                           <button className="text-button" onClick={() => launch(lessons[0])}>
-                            Find your first lightbulb moment <ArrowRightIcon />
+                            Start your first lesson <ArrowRightIcon />
                           </button>
                         </div>
                       )}
@@ -1036,17 +1031,17 @@ export default function TallyApp() {
                     <div className="billi-note">
                       <Blob small />
                       <p>
-                        <strong>Trying to remember is the practice.</strong>A little effort is good.
-                        If you get stuck, ask for a nudge. No hearts lost, no pressure added.
+                        <strong>Try recalling before checking.</strong> If you get stuck, use a
+                        hint. You can retry any activity.
                       </p>
                     </div>
                   </>
                 ) : (
                   <>
                     <PageHeading
-                      eyebrow="LOOK HOW YOU’RE GROWING"
-                      title="Your little corner of Tally."
-                      description="Every attempt, every discovery. It all adds up."
+                      eyebrow="YOUR PROFILE"
+                      title="Your progress"
+                      description="View your activity, completed lessons, and achievements."
                     />
                     <section className="profile-card">
                       <div className="profile-avatar">
@@ -1054,11 +1049,11 @@ export default function TallyApp() {
                       </div>
                       <div>
                         <span className="eyebrow">CURIOUS MIND · LEVEL {level}</span>
-                        <h2>{p.name || 'A future numbers person'}</h2>
+                        <h2>{p.name || 'Tally learner'}</h2>
                         <p>
                           {count
-                            ? 'Building a little confidence, every day.'
-                            : 'Your accounting story is just beginning.'}
+                            ? `${count} ${count === 1 ? 'lesson' : 'lessons'} explored.`
+                            : 'No lessons completed yet.'}
                         </p>
                       </div>
                       <button
@@ -1098,8 +1093,8 @@ export default function TallyApp() {
                     <section className="badges-section">
                       <div className="section-heading">
                         <div>
-                          <span className="eyebrow">LITTLE MILESTONES, BIG FEELINGS</span>
-                          <h2>A few things to be proud of.</h2>
+                          <span className="eyebrow">MILESTONES</span>
+                          <h2>Your achievements</h2>
                         </div>
                       </div>
                       <div className="badges">
@@ -1160,7 +1155,7 @@ export default function TallyApp() {
                 )}
                 <footer className="page-footer">
                   <span>
-                    <Logo /> <span>A little better, every day.</span>
+                    <Logo /> <span>Accounting at your pace.</span>
                   </span>
                   <a className="public-guides-link" href="/learn">
                     Learn accounting · Free guides
@@ -1183,10 +1178,8 @@ export default function TallyApp() {
             >
               <span className="breathing-dot" />
               <div>
-                <strong>A little room to focus.</strong>
-                <span>
-                  {focus.paused ? 'Paused. Your time is yours.' : 'One calm moment at a time.'}
-                </span>
+                <strong>Focus timer</strong>
+                <span>{focus.paused ? 'Paused' : 'Session in progress'}</span>
               </div>
               <span className="focus-time mono">
                 {Math.floor(Math.ceil(focus.remaining) / 60)
@@ -1262,7 +1255,7 @@ export default function TallyApp() {
               onFocus={() => {
                 playSound('focus-start');
                 focus.start();
-                showToast('Focus is on. Take a breath, then take your next step.');
+                showToast('Focus session started.');
               }}
               feedback={feedback}
             />
@@ -1274,12 +1267,12 @@ export default function TallyApp() {
             patch({ onboarded: true });
             setOnboarding(false);
           }}
-          title="A little hello."
-          description="Let’s make this your kind of learning."
+          title="Your preferences"
+          description="Set your name and daily learning goal."
         >
           <div className="onboarding">
             <Blob happy />
-            <h2>Your own learning rhythm.</h2>
+            <h2>Set a daily goal</h2>
             <p>Make this your learning space. You can change these preferences anytime.</p>
             <label htmlFor="first-name">
               What should I call you? <span className="muted">(optional)</span>
@@ -1291,12 +1284,12 @@ export default function TallyApp() {
               onChange={(e) => setDraftName(e.target.value)}
               placeholder="Your first name"
             />
-            <p>Choose a daily rhythm.</p>
+            <p>How many minutes would you like to practice each day?</p>
             <div className="goal-options">
               {[
-                { n: 3, title: 'A tiny spark' },
-                { n: 5, title: 'A steady glow' },
-                { n: 10, title: 'A brighter light' },
+                { n: 3, title: '3 minutes' },
+                { n: 5, title: '5 minutes' },
+                { n: 10, title: '10 minutes' },
               ].map((g) => (
                 <button
                   key={g.n}
@@ -1305,9 +1298,7 @@ export default function TallyApp() {
                   onClick={() => setDraftGoal(g.n)}
                 >
                   <strong>{g.title}</strong>
-                  <span className="mono">
-                    {g.n} min {draftGoal === g.n && <CheckIcon />}
-                  </span>
+                  <span className="mono">per day {draftGoal === g.n && <CheckIcon />}</span>
                 </button>
               ))}
             </div>
@@ -1366,9 +1357,9 @@ export default function TallyApp() {
             <div className="setting-row">
               <span>
                 <strong>
-                  <TargetIcon /> Daily rhythm
+                  <TargetIcon /> Daily goal
                 </strong>
-                <small>A gentle goal, never a deadline.</small>
+                <small>Minutes of practice per day.</small>
               </span>
               <select
                 aria-label="Daily goal"
@@ -1386,9 +1377,9 @@ export default function TallyApp() {
             <div className="setting-row">
               <span>
                 <strong>
-                  <VibrateIcon /> Little haptics
+                  <VibrateIcon /> Haptic feedback
                 </strong>
-                <small>A little tap when something clicks, on supported phones.</small>
+                <small>Vibration feedback on supported phones.</small>
               </span>
               <Switch
                 checked={p.haptics}
@@ -1399,9 +1390,9 @@ export default function TallyApp() {
             <div className="setting-row">
               <span>
                 <strong>
-                  <SpeakerHighIcon /> Sounds of progress
+                  <SpeakerHighIcon /> Sound effects
                 </strong>
-                <small>A soft chime for your lightbulb moments.</small>
+                <small>Audio cues for navigation, answers, and completed sessions.</small>
               </span>
               <Switch
                 checked={p.sound}
@@ -1538,7 +1529,7 @@ export default function TallyApp() {
                     setProgress({ ...initialProgress, theme: p.theme });
                     localStorage.removeItem('tally-reviews-v1');
                     setReset(false);
-                    showToast('A fresh page. Your next chapter is waiting.');
+                    showToast('Progress reset.');
                   }}
                 >
                   Yes, start fresh
@@ -1554,11 +1545,7 @@ export default function TallyApp() {
             )}
           </div>
         </Modal>
-        <Modal
-          open={installInfo}
-          onClose={() => setInstallInfo(false)}
-          title="Take a little learning with you."
-        >
+        <Modal open={installInfo} onClose={() => setInstallInfo(false)} title="Install Tally">
           <div className="install-instructions">
             <DownloadSimpleIcon size={45} weight="duotone" />
             <p>
@@ -1581,14 +1568,14 @@ export default function TallyApp() {
         <Modal
           open={about}
           onClose={() => setAbout(false)}
-          title="A tutor with a little patience."
+          title="How learning works"
           description="Built for understanding, one discovery at a time."
         >
           <div className="about-learning">
             <Blob small />
             <p>
-              Tally uses familiar examples, visual models, active recall, and gentle spaced review.
-              You try an idea, get specific feedback, then revisit it after a break.
+              Tally uses familiar examples, visual models, active recall, and spaced review. You try
+              an idea, get specific feedback, then revisit it after a break.
             </p>
             <ul>
               <li>

@@ -285,54 +285,6 @@
     max-width: 100%;
   }
 }
-:root {
-  --bg: #faf8f2;
-  --surface: #fffefa;
-  --raised: #eeeff7;
-  --text: #202b43;
-  --muted: #5b6579;
-  --line: #e2e5ef;
-  --coral: #f17e58;
-  --accent: #3654cf;
-  --peach: #ffe3d3;
-  --lavender: #eae1ff;
-  --mint: #def1e4;
-  --butter: #fcf1b4;
-  --blue: #e1e8ff;
-  --green: #356c4b;
-  --nav: #e6eaff;
-  --dark: #263b7e;
-  --ring: #3a56db;
-  --brand: #3a56db;
-  --on-brand: #fff;
-  --hero: #e7ecff;
-  --hero-ink: #253b83;
-  --ink-on-pastel: #25334d;
-}
-:root[data-theme='dark'] {
-  --bg: #111524;
-  --surface: #1b2236;
-  --raised: #252e47;
-  --text: #f3f2fa;
-  --muted: #b4bed2;
-  --line: #35405b;
-  --coral: #ffaf8d;
-  --accent: #b5c4ff;
-  --peach: #47323a;
-  --lavender: #3a3056;
-  --mint: #243e3b;
-  --butter: #44412d;
-  --blue: #29365e;
-  --green: #a9dfb9;
-  --nav: #293961;
-  --dark: #e5e9ff;
-  --ring: #b5c4ff;
-  --brand: #829aff;
-  --on-brand: #111a3e;
-  --hero: #26345c;
-  --hero-ink: #e2e8ff;
-  --ink-on-pastel: #f3f2fa;
-}
 ::selection {
   background: #c8d4ff;
   color: #1b2c65;
@@ -915,7 +867,6 @@
   font-size: 7px;
   letter-spacing: 1.3px;
   font-weight: 600;
-  opacity: 0.9;
 }
 .format-card > strong {
   font-family: Outfit;
@@ -1927,22 +1878,13 @@
     border-radius: 18px;
   }
   .practice-hero {
-    min-height: 286px;
     padding: 26px 23px;
-  }
-  .practice-hero h2 {
-    font-size: 31px;
-    max-width: 230px;
   }
   .practice-hero p {
     font-size: 11px;
-    max-width: 185px;
   }
   .practice-hero > .scene {
     height: 255px;
-    top: 25px;
-    width: 54%;
-    right: -23px;
   }
   .practice-hero .button {
     font-size: 11px;

@@ -4,8 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
     id: '/',
     name: 'Tally — Make accounting click',
     short_name: 'Tally',
-    description:
-      'A patient little accounting tutor. Learn through playful 3D lessons at your pace.',
+    description: 'Learn accounting with worked examples, interactive lessons, and daily practice.',
     start_url: '/',
     scope: '/',
     display: 'standalone',

@@ -5,7 +5,7 @@ export default function Loading() {
       <span>
         tally<span style={{ color: 'var(--brand)' }}>.</span>
       </span>
-      <p>A little curiosity goes a long way.</p>
+      <p>Loading your lessons…</p>
       <style>{`.app-loading{min-height:100dvh;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center}.app-loading>span{font-family:Outfit,sans-serif;font-size:44px;letter-spacing:-2px}.app-loading p{font-size:12px;margin-top:15px}`}</style>
     </div>
   );

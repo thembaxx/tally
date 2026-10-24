@@ -70,13 +70,13 @@ export default async function LessonGuide({ params }: Props) {
             <aside className="guide-tip">
               <img src="/brand-mark.webp" alt="" width={36} height={36} />
               <p>
-                <strong>A little tip</strong>
+                <strong>Key point</strong>
                 {lesson.tip}
               </p>
             </aside>
             <section>
               <span className="eyebrow">03 · YOUR TURN</span>
-              <h2>A tiny check-in.</h2>
+              <h2>Check your understanding</h2>
               <p>{lesson.entry.prompt}</p>
               <details>
                 <summary>Think it through, then reveal the explanation</summary>
@@ -107,7 +107,7 @@ export default async function LessonGuide({ params }: Props) {
         </article>
         <section className="guide-related">
           <span className="eyebrow">FOLLOW YOUR CURIOSITY</span>
-          <h2>Another little lightbulb?</h2>
+          <h2>Related lessons</h2>
           <div className="guide-grid">
             {related.map((item) => (
               <Link key={item.id} className={`guide-card ${item.color}`} href={`/learn/${item.id}`}>

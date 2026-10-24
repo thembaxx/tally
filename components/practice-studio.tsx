@@ -12,7 +12,7 @@ const formats = [
   {
     id: 'journal-lab',
     name: 'Build an entry',
-    description: 'Give every transaction two sides.',
+    description: 'Choose accounts and balance debits and credits.',
     tag: 'HANDS ON',
     color: 'blue',
     icon: NotebookIcon,
@@ -20,7 +20,7 @@ const formats = [
   {
     id: 'spot-the-slip',
     name: 'Spot the slip',
-    description: 'Find the why behind a mistake.',
+    description: 'Find incorrect accounts in journal entries.',
     tag: 'PLAY DETECTIVE',
     color: 'peach',
     icon: MagnifyingGlassIcon,
@@ -28,7 +28,7 @@ const formats = [
   {
     id: 'recall',
     name: 'Turn a card',
-    description: 'Stretch your memory. Make it stick.',
+    description: 'Recall an answer before revealing the card.',
     tag: 'RECALL & REVEAL',
     color: 'lavender',
     icon: CardsIcon,
@@ -36,7 +36,7 @@ const formats = [
   {
     id: 'cashflow',
     name: 'Follow a story',
-    description: 'See where the money really goes.',
+    description: 'Classify cash flows in a business scenario.',
     tag: 'REAL LIFE',
     color: 'mint',
     icon: PathIcon,
@@ -54,11 +54,11 @@ export function PracticeStudio({
     <section className="practice-studio">
       <div className="section-heading">
         <div>
-          <span className="eyebrow">THERE’S MORE THAN ONE WAY TO CLICK</span>
-          <h2>What feels like you today?</h2>
-          <p>Build it. Question it. Turn it around.</p>
+          <span className="eyebrow">PRACTICE ACTIVITIES</span>
+          <h2>Choose an activity</h2>
+          <p>Practice journal entries, error checking, recall, or cash flow.</p>
         </div>
-        <span className="studio-count">4 ways to play</span>
+        <span className="studio-count">4 formats</span>
       </div>
       <div className="format-grid">
         {formats.map((f, i) => (
@@ -86,7 +86,7 @@ export function PracticeStudio({
             <strong>{f.name}</strong>
             <span className="format-description">{f.description}</span>
             <span className="format-time">
-              {completed.includes(f.id) ? 'Come play again' : 'A new little adventure'}{' '}
+              {completed.includes(f.id) ? 'Practice again' : 'Start activity'}{' '}
               <span className="mono">{lessons.find((l) => l.id === f.id)?.minutes} min</span>
             </span>
           </motion.button>

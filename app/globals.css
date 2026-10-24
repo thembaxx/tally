@@ -17,46 +17,56 @@
   font-display: swap;
 }
 :root {
-  --bg: #f8f7f3;
+  --bg: #faf8f2;
   --surface: #fffefa;
-  --raised: #f1f0eb;
-  --text: #2c3030;
-  --muted: #59635b;
-  --line: #e8e8e0;
-  --coral: #d67b60;
-  --accent: #a85740;
-  --peach: #f4e0d3;
-  --lavender: #e9e3f1;
-  --mint: #e2ece4;
-  --butter: #f5edce;
-  --blue: #e3ecf1;
-  --green: #657e62;
+  --raised: #eeeff7;
+  --text: #202b43;
+  --muted: #5b6579;
+  --line: #e2e5ef;
+  --coral: #f17e58;
+  --accent: #3654cf;
+  --peach: #ffe3d3;
+  --lavender: #eae1ff;
+  --mint: #def1e4;
+  --butter: #fcf1b4;
+  --blue: #e1e8ff;
+  --green: #356c4b;
   --shadow: 0 12px 40px #29322b06;
-  --nav: #f0e8e1;
-  --dark: #2c3534;
-  --ring: #a65d47;
+  --nav: #e6eaff;
+  --dark: #263b7e;
+  --ring: #3a56db;
   color-scheme: light;
+  --brand: #3a56db;
+  --on-brand: #fff;
+  --hero: #e7ecff;
+  --hero-ink: #253b83;
+  --ink-on-pastel: #25334d;
 }
 :root[data-theme='dark'] {
-  --bg: #181a1b;
-  --surface: #222526;
-  --raised: #2c3030;
-  --text: #eeeee5;
-  --muted: #a6aaa4;
-  --line: #363b3a;
-  --coral: #e4a087;
-  --accent: #edb199;
-  --peach: #4b3b33;
-  --lavender: #3d3749;
-  --mint: #2e4239;
-  --butter: #49442f;
-  --blue: #33414a;
-  --green: #adc7a2;
+  --bg: #111524;
+  --surface: #1b2236;
+  --raised: #252e47;
+  --text: #f3f2fa;
+  --muted: #b4bed2;
+  --line: #35405b;
+  --coral: #ffaf8d;
+  --accent: #b5c4ff;
+  --peach: #47323a;
+  --lavender: #3a3056;
+  --mint: #243e3b;
+  --butter: #44412d;
+  --blue: #29365e;
+  --green: #a9dfb9;
   --shadow: 0 12px 40px #00000010;
-  --nav: #3a302c;
-  --dark: #e1e7db;
-  --ring: #edb199;
+  --nav: #293961;
+  --dark: #e5e9ff;
+  --ring: #b5c4ff;
   color-scheme: dark;
+  --brand: #829aff;
+  --on-brand: #111a3e;
+  --hero: #26345c;
+  --hero-ink: #e2e8ff;
+  --ink-on-pastel: #f3f2fa;
 }
 * {
   box-sizing: border-box;
@@ -199,31 +209,17 @@ strong {
   gap: 22px;
   align-items: center;
   justify-content: center;
-  border-radius: 11px;
   padding: 13px 19px;
   font-size: 12px;
   font-weight: 600;
   line-height: 1.5;
   min-height: 46px;
-  transition:
-    transform 0.2s,
-    background 0.2s,
-    box-shadow 0.2s;
 }
 .button:hover {
-  transform: translateY(-2px);
   box-shadow: 0 6px 16px #1b2a2312;
-}
-.button:active {
-  transform: scale(0.97);
 }
 .button svg {
   font-size: 18px;
-}
-.button.primary,
-.button.dark {
-  background: var(--text);
-  color: var(--bg);
 }
 .text-button {
   font-size: 11px;
@@ -269,7 +265,6 @@ strong {
 }
 .brand {
   display: inline-flex;
-  gap: 6px;
   align-items: center;
   font-family: Outfit, sans-serif;
   font-size: 34px;
@@ -280,10 +275,6 @@ strong {
 .brand > svg {
   width: 31px;
   height: 34px;
-  color: var(--coral);
-}
-.brand-dot {
-  color: var(--coral);
 }
 .brand-button {
   padding: 0;
@@ -321,7 +312,6 @@ strong {
   gap: 13px;
   height: 47px;
   padding: 0 15px;
-  font-size: 12px;
   border-radius: 11px;
   color: var(--muted);
   text-align: left;
@@ -331,7 +321,6 @@ strong {
   color: var(--text);
 }
 .main-nav button.active {
-  color: var(--accent);
   font-weight: 600;
 }
 .nav-pill {
@@ -352,7 +341,6 @@ strong {
   margin-top: auto;
 }
 .sidebar-mascot {
-  padding: 32px 10px;
   text-align: center;
   position: relative;
 }
@@ -362,7 +350,6 @@ strong {
 }
 .sidebar-mascot p {
   font-family: Outfit;
-  font-size: 18px;
   line-height: 1.3;
   color: var(--text);
 }
@@ -379,7 +366,6 @@ strong {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 11px;
 }
 .sidebar-settings span {
   margin-left: auto;
@@ -426,7 +412,6 @@ strong {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 23px;
 }
 .streak-chip,
 .xp-chip {
@@ -435,12 +420,8 @@ strong {
   align-items: center;
   font-size: 10px;
 }
-.streak-chip > svg {
-  color: #cf866a;
-}
 .xp-chip > svg {
   font-size: 16px;
-  color: #ae9bc9;
 }
 .streak-chip > .mono {
   margin-right: -3px;
@@ -448,8 +429,6 @@ strong {
 .avatar {
   width: 35px;
   height: 35px;
-  background: var(--peach);
-  color: var(--accent);
   border: 3px solid var(--surface);
   outline: 1px solid var(--line);
   border-radius: 50%;
@@ -496,7 +475,6 @@ strong {
 }
 .greeting-spark {
   font-size: 31px;
-  color: var(--coral);
   display: inline-block;
   transform: rotate(12deg);
   margin-left: 4px;
@@ -517,8 +495,6 @@ strong {
 }
 .welcome-grid {
   display: grid;
-  grid-template-columns: 1.8fr 1fr;
-  gap: 20px;
 }
 .hero-card {
   position: relative;
@@ -550,10 +526,7 @@ strong {
   gap: 6px;
 }
 .hero-tag > span {
-  height: 4px;
-  width: 4px;
   border-radius: 50%;
-  background: #bc8568;
 }
 .hero-card h2 {
   font-size: 37px;
@@ -574,12 +547,7 @@ strong {
 }
 .hero-card .button {
   margin-top: 22px;
-  font-size: 10px;
-  min-height: 39px;
-  gap: 18px;
   padding: 11px 14px;
-  background: #343d36;
-  color: #fafbf1;
   border-radius: 9px;
 }
 .hero-footnote {
@@ -592,9 +560,7 @@ strong {
 }
 .hero-visual {
   position: absolute;
-  width: 63%;
   height: 100%;
-  right: -35px;
   top: 0;
   z-index: 1;
 }
@@ -637,7 +603,6 @@ strong {
 .tiny-dot {
   height: 4px;
   width: 4px;
-  background: #ad9b82;
   border-radius: 50%;
 }
 .orbit-dot {
@@ -652,21 +617,12 @@ strong {
 .orbit-dot.one {
   height: 22px;
   width: 22px;
-  top: 110px;
-  right: 28px;
 }
 .orbit-dot.two {
   height: 12px;
   width: 12px;
-  left: 64px;
-  bottom: 63px;
-  background: #c9d9c6;
 }
 .daily-card {
-  background: #343d3a;
-  color: #f3f3e8;
-  padding: 24px;
-  border-radius: 18px;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -675,10 +631,6 @@ strong {
 .daily-card:before {
   content: '';
   position: absolute;
-  right: -50px;
-  top: 14px;
-  height: 180px;
-  width: 180px;
   border: 1px solid #9fac9718;
   border-radius: 50%;
   pointer-events: none;
@@ -689,17 +641,13 @@ strong {
   align-items: center;
 }
 .daily-orbit {
-  color: #c1cba8;
   transform: rotate(10deg);
 }
 .daily-card h2 {
-  font-size: 23px;
   margin-top: 21px;
-  line-height: 1.25;
   letter-spacing: -0.6px;
 }
 .daily-card p {
-  color: #a9b0a5;
   font-size: 10px;
   margin-top: 11px;
   line-height: 1.7;
@@ -716,27 +664,19 @@ strong {
   flex-direction: column;
   align-items: center;
   gap: 5px;
-  color: #d5dec1;
 }
 .daily-steps small {
   font-size: 8px;
-  color: #adb9aa;
 }
 .daily-steps i {
   height: 1px;
   width: 28px;
-  background: #657260;
   margin-bottom: 16px;
   opacity: 0.65;
 }
 .daily-button {
-  background: #e9ebd2;
-  color: #394036;
-  font-size: 10px;
-  min-height: 39px;
   padding: 10px 14px;
   justify-content: space-between;
-  border-radius: 8px;
   margin-top: auto;
 }
 .daily-reward {
@@ -750,7 +690,6 @@ strong {
   display: flex;
   gap: 4px;
   align-items: center;
-  color: #d6dabe;
 }
 .section-heading {
   display: flex;
@@ -762,11 +701,7 @@ strong {
 .section-heading .eyebrow {
   margin-bottom: 7px;
 }
-.section-heading h2 {
-  font-size: 22px;
-}
 .section-heading p {
-  font-size: 10px;
   margin-top: 7px;
 }
 .section-heading .text-button {
@@ -782,14 +717,11 @@ strong {
   gap: 17px;
 }
 .lesson-card {
-  background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 14px;
   padding: 20px;
   text-align: left;
   min-width: 0;
   box-shadow: var(--shadow);
-  transition: border-color 0.2s;
 }
 .lesson-card:hover {
   border-color: #c2b5a2;
@@ -802,29 +734,23 @@ strong {
 .lesson-icon {
   width: 50px;
   height: 50px;
-  border-radius: 14px;
   display: grid;
   place-items: center;
 }
 .peach {
   background: var(--peach);
-  color: #b87b5d;
 }
 .lavender {
   background: var(--lavender);
-  color: #9380ac;
 }
 .mint {
   background: var(--mint);
-  color: #6f927f;
 }
 .butter {
   background: var(--butter);
-  color: #ac974c;
 }
 .blue {
   background: var(--blue);
-  color: #779cac;
 }
 .lesson-number {
   font-size: 10px;
@@ -833,12 +759,10 @@ strong {
   margin-top: 3px;
 }
 .lesson-card h3 {
-  font-size: 21px;
   margin-top: 16px;
   letter-spacing: -0.5px;
 }
 .lesson-card p {
-  font-size: 10px;
   margin-top: 5px;
 }
 .lesson-card-bottom {
@@ -854,7 +778,6 @@ strong {
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 8px;
   color: var(--muted);
 }
 .lesson-arrow {
@@ -871,9 +794,6 @@ strong {
   background: var(--mint);
   border: 0;
 }
-.lesson-card.locked {
-  opacity: 0.65;
-}
 .home-bottom {
   display: grid;
   grid-template-columns: 1.8fr 1fr;
@@ -883,7 +803,6 @@ strong {
 .weekly-card {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 14px;
   padding: 22px 24px;
 }
 .weekly-card .section-heading {
@@ -895,7 +814,6 @@ strong {
   letter-spacing: -0.35px;
 }
 .weekly-card .section-heading p {
-  font-size: 9px;
   margin-top: 6px;
 }
 .week-total {
@@ -925,7 +843,6 @@ strong {
   color: var(--muted);
 }
 .week-days > div.today > span {
-  color: var(--accent);
   font-weight: 600;
 }
 .day-circle {
@@ -945,7 +862,6 @@ strong {
 }
 .today .day-circle {
   border: 1px dashed var(--coral);
-  background: var(--peach);
 }
 .today .day-circle.complete {
   border: 1px solid var(--green);
@@ -959,14 +875,12 @@ strong {
   background: var(--line);
 }
 .today-dot {
-  background: var(--coral);
   width: 6px;
   height: 6px;
 }
 .goal-caption {
   display: flex;
   justify-content: space-between;
-  font-size: 8px;
   color: var(--muted);
   gap: 8px;
 }
@@ -1022,7 +936,6 @@ strong {
   color: #6b7c5d;
 }
 .focus-card p {
-  font-size: 10px;
   line-height: 1.7;
   color: #5e6c55;
   margin-top: 15px;
@@ -1030,7 +943,6 @@ strong {
   z-index: 1;
 }
 .focus-card > .text-button {
-  font-size: 9px;
   margin-top: 10px;
   position: relative;
   z-index: 1;
@@ -1076,10 +988,6 @@ strong {
   border-radius: 50%;
   box-shadow: 0 1px 3px #0002;
 }
-.switch.on {
-  background: #849575;
-  border-color: #849575;
-}
 .billi-note {
   margin-top: 22px;
   padding: 20px 23px;
@@ -1087,7 +995,6 @@ strong {
   gap: 17px;
   align-items: center;
   border: 1px dashed var(--line);
-  border-radius: 13px;
 }
 .billi-note p {
   font-size: 10px;
@@ -1097,7 +1004,6 @@ strong {
   display: block;
   color: var(--text);
   font-size: 10px;
-  font-weight: 500;
   margin-bottom: 2px;
 }
 .billi-note .icon-button {
@@ -1113,12 +1019,8 @@ strong {
   width: 70px;
   height: 66px;
   min-width: 70px;
-  background: #c0b0d8;
   border-radius: 48% 48% 40% 43% / 54% 50% 39% 42%;
   transform: rotate(-7deg);
-  box-shadow:
-    inset -7px -5px 10px #927ca330,
-    inset 5px 4px 8px #e9ddf28a;
   vertical-align: middle;
   animation: bob 6s ease-in-out infinite;
 }
@@ -1126,7 +1028,6 @@ strong {
   height: 8px;
   width: 4px;
   border-radius: 4px;
-  background: #444241;
   transform: rotate(-6deg);
   margin-top: 0;
   position: relative;
@@ -1148,7 +1049,6 @@ strong {
   position: absolute;
   right: -12px;
   top: -8px;
-  color: #d2ae64;
   transform: rotate(8deg);
   font-size: 18px;
 }
@@ -1196,7 +1096,6 @@ strong {
   padding: 20px 0 21px;
   border-top: 1px solid var(--line);
   color: var(--muted);
-  font-size: 8px;
   gap: 12px;
 }
 .page-footer > span {
@@ -1217,7 +1116,6 @@ strong {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 8px;
 }
 .scene {
   height: 280px;
@@ -1254,10 +1152,8 @@ strong {
   display: flex;
   align-items: center;
   gap: 20px;
-  background: var(--surface);
   border: 1px solid var(--line);
   padding: 24px;
-  border-radius: 15px;
   flex-wrap: wrap;
   margin-bottom: 28px;
 }
@@ -1274,9 +1170,6 @@ strong {
   display: flex;
   gap: 16px;
   align-items: center;
-}
-.path-progress > svg {
-  color: var(--coral);
 }
 .path-progress h3 {
   font-size: 19px;
@@ -1332,19 +1225,12 @@ strong {
   border: 1px solid var(--line);
   z-index: -1;
 }
-.path-section {
-  margin-top: 34px;
-}
 .path-section > .section-heading {
   margin-bottom: 20px;
 }
 .chapter-tag {
-  font-size: 8px;
   letter-spacing: 1px;
-  color: var(--muted);
-  background: var(--raised);
   padding: 5px 9px;
-  border-radius: 5px;
 }
 .path-section .lesson-grid {
   row-gap: 20px;
@@ -1353,14 +1239,10 @@ strong {
   margin-top: 27px;
 }
 .practice-hero {
-  background: var(--peach);
-  border-radius: 18px;
-  padding: 35px;
   display: flex;
   align-items: center;
   position: relative;
   overflow: hidden;
-  min-height: 300px;
 }
 .practice-hero > div:first-child {
   width: 65%;
@@ -1372,7 +1254,6 @@ strong {
   pointer-events: auto;
 }
 .practice-hero h2 {
-  font-size: 36px;
   margin: 20px 0 14px;
 }
 .practice-hero p {
@@ -1380,12 +1261,10 @@ strong {
   margin-bottom: 24px;
 }
 .practice-hero .pill {
-  background: var(--surface);
   color: var(--accent);
 }
 .practice-hero > .scene {
   width: 48%;
-  height: 300px;
   position: absolute;
   right: 0;
   top: 0;
@@ -1466,8 +1345,6 @@ strong {
   gap: 24px;
   padding: 30px;
   border: 1px solid var(--line);
-  border-radius: 18px;
-  background: var(--surface);
 }
 .profile-avatar {
   height: 95px;
@@ -1475,7 +1352,6 @@ strong {
   min-width: 95px;
   display: grid;
   place-items: center;
-  background: var(--lavender);
   border-radius: 50%;
   border: 6px solid var(--bg);
 }
@@ -1504,7 +1380,6 @@ strong {
   align-items: center;
   padding: 25px 10px 20px;
   border: 1px solid var(--line);
-  border-radius: 13px;
   background: var(--surface);
 }
 .stat-icon {
@@ -1600,8 +1475,6 @@ strong {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: #17221d65;
-  backdrop-filter: blur(8px);
   z-index: 90;
   animation: overlay-in 0.25s;
 }
@@ -1614,13 +1487,11 @@ strong {
   max-width: 480px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 23px;
   padding: 28px;
   z-index: 100;
   max-height: 90dvh;
   overflow-y: auto;
   overscroll-behavior: contain;
-  box-shadow: 0 30px 100px #0003;
   animation: modal-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .modal.wide {
@@ -1634,7 +1505,6 @@ strong {
   margin-bottom: 20px;
 }
 .modal-top h2 {
-  font-size: 22px;
   letter-spacing: -0.6px;
   padding-top: 3px;
 }
@@ -1664,9 +1534,7 @@ strong {
   border: 0;
 }
 .lesson-progress {
-  height: 4px;
   border-radius: 5px;
-  background: var(--raised);
   margin: 10px 0 28px;
   overflow: hidden;
 }
@@ -1699,7 +1567,6 @@ strong {
   margin-top: 20px;
 }
 .worked-example {
-  background: var(--butter);
   padding: 18px;
   border-radius: 12px;
   margin-top: 20px;
@@ -1724,9 +1591,7 @@ strong {
   display: flex;
   align-items: center;
   gap: 15px;
-  background: var(--raised);
   padding: 16px;
-  border-radius: 12px;
   margin: 20px 0;
   font-size: 12px;
   color: var(--muted);
@@ -1750,7 +1615,6 @@ strong {
   font-size: 10px;
 }
 .lesson-player h2 {
-  font-size: 29px;
   line-height: 1.2;
 }
 .lesson-player h2 + p {
@@ -1787,9 +1651,7 @@ strong {
   padding: 20px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 13px;
   cursor: grab;
-  box-shadow: 0 5px 15px #00000004;
 }
 .sort-card h3 {
   margin: 10px 0 6px;
@@ -1822,13 +1684,9 @@ strong {
   padding: 13px 7px;
   border: 1px solid var(--line);
   background: var(--raised);
-  border-radius: 9px;
   font-size: 11px;
-  min-height: 45px;
 }
 .sort-options .chosen.good {
-  border-color: var(--green);
-  background: var(--mint);
   opacity: 1;
 }
 .sort-options .chosen.bad {
@@ -1838,7 +1696,6 @@ strong {
 .answer-feedback {
   margin-top: 20px;
   padding: 19px;
-  border-radius: 13px;
   background: var(--mint);
   border: 1px solid #89a08540;
 }
@@ -1949,7 +1806,6 @@ textarea {
   padding: 4px;
   display: flex;
   align-items: center;
-  min-height: 32px;
 }
 .order-number {
   font-size: 10px;
@@ -1964,8 +1820,6 @@ textarea {
   gap: 2px;
 }
 .order-arrows button {
-  width: 29px;
-  height: 32px;
   display: grid;
   place-items: center;
   border-radius: 5px;
@@ -2055,7 +1909,6 @@ textarea {
 }
 .earned-xp > strong {
   font-family: 'DM Mono';
-  font-size: 28px;
   font-weight: 400;
   letter-spacing: -1px;
 }
@@ -2121,8 +1974,6 @@ textarea {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--peach);
-  color: var(--accent);
   width: 86px;
   height: 86px;
   border-radius: 25px;
@@ -2406,10 +2257,8 @@ textarea {
   display: flex;
   align-items: center;
   gap: 15px;
-  background: #252e2c;
   box-shadow: 0 8px 40px #0006;
   border: 1px solid #506354;
-  color: #eff1e4;
   padding: 14px 16px;
   border-radius: 15px;
   width: max-content;
@@ -2436,7 +2285,6 @@ textarea {
 .focus-time {
   font-size: 22px;
   margin-left: 15px;
-  color: #d3e2bb;
 }
 .breathing-dot {
   height: 8px;
@@ -2456,18 +2304,13 @@ textarea {
   z-index: 150;
   width: max-content;
   max-width: calc(100% - 32px);
-  background: var(--text);
-  color: var(--bg);
-  border-radius: 12px;
   padding: 13px 15px;
-  box-shadow: 0 5px 35px #0002;
   display: flex;
   gap: 10px;
   align-items: center;
   font-size: 11px;
 }
 .toast > svg {
-  color: #cdbb8f;
   min-width: 18px;
 }
 .toast > button {
@@ -2570,12 +2413,6 @@ textarea {
   }
 }
 @media (min-width: 1550px) {
-  .hero-card {
-    min-height: 390px;
-  }
-  .hero-card h2 {
-    font-size: 46px;
-  }
   .hero-text {
     padding: 35px 0 30px 34px;
   }
@@ -2602,7 +2439,6 @@ textarea {
     padding: 28px;
   }
   .daily-card h2 {
-    font-size: 28px;
     margin-top: 28px;
   }
   .daily-card p {
@@ -2646,17 +2482,10 @@ textarea {
     gap: 16px;
     grid-template-columns: 1.65fr 1fr;
   }
-  .hero-card h2 {
-    font-size: 33px;
-  }
   .hero-text {
     padding-left: 23px;
   }
-  .hero-card {
-    min-height: 330px;
-  }
   .hero-visual {
-    right: -26px;
     width: 63%;
   }
   .floating-equation {
@@ -2668,12 +2497,6 @@ textarea {
   }
   .hero-card p {
     font-size: 10px;
-  }
-  .daily-card {
-    padding: 22px 19px;
-  }
-  .daily-card h2 {
-    font-size: 21px;
   }
   .daily-steps {
     margin: 22px 0;
@@ -2829,15 +2652,11 @@ textarea {
     bottom: calc(12px + env(safe-area-inset-bottom));
     left: 50%;
     transform: translateX(-50%);
-    height: 65px;
-    padding: 5px 7px;
     background: color-mix(in srgb, var(--surface) 86%, transparent);
     backdrop-filter: blur(24px);
     border: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
-    border-radius: 24px;
     box-shadow: 0 6px 35px #1e2a2214;
     z-index: 60;
-    min-width: 285px;
     max-width: calc(100% - 36px);
   }
   .sidebar > .brand-button,
@@ -2852,21 +2671,13 @@ textarea {
     justify-content: space-between;
   }
   .main-nav button {
-    width: 63px;
-    height: 53px;
     flex-direction: column;
-    gap: 1px;
     border-radius: 18px;
-    font-size: 8px;
     line-height: 1.4;
     padding: 5px 0;
   }
   .main-nav button > span:not(.nav-pill) {
     display: block;
-  }
-  .main-nav button > svg {
-    width: 21px;
-    height: 21px;
   }
   .nav-pill {
     border-radius: 18px;
@@ -2880,7 +2691,6 @@ textarea {
     margin: 0;
   }
   .topbar {
-    height: 80px;
     padding: 12px 22px;
     border: 0;
     gap: 8px;
@@ -2889,7 +2699,6 @@ textarea {
     display: block;
   }
   .mobile-brand .brand {
-    font-size: 29px;
     letter-spacing: -1.6px;
   }
   .mobile-brand .brand > svg {
@@ -2898,9 +2707,6 @@ textarea {
   }
   .breadcrumb {
     display: none;
-  }
-  .header-actions {
-    gap: 14px;
   }
   .streak-chip {
     font-size: 10px;
@@ -2917,111 +2723,39 @@ textarea {
   }
   .settings-trigger {
     display: flex;
-    width: 31px;
-    height: 31px;
     color: var(--text);
   }
   .main-content {
     padding: 12px 22px 100px;
   }
-  .page-heading {
-    margin-bottom: 23px;
-  }
   .page-heading .eyebrow {
-    font-size: 7px;
-    letter-spacing: 1.3px;
     margin-bottom: 9px;
   }
   .page-heading h1 {
-    font-size: 27px;
     letter-spacing: -0.9px;
     gap: 3px;
-    line-height: 1.25;
   }
   .page-heading p {
-    font-size: 11px;
-    line-height: 1.8;
-    max-width: 320px;
     margin-top: 9px;
   }
   .greeting-spark {
     font-size: 25px;
-    margin-left: 7px;
-  }
-  .welcome-grid {
-    grid-template-columns: 1fr;
-    gap: 18px;
   }
   .hero-card {
-    min-height: 338px;
     border-radius: 17px;
   }
-  .hero-text {
-    padding: 26px 0 25px 24px;
-    width: 62%;
-  }
-  .hero-tag {
-    font-size: 6.8px;
-    letter-spacing: 0.8px;
-  }
-  .hero-card h2 {
-    font-size: 35px;
-    line-height: 1.12;
-    margin-top: 18px;
-    letter-spacing: -1.4px;
-  }
-  .hero-card p {
-    font-size: 10px;
-    margin-top: 14px;
-  }
   .hero-card .button {
-    margin-top: 22px;
-    font-size: 10px;
-    min-height: 41px;
-    padding: 11px 14px;
     gap: 13px;
-  }
-  .hero-footnote {
-    font-size: 7.5px;
-    margin-top: 11px;
-  }
-  .hero-visual {
-    width: 67%;
-    right: -47px;
-    top: 20px;
-    height: calc(100% - 20px);
-  }
-  .hero-visual > .scene {
-    inset: 30px -8px 0;
-  }
-  .floating-equation {
-    right: 45px;
-    top: 30px;
-    font-size: 9px;
-    padding: 4px 8px;
-  }
-  .scene-hint {
-    bottom: 22px;
-    right: 45px;
-    font-size: 5.5px;
-    max-width: 140px;
   }
   .orbit-dot.one {
     width: 16px;
     height: 16px;
-    right: 27px;
-    top: 100px;
   }
   .orbit-dot.two {
     width: 8px;
     height: 8px;
-    left: 60px;
-    bottom: 74px;
   }
   .daily-card {
-    padding: 22px 23px;
-    min-height: 270px;
-    border-radius: 17px;
     display: grid;
     grid-template-columns: 1fr 1fr;
     column-gap: 10px;
@@ -3030,22 +2764,16 @@ textarea {
     grid-column: 1/-1;
   }
   .daily-card h2 {
-    font-size: 24px;
-    margin-top: 20px;
     grid-column: 1/-1;
   }
   .daily-card p {
-    font-size: 10px;
-    margin-top: 10px;
     grid-column: 1;
     grid-row: 3;
   }
   .daily-steps {
     grid-column: 2;
     grid-row: 3;
-    margin: 13px 0 11px;
     align-self: center;
-    gap: 9px;
   }
   .daily-steps i {
     width: 13px;
@@ -3058,26 +2786,17 @@ textarea {
     height: 21px;
   }
   .daily-steps small {
-    font-size: 7px;
     white-space: nowrap;
   }
   .daily-button {
     grid-column: 1/-1;
-    margin-top: 22px;
-    min-height: 41px;
-    font-size: 11px;
   }
   .daily-reward {
     grid-column: 1/-1;
-    font-size: 8px;
-    margin-top: 10px;
   }
   .daily-card:before {
     right: -37px;
     top: 4px;
-  }
-  .learning-section {
-    margin-top: 28px;
   }
   .section-heading {
     gap: 10px;
@@ -3085,9 +2804,7 @@ textarea {
     align-items: flex-end;
   }
   .section-heading h2 {
-    font-size: 22px;
     letter-spacing: -0.6px;
-    max-width: 250px;
   }
   .section-heading .eyebrow {
     font-size: 7px;
@@ -3112,10 +2829,7 @@ textarea {
   }
   .learning-section .lesson-card {
     display: grid;
-    grid-template-columns: 50px 1fr 30px;
     column-gap: 15px;
-    padding: 18px 16px;
-    border-radius: 13px;
   }
   .learning-section .lesson-card-top {
     display: contents;
@@ -3123,8 +2837,6 @@ textarea {
   .learning-section .lesson-icon {
     grid-column: 1;
     grid-row: 1/3;
-    width: 49px;
-    height: 49px;
     border-radius: 13px;
   }
   .learning-section .lesson-number {
@@ -3134,14 +2846,12 @@ textarea {
     grid-column: 2;
     grid-row: 1;
     margin: 2px 0 0;
-    font-size: 20px;
     align-self: center;
     line-height: 1.2;
   }
   .learning-section .lesson-card > p {
     grid-column: 2;
     grid-row: 2;
-    font-size: 10px;
     margin-top: 3px;
   }
   .learning-section .lesson-card-bottom {
@@ -3160,24 +2870,9 @@ textarea {
   }
   .home-bottom {
     grid-template-columns: 1fr;
-    gap: 17px;
-    margin-top: 23px;
-  }
-  .weekly-card {
-    padding: 22px;
-  }
-  .weekly-card h2 {
-    font-size: 17px;
-    max-width: 240px;
   }
   .weekly-card .section-heading {
     margin-bottom: 22px;
-  }
-  .weekly-card .section-heading p {
-    font-size: 9px;
-  }
-  .week-total {
-    font-size: 21px;
   }
   .week-days {
     margin-bottom: 20px;
@@ -3188,16 +2883,6 @@ textarea {
   .day-circle {
     height: 34px;
     width: 34px;
-  }
-  .goal-caption {
-    font-size: 8px;
-  }
-  .focus-card {
-    padding: 22px;
-    min-height: 180px;
-  }
-  .focus-title > span:nth-child(2) {
-    font-size: 20px;
   }
   .focus-title {
     gap: 13px;
@@ -3210,11 +2895,9 @@ textarea {
     transform: none;
   }
   .focus-card p {
-    font-size: 11px;
     margin-top: 13px;
   }
   .focus-card > .text-button {
-    font-size: 10px;
     margin-top: 7px;
   }
   .focus-decoration {
@@ -3224,9 +2907,7 @@ textarea {
     bottom: -29px;
   }
   .billi-note {
-    padding: 18px;
     gap: 14px;
-    margin-top: 18px;
   }
   .billi-note p {
     font-size: 10px;
@@ -3238,17 +2919,10 @@ textarea {
     display: none;
   }
   .page-footer {
-    margin-top: 24px;
     padding: 20px 0 12px;
   }
   .page-footer > span {
     gap: 10px;
-  }
-  .page-footer > span > span {
-    font-size: 7px;
-  }
-  .page-footer > button {
-    font-size: 0;
   }
   .page-footer > button > svg {
     font-size: 13px;
@@ -3295,7 +2969,6 @@ textarea {
     width: 100%;
     max-width: 100%;
     max-height: 94dvh;
-    border-radius: 24px 24px 0 0;
     padding: 13px 24px calc(28px + env(safe-area-inset-bottom));
     animation: sheet-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   }
@@ -3313,21 +2986,12 @@ textarea {
   .modal-top {
     margin-bottom: 20px;
   }
-  .modal-top h2 {
-    font-size: 21px;
-  }
-  .modal-top p {
-    font-size: 10px;
-  }
   .lesson-progress {
     margin-bottom: 23px;
   }
   .lesson-intro h2,
   .reflection h2 {
     font-size: 29px;
-  }
-  .lesson-player h2 {
-    font-size: 27px;
   }
   .concept {
     font-size: 13px;
@@ -3338,9 +3002,6 @@ textarea {
   }
   .worked-example {
     padding: 17px;
-  }
-  .worked-example p {
-    font-size: 12px;
   }
   .exercise-scene .scene {
     height: 210px;
@@ -3358,13 +3019,9 @@ textarea {
   .sort-options {
     gap: 8px;
   }
-  .entry-question {
-    font-size: 17px !important;
-  }
   .order-row {
     padding: 9px 7px;
     gap: 7px;
-    font-size: 10px;
   }
   .order-arrows button {
     width: 27px;
@@ -3373,14 +3030,8 @@ textarea {
     gap: 12px;
     padding: 15px;
   }
-  .tutor-tip p {
-    font-size: 11px;
-  }
   .onboarding h2 {
     font-size: 30px;
-  }
-  .onboarding p {
-    font-size: 12px;
   }
   .onboarding .blob {
     margin-top: 8px;
@@ -3429,18 +3080,10 @@ textarea {
   .path-section .section-heading h2 {
     font-size: 23px;
   }
-  .path-section .section-heading p {
-    font-size: 10px;
-  }
   .chapter-tag {
     display: none;
   }
-  .path-section .lesson-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-  }
   .path-section .lesson-card {
-    padding: 16px;
     display: block;
   }
   .path-section .lesson-icon {
@@ -3453,59 +3096,32 @@ textarea {
     height: 25px;
   }
   .path-section .lesson-card h3 {
-    font-size: 19px;
-    line-height: 1.2;
-    margin-top: 15px;
     min-height: 23px;
   }
-  .path-section .lesson-card > p {
-    font-size: 9px;
-    line-height: 1.7;
-    min-height: 30px;
-  }
   .path-section .lesson-card-bottom {
-    margin-top: 17px;
     padding-top: 11px;
-  }
-  .path-section .lesson-card-bottom > span:first-child {
-    font-size: 8px;
   }
   .path-section .lesson-card-bottom > span:first-child svg {
     display: none;
   }
   .path-section .lesson-arrow {
-    height: 23px;
-    width: 23px;
     font-size: 13px;
-    min-width: 23px;
-  }
-  .practice-hero {
-    min-height: 340px;
-    padding: 26px 23px;
   }
   .practice-hero > div:first-child {
     width: 100%;
   }
   .practice-hero h2 {
-    font-size: 31px;
     margin-top: 20px;
-    max-width: 230px;
   }
   .practice-hero p {
-    font-size: 10px;
-    max-width: 190px;
     line-height: 1.8;
     margin-bottom: 23px;
   }
   .practice-hero .button {
-    font-size: 11px;
     padding: 12px 15px;
     min-height: 43px;
   }
   .practice-hero > .scene {
-    width: 55%;
-    right: -30px;
-    top: 40px;
     min-width: 190px;
   }
   .empty-review {
@@ -3544,7 +3160,6 @@ textarea {
   }
   .profile-card {
     gap: 16px;
-    padding: 22px 19px;
     flex-wrap: wrap;
     position: relative;
   }
@@ -3566,7 +3181,6 @@ textarea {
     letter-spacing: 1px;
   }
   .profile-card p {
-    font-size: 10px;
     max-width: 160px;
   }
   .profile-card > .icon-button {
@@ -3583,11 +3197,7 @@ textarea {
   }
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 13px;
     margin-top: 18px;
-  }
-  .stat-card {
-    padding: 21px 10px;
   }
   .stat-card strong {
     font-size: 27px;
@@ -3620,9 +3230,6 @@ textarea {
   .lesson-complete {
     padding: 10px 0 0;
   }
-  .lesson-complete h2 {
-    font-size: 29px;
-  }
   .lesson-complete p {
     font-size: 12px;
   }
@@ -3649,45 +3256,14 @@ textarea {
     padding-left: 17px;
     padding-right: 17px;
   }
-  .header-actions {
-    gap: 9px;
-  }
-  .page-heading h1 {
-    font-size: 24px;
-  }
   .greeting-spark {
     font-size: 22px;
   }
-  .hero-text {
-    padding-left: 19px;
-  }
-  .hero-card h2 {
-    font-size: 32px;
-  }
-  .hero-tag {
-    font-size: 6px;
-  }
-  .hero-card {
-    min-height: 325px;
-  }
-  .hero-visual {
-    right: -48px;
-  }
   .hero-card .button {
-    font-size: 9px;
     gap: 10px;
   }
   .hero-card .button svg {
     font-size: 15px;
-  }
-  .hero-footnote {
-    font-size: 7px;
-  }
-  .daily-card h2 {
-    font-size: 22px;
-  }
-  .daily-card {
-    padding: 21px 19px;
   }
   .daily-steps {
     gap: 6px;
@@ -3708,15 +3284,6 @@ textarea {
   .modal {
     padding-left: 19px;
     padding-right: 19px;
-  }
-  .path-section .lesson-card {
-    padding: 13px;
-  }
-  .path-section .lesson-card h3 {
-    font-size: 17px;
-  }
-  .path-section .lesson-card-bottom > span:first-child {
-    font-size: 7px;
   }
   .segmented > button {
     padding: 7px 10px;
@@ -3771,50 +3338,8 @@ textarea {
   .hero-card {
     min-height: 378px;
   }
-  .hero-text {
-    width: 100%;
-    padding: 25px 24px;
-  }
-  .hero-card h2 {
-    max-width: 90%;
-    font-size: 36px;
-  }
-  .hero-card p {
-    max-width: 48%;
-  }
-  .hero-visual {
-    width: 68%;
-    right: -9px;
-    top: 135px;
-    height: 235px;
-  }
-  .hero-visual > .scene {
-    inset: 0 -3px 0;
-  }
-  .floating-equation {
-    top: -90px;
-    right: 24px;
-    font-size: 10px;
-  }
   .scene-hint {
-    bottom: 10px;
-    right: 23px;
     max-width: none;
-    font-size: 6px;
-  }
-  .hero-card .button {
-    margin-top: 24px;
-  }
-  .hero-footnote {
-    margin-top: 12px;
-  }
-  .orbit-dot.one {
-    right: 5px;
-    top: 5px;
-  }
-  .orbit-dot.two {
-    left: 35px;
-    bottom: 33px;
   }
   .hero-card .desktop-break {
     display: block;
@@ -3822,14 +3347,10 @@ textarea {
   .greeting-spark {
     width: 25px;
     height: 25px;
-    min-width: 25px;
     color: var(--coral);
   }
   .page-heading h1 {
     align-items: center;
-  }
-  .hero-tag {
-    font-size: 7px;
   }
   .hero-text > .button {
     max-width: 170px;
@@ -3839,27 +3360,8 @@ textarea {
   }
 }
 @media (max-width: 360px) {
-  .hero-card h2 {
-    font-size: 32px;
-  }
-  .hero-visual {
-    top: 140px;
-    width: 65%;
-    height: 225px;
-    right: -6px;
-  }
   .hero-card {
     min-height: 365px;
-  }
-  .hero-text {
-    padding-left: 20px;
-  }
-  .floating-equation {
-    top: -94px;
-    right: 20px;
-  }
-  .hero-card p {
-    font-size: 9px;
   }
   .hero-text > .button {
     max-width: 150px;
@@ -3926,34 +3428,13 @@ textarea {
 .greeting-spark {
   width: 30px;
   height: 30px;
-  color: var(--coral);
 }
 @media (max-width: 760px) {
-  .main-nav button {
-    font-size: 10px;
-  }
   .settings-trigger {
-    width: 42px;
     height: 42px;
-  }
-  .page-heading p {
-    font-size: 12px;
-  }
-  .hero-card p {
-    font-size: 11px;
-    line-height: 1.8;
-  }
-  .daily-card p {
-    font-size: 11px;
-  }
-  .daily-steps small {
-    font-size: 9px;
   }
   .daily-card {
     padding-bottom: 23px;
-  }
-  .learning-section .lesson-card > p {
-    font-size: 12px;
   }
   .lesson-card p {
     font-size: 11px;
@@ -3962,14 +3443,8 @@ textarea {
   .billi-note strong {
     font-size: 11px;
   }
-  .weekly-card .section-heading p {
-    font-size: 11px;
-  }
   .goal-caption {
     font-size: 9px;
-  }
-  .focus-card p {
-    font-size: 12px;
   }
   .focus-card > .text-button {
     font-size: 11px;
@@ -3979,9 +3454,6 @@ textarea {
   }
   .section-heading p {
     font-size: 12px;
-  }
-  .lesson-player h2 + p {
-    font-size: 13px;
   }
   .tutor-tip p {
     font-size: 12px;
@@ -4019,12 +3491,6 @@ textarea {
   .privacy-note {
     font-size: 10px;
   }
-  .path-section .section-heading p {
-    font-size: 12px;
-  }
-  .path-section .lesson-card > p {
-    font-size: 11px;
-  }
   .profile-card p {
     font-size: 11px;
   }
@@ -4037,7 +3503,6 @@ textarea {
 }
 .concept-explorer {
   margin: 22px 0;
-  background: var(--peach);
   border: 1px solid var(--line);
   border-radius: 15px;
   overflow: hidden;

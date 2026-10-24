@@ -21,22 +21,20 @@ export default function LearningShelf() {
       <main id="guide-main">
         <section className="shelf-hero">
           <div>
-            <span className="eyebrow">
-              THE LEARNING SHELF · {available.length} SMALL DISCOVERIES
-            </span>
+            <span className="eyebrow">ACCOUNTING GUIDES · {available.length} TOPICS</span>
             <h1>
-              Big ideas.
+              Accounting,
               <br />
-              <em>Little lightbulbs.</em>
+              <em>with examples.</em>
             </h1>
             <p>
               Learn accounting through stories that make sense. Read an idea, try an example, then
               bring it to life in Tally.
             </p>
             <Link className="button primary" href="/?lesson=equation">
-              Find your first “aha!”
+              Start with the accounting equation
             </Link>
-            <span className="guide-quiet">No account. No rush. Just a little curiosity.</span>
+            <span className="guide-quiet">Free lessons. No account needed.</span>
           </div>
           <div className="shelf-brand-art">
             <img

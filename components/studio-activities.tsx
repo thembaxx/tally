@@ -41,7 +41,7 @@ function Nudge({ text, onHint }: { text: string; onHint?: () => void }) {
         }}
       >
         <LightbulbIcon weight="duotone" />
-        {open ? 'Keep going' : 'A little nudge?'}
+        {open ? 'Hide hint' : 'Show hint'}
       </button>
       {open && (
         <div className="tutor-tip">
@@ -72,7 +72,7 @@ export function ChoiceTask({
   return (
     <div className="choice-task">
       <div className="activity-kicker">
-        <MagnifyingGlassIcon weight="duotone" /> LOOK A LITTLE CLOSER
+        <MagnifyingGlassIcon weight="duotone" /> EXAMINE THE TRANSACTION
       </div>
       <h2>{c.title}</h2>
       <div className="story-slip">

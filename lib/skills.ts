@@ -2,7 +2,7 @@ import type { Review } from './reviews';
 
 export const skillStages = [
   { id: 'new', label: 'Not started', description: 'An idea to explore' },
-  { id: 'building', label: 'Building', description: 'Finding your footing' },
+  { id: 'building', label: 'Building', description: 'Ready for more practice' },
   { id: 'strengthening', label: 'Strengthening', description: 'Recalling independently' },
   { id: 'steady', label: 'Steady', description: 'Recalling across several days' },
 ] as const;
