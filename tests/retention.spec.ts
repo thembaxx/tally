@@ -223,12 +223,17 @@ test('an unfinished lesson resumes its activity and takeaway across reloads, the
   await expect(page.getByLabel('My takeaway')).toHaveValue(note);
   await page.getByRole('button', { name: 'Finish lesson' }).click();
   await expect.poll(async () => (await saved(page)).xp).toBe(60);
+  await expect.poll(async () => (await saved(page)).notes.statements).toBe(note);
   await page.getByRole('button', { name: 'Keep the good feeling' }).click();
   await page.getByRole('button', { name: 'Practice', exact: true }).click();
-  await expect(page.locator('.saved-takeaway')).toHaveText(`My takeaway: ${note}`);
+  // Practice enters after Home exits; software-rendered 3D can delay this on CI.
+  await expect(page.locator('.saved-takeaway')).toHaveText(`My takeaway: ${note}`, {
+    timeout: 15000,
+  });
   await page.reload();
   expect((await saved(page)).xp).toBe(60);
   expect((await saved(page)).draft).toBeNull();
+  expect((await saved(page)).notes.statements).toBe(note);
 });
 
 test('a real legacy device migrates its separate review schedule', async ({ page }) => {

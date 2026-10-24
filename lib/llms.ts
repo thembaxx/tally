@@ -31,6 +31,7 @@ ${available.map((lesson) => `- [${guideTitle(lesson)}](${absoluteUrl(`/learn/${l
 - Daily challenges contain three date-based tasks. Repeat runs earn less XP.
 - Fresh question variants test concepts beyond worked examples. Short reviews target up to two weak due concepts.
 - Spaced review adapts from one to 30 days according to mistakes, hints, confidence, and successful recall on separate days.
+- Learn's skill map shows each topic's practice stage, recall evidence, and next review date, with direct lesson and review actions. Stages reflect recorded practice rather than a mastery score.
 - A connected bakery scenario follows journal entries through profit to the balance sheet.
 - Unfinished sessions and written takeaways are saved; optional profile preferences follow the first learning session.
 - Focus mode runs a five-minute timer, pauses when the tab is hidden, and awards focus XP once per day.
