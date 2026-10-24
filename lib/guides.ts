@@ -5,9 +5,9 @@ import type { Lesson } from './learning';
 const topics: Record<string, string> = {
   equation: 'The accounting equation: assets, liabilities and equity',
   debit: 'Debits and credits, explained with a laptop',
-  statements: 'How to read an income statement',
+  statements: 'How to read an statement of profit or loss',
   accruals: 'Accrual accounting: when income is earned',
-  inventory: 'FIFO inventory and cost of goods sold',
+  inventory: 'FIFO inventory and cost of sales',
   depreciation: 'Straight-line depreciation, one step at a time',
   ratios: 'Financial ratios: understanding the current ratio',
   budgeting: 'Budget variance: compare your plan with reality',
@@ -18,7 +18,7 @@ const topics: Record<string, string> = {
   recall: 'Accounting flashcards and retrieval practice',
   'journal-lab': 'How to build a balanced journal entry',
   'spot-the-slip': 'Find accounting errors beyond balanced totals',
-  bakery: 'Run a bakery: journal entries, profit and the balance sheet',
+  bakery: 'Run a bakery: journal entries, profit and the statement of financial position',
 };
 
 export const guideTitle = (lesson: Lesson) => topics[lesson.id] || lesson.title;
@@ -30,6 +30,7 @@ export function pageMetadata(title: string, description: string, path: string): 
     alternates: { canonical: path },
     openGraph: {
       type: 'website',
+      locale: 'en_ZA',
       url: path,
       title: `${title} · Tally`,
       description,

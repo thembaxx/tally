@@ -2,6 +2,7 @@ import { ArrowRightIcon, PathIcon } from '@phosphor-icons/react';
 import { lessons, type Progress } from '@/lib/learning';
 import { recallEvidence, skillStage, skillStages } from '@/lib/skills';
 import type { Session } from '@/lib/session';
+import { dateLabel } from '@/lib/south-africa';
 
 export function SkillMap({
   progress,
@@ -77,13 +78,7 @@ export function SkillMap({
                     {review && (
                       <p className="skill-due">
                         {review.due <= today ? 'Review due' : 'Next review'} ·{' '}
-                        <time dateTime={review.due}>
-                          {new Date(`${review.due}T12:00:00`).toLocaleDateString('en', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })}
-                        </time>
+                        <time dateTime={review.due}>{dateLabel(review.due)}</time>
                       </p>
                     )}
                     <button

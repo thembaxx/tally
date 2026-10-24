@@ -28,8 +28,8 @@ export default function LearningShelf() {
               <em>with examples.</em>
             </h1>
             <p>
-              Learn accounting through stories that make sense. Read an idea, try an example, then
-              bring it to life in Tally.
+              Learn accounting through South African examples in rand. Read an idea, try an example,
+              then bring it to life in Tally.
             </p>
             <Link className="button primary" href="/?lesson=equation">
               Start with the accounting equation
@@ -39,7 +39,7 @@ export default function LearningShelf() {
           <div className="shelf-brand-art">
             <img
               src="/brand-mark.webp"
-              alt="Tally’s colorful folded t symbol"
+              alt="Tally’s colourful folded t symbol"
               width={240}
               height={240}
             />

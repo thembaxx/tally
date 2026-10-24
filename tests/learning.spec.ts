@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import {
   initialProgress,
+  localDay,
   previousDay,
   streak,
   accepts,
@@ -24,7 +25,7 @@ async function returning(page: Page) {
   await expect(page.getByRole('heading', { name: 'Welcome back, Alex.' })).toBeVisible();
 }
 test('accounting model, loose checks, daily variation, and real streaks', () => {
-  expect(accepts(' $1,200.00 ', ['1200'])).toBe(true);
+  expect(accepts(' R1 200.00 ', ['1200'])).toBe(true);
   expect(accepts('Laptop', ['equipment', 'laptop'])).toBe(true);
   expect(accepts('', ['0'])).toBe(false);
   expect(accepts('cash flow', ['cash'])).toBe(false);
@@ -68,8 +69,8 @@ test('onboarding, swipe sorting, loose answer, XP and review persistence', async
   });
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page
-    .getByLabel('Owner’s equity ($)')
-    .fill(`$${practiceEntry('equation').answers[0][0]}.00`);
+    .getByLabel('Owner’s equity (R)')
+    .fill(`R${practiceEntry('equation').answers[0][0]}.00`);
   await page.getByRole('button', { name: 'Check my answer' }).click();
   await expect(
     page.getByText(practiceEntry('equation').explanation, { exact: true }),
@@ -178,12 +179,9 @@ test('navigation and responsive layouts at five widths', async ({ page }) => {
 
 test('daily mix completes all three tasks and repeat rewards decrease', async ({ page }) => {
   test.setTimeout(120000);
-  // Read the browser's own calendar; keep native animation timers running.
+  // Use the SAST calendar; keep native animation timers running.
   await returning(page);
-  const day = await page.evaluate(() => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  });
+  const day = localDay();
   for (const expected of [90, 15]) {
     const history = await page.evaluate(
       () => JSON.parse(localStorage.getItem('tally-progress-v1') || '{}').reviews || {},

@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { GuideFooter, GuideHeader } from '@/components/guide-shell';
 import { lessons } from '@/lib/learning';
 import { guideTitle, pageMetadata } from '@/lib/guides';
+import { learningContext } from '@/lib/south-africa';
 import { absoluteUrl, jsonLd } from '@/lib/site';
 
 export const dynamicParams = false;
@@ -52,6 +53,7 @@ export default async function LessonGuide({ params }: Props) {
             </span>
             <h1>{title}</h1>
             <p>{lesson.subtitle}</p>
+            <p className="guide-caption">{learningContext}</p>
             <Link className="button primary" href={`/?lesson=${lesson.id}`}>
               Try the interactive lesson <span aria-hidden="true">→</span>
             </Link>
@@ -135,7 +137,7 @@ export default async function LessonGuide({ params }: Props) {
                 url: absoluteUrl(`/learn/${lesson.id}`),
                 name: title,
                 description: lesson.concept,
-                inLanguage: 'en',
+                inLanguage: 'en-ZA',
                 learningResourceType: 'Lesson',
                 educationalUse: ['Instruction', 'Practice'],
                 educationalLevel:

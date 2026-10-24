@@ -65,6 +65,7 @@ import { recallEvidence } from '@/lib/skills';
 import { readBackup } from '@/lib/backup';
 import { scheduleReview, weakestReviews } from '@/lib/reviews';
 import { practiceTopics, recommendedChallenge } from '@/lib/adaptive';
+import { addDays, dateLabel, learningContext } from '@/lib/south-africa';
 import {
   matchesDraft,
   sessionId,
@@ -429,12 +430,11 @@ export default function TallyApp() {
   const todayMinutes = p.activity[today] || 0;
   const level = Math.floor(p.xp / 200) + 1;
   const week = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(`${today}T12:00:00`);
-    d.setDate(d.getDate() - 6 + i);
+    const day = addDays(today, -6 + i);
     return {
-      key: localDay(d),
-      label: d.toLocaleDateString('en', { weekday: 'narrow' }),
-      full: d.toLocaleDateString('en', { weekday: 'long', month: 'short', day: 'numeric' }),
+      key: day,
+      label: dateLabel(day, { weekday: 'narrow' }),
+      full: dateLabel(day, { weekday: 'long', month: 'short', day: 'numeric' }),
     };
   });
   return (
@@ -567,17 +567,11 @@ export default function TallyApp() {
                           {p.name ? `Welcome back, ${p.name}.` : 'Welcome to Tally.'}
                           <SparkleIcon className="greeting-spark" weight="duotone" />
                         </h1>
-                        <p>Learn accounting with worked examples and hands-on practice.</p>
+                        <p>Learn accounting with South African examples, in rand.</p>
                       </div>
                       <div className="date-display">
                         <CalendarDotsIcon size={18} />
-                        {ready
-                          ? new Date(`${today}T12:00:00`).toLocaleDateString('en', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })
-                          : 'A new day to learn'}
+                        {ready ? dateLabel(today) : 'A new day to learn'}
                       </div>
                     </section>
                     {resumable && (
@@ -684,7 +678,7 @@ export default function TallyApp() {
                           <span>
                             <SparkleIcon weight="fill" /> +{p.dailyRuns[today] ? 15 : 90} XP
                           </span>
-                          <span>~5 min · no pressure</span>
+                          <span>Resets at 00:00 SAST</span>
                         </div>
                       </section>
                     </div>
@@ -999,7 +993,7 @@ export default function TallyApp() {
                                     {reviews[l.id]?.due <= today
                                       ? 'Ready to revisit'
                                       : reviews[l.id]?.due
-                                        ? `Next review: ${new Date(reviews[l.id].due + 'T12:00:00').toLocaleDateString('en', { month: 'short', day: 'numeric' })}`
+                                        ? `Next review: ${dateLabel(reviews[l.id].due, { month: 'short', day: 'numeric' })}`
                                         : 'Practice whenever you like'}
                                   </small>
                                   {reviews[l.id]?.total > 0 && (
@@ -1593,6 +1587,20 @@ export default function TallyApp() {
         >
           <div className="about-learning">
             <Blob small />
+            <h3>South African context</h3>
+            <p>{learningContext}</p>
+            <p>
+              Trade receivables and payables are also called debtors and creditors. The statement of
+              profit or loss is the income statement; the statement of financial position is the
+              balance sheet. Daily practice and streaks use South African Standard Time (SAST).
+            </p>
+            <a
+              href="https://www.sars.gov.za/types-of-tax/value-added-tax/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Read SARS guidance on VAT <ArrowUpRightIcon />
+            </a>
             <p>
               Tally uses familiar examples, visual models, active recall, and spaced review. You try
               an idea, get specific feedback, then revisit it after a break.

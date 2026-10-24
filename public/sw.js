@@ -1,4 +1,4 @@
-const CACHE='tally-offline-v6';
+const CACHE='tally-offline-v7';
 const CORE=['/','/offline.html','/brand-mark.webp','/icons/icon-32.png','/icons/icon-192.png','/icons/icon-512.png','/fonts/dm-sans.ttf','/fonts/outfit.ttf','/fonts/dm-mono.ttf'];
 self.addEventListener('install',event=>{event.waitUntil((async()=>{const cache=await caches.open(CACHE);await cache.addAll(CORE);const shell=await cache.match('/');if(shell){const html=await shell.text();const assets=[...html.matchAll(/(?:src|href)="([^"]+)"/g)].map(m=>new URL(m[1],self.location.origin)).filter(u=>u.origin===self.location.origin&&u.pathname.startsWith('/_next/static/')&&/\.(js|css)$/.test(u.pathname)).map(u=>u.href);await cache.addAll([...new Set(assets)]);}})())});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('tally-')&&key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()))});

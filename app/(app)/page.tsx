@@ -19,7 +19,7 @@ export default function Home() {
             operatingSystem: 'Any',
             browserRequirements: 'A modern web browser. WebGL is optional.',
             isAccessibleForFree: true,
-            inLanguage: 'en',
+            inLanguage: 'en-ZA',
             educationalLevel: ['Beginner', 'Intermediate', 'Introductions to advanced topics'],
             featureList: [
               'Interactive accounting lessons',
@@ -28,7 +28,7 @@ export default function Home() {
               'Offline learning',
             ],
             publisher: { '@id': absoluteUrl('/#organization') },
-            offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+            offers: { '@type': 'Offer', price: '0', priceCurrency: 'ZAR' },
           }),
         }}
       />

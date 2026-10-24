@@ -32,10 +32,10 @@ test('journal lab checks the accounts as well as equal totals', async ({ page })
   await page.getByRole('button', { name: 'Place account on debit', exact: true }).click();
   await page.getByRole('button', { name: 'Cash', exact: true }).click();
   await page.getByRole('button', { name: 'Place account on credit', exact: true }).click();
-  await page.getByLabel('Debit amount ($)', { exact: true }).fill('$500.00');
-  await page.getByLabel('Debit amount ($)', { exact: true }).press('Enter');
-  await expect(page.getByLabel('Credit amount ($)', { exact: true })).toBeFocused();
-  await page.getByLabel('Credit amount ($)', { exact: true }).fill('500');
+  await page.getByLabel('Debit amount (R)', { exact: true }).fill('R500.00');
+  await page.getByLabel('Debit amount (R)', { exact: true }).press('Enter');
+  await expect(page.getByLabel('Credit amount (R)', { exact: true })).toBeFocused();
+  await page.getByLabel('Credit amount (R)', { exact: true }).fill('500');
   await page.getByRole('button', { name: 'Check my entry' }).click();
   await expect(page.getByText(/Your totals balance. Now check/)).toBeVisible();
   await page.getByRole('button', { name: 'Equipment', exact: true }).click();
@@ -45,10 +45,10 @@ test('journal lab checks the accounts as well as equal totals', async ({ page })
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByRole('button', { name: 'Supplies', exact: true }).click();
   await page.getByRole('button', { name: 'Place account on debit', exact: true }).click();
-  await page.getByRole('button', { name: 'Accounts payable', exact: true }).click();
+  await page.getByRole('button', { name: 'Trade payables', exact: true }).click();
   await page.getByRole('button', { name: 'Place account on credit', exact: true }).click();
-  await page.getByLabel('Debit amount ($)', { exact: true }).fill('200');
-  await page.getByLabel('Credit amount ($)', { exact: true }).fill('200');
+  await page.getByLabel('Debit amount (R)', { exact: true }).fill('200');
+  await page.getByLabel('Credit amount (R)', { exact: true }).fill('200');
   await page.getByRole('button', { name: 'Check my entry' }).click();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await finish(page);
@@ -59,7 +59,7 @@ test('recall cards revisit a fuzzy idea before completing the deck', async ({ pa
   await page.getByRole('button', { name: 'Turn the card', exact: true }).click();
   await expect(page.locator('.recall-back')).toContainText('An asset.');
   await page.getByRole('button', { name: 'Let’s see it again' }).click();
-  for (const answer of ['The debit side.', '$60.', 'An asset.']) {
+  for (const answer of ['The debit side.', 'R60.', 'An asset.']) {
     await page.getByRole('button', { name: 'Turn the card', exact: true }).click();
     await expect(page.locator('.recall-back')).toContainText(answer);
     await page.getByRole('button', { name: 'It’s connecting', exact: true }).click();
@@ -74,7 +74,7 @@ test('story decisions explain incorrect choices and unlock cash-flow understandi
   await expect(page.getByText(/buying a long-term asset is an investing cash flow/)).toBeVisible();
   await page.getByRole('button', { name: /Investing: the business bought/ }).click();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
-  await page.getByRole('button', { name: /Revenue and accounts receivable increased/ }).click();
+  await page.getByRole('button', { name: /Revenue and trade receivables increased/ }).click();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await finish(page);
 });

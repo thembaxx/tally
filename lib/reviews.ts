@@ -1,3 +1,5 @@
+import { addDays } from './south-africa';
+
 export type Review = {
   due: string;
   confidence: string;
@@ -82,9 +84,7 @@ export function scheduleReview(
     ? Math.min(4, (previous?.streak || 0) + (previous?.lastReviewed === day ? 0 : 1))
     : 0;
   const interval = [1, 3, 7, 14, 30][streak];
-  const date = new Date(`${day}T12:00:00`);
-  date.setDate(date.getDate() + interval);
-  const due = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  const due = addDays(day, interval);
   return {
     due,
     confidence,

@@ -1,13 +1,13 @@
 import type { Entry } from './learning';
 import { challengeEntry, type ChallengeLevel } from './challenge-questions';
+import { money } from './south-africa';
 
 // Integer inputs keep every generated answer exact. Attempts are saved with the
 // session so reloads cannot change the question halfway through an activity.
 export function practiceEntry(id: string, attempt = 0, level: ChallengeLevel = 'standard'): Entry {
   if (level !== 'standard') return challengeEntry(id, attempt, level);
   const n = Math.max(0, Math.floor(attempt)) % 24;
-  const business = ['flower shop', 'bike workshop', 'coffee cart', 'bookshop'][n % 4];
-  const money = (value: number) => `$${value.toLocaleString('en-US')}`;
+  const business = ['spaza shop', 'bicycle repair shop', 'coffee stall', 'bookshop'][n % 4];
   const numeric = (
     prompt: string,
     label: string,
@@ -40,7 +40,7 @@ export function practiceEntry(id: string, attempt = 0, level: ChallengeLevel = '
         debt = 300 + n * 10;
       return numeric(
         `Your ${business} has ${money(assets)} in assets and owes ${money(debt)}. How much is the owner’s equity?`,
-        'Owner’s equity ($)',
+        'Owner’s equity (R)',
         assets - debt,
         `${money(assets)} − ${money(debt)} = ${money(assets - debt)}. Assets minus liabilities leaves the owner’s share.`,
         'Equity = Assets − Liabilities.',
@@ -50,16 +50,16 @@ export function practiceEntry(id: string, attempt = 0, level: ChallengeLevel = '
       const amount = 650 + n * 25;
       const scenarios = [
         {
-          story: `buys ${money(amount)} of equipment with cash`,
+          story: `buys ${money(amount)} of equipment and pays by EFT from its business bank account`,
           debit: ['equipment', 'computer', 'laptop', 'office equipment', 'computer equipment'],
-          credit: ['cash', 'bank', 'bank account', 'business cash'],
-          why: 'Equipment increases and Cash decreases. Both are assets.',
+          credit: ['bank', 'bank account', 'cash', 'business cash'],
+          why: 'Equipment increases and Bank decreases. Both are assets. EFT means electronic funds transfer.',
         },
         {
           story: `buys ${money(amount)} of inventory on credit from a supplier`,
           debit: ['inventory', 'stock', 'merchandise'],
-          credit: ['accounts payable', 'payables', 'supplier payable', 'creditors'],
-          why: 'Inventory increases with a debit. The supplier liability increases with a credit.',
+          credit: ['trade payables', 'payables', 'supplier payable', 'creditors'],
+          why: 'Inventory increases with a debit. Trade payables (creditors) increase with a credit.',
         },
         {
           story: `borrows ${money(amount)} from a bank and receives the cash`,
@@ -88,11 +88,11 @@ export function practiceEntry(id: string, attempt = 0, level: ChallengeLevel = '
       const revenue = 1400 + n * 100,
         cost = 550 + n * 25;
       return numeric(
-        `Your ${business} earns ${money(revenue)} in revenue. Goods sold cost ${money(cost)} and rent is $200. What is gross profit?`,
-        'Gross profit ($)',
+        `Your ${business} earns ${money(revenue)} in revenue. Goods sold cost ${money(cost)} and rent is R200. What is gross profit?`,
+        'Gross profit (R)',
         revenue - cost,
         `${money(revenue)} − ${money(cost)} = ${money(revenue - cost)} gross profit. Rent is an operating expense and comes afterward.`,
-        'Gross profit subtracts cost of goods sold, before operating expenses.',
+        'Gross profit subtracts cost of sales, before operating expenses.',
       );
     }
     case 'accruals': {
@@ -125,8 +125,8 @@ export function practiceEntry(id: string, attempt = 0, level: ChallengeLevel = '
         oldCost = 4 + (n % 3),
         newCost = oldCost + 2;
       return numeric(
-        `Your ${business} buys ${units} items at ${money(oldCost)} each, then ${units} at ${money(newCost)}. It sells ${units} using FIFO. What is cost of goods sold?`,
-        'Cost of goods sold ($)',
+        `Your ${business} buys ${units} items at ${money(oldCost)} each, then ${units} at ${money(newCost)}. It sells ${units} using FIFO. What is cost of sales?`,
+        'Cost of sales (R)',
         units * oldCost,
         `FIFO uses the oldest batch: ${units} × ${money(oldCost)} = ${money(units * oldCost)}. The newer batch stays in inventory.`,
         'First in, first out: use the first purchase cost.',
@@ -139,7 +139,7 @@ export function practiceEntry(id: string, attempt = 0, level: ChallengeLevel = '
         cost = annual * years + residual;
       return numeric(
         `Equipment costs ${money(cost)}, will last ${years} years, and has a ${money(residual)} residual value. What is annual straight-line depreciation?`,
-        'Annual depreciation ($)',
+        'Annual depreciation (R)',
         annual,
         `(${money(cost)} − ${money(residual)}) ÷ ${years} = ${money(annual)} per year.`,
         'Subtract residual value from cost, then divide by useful life.',
@@ -153,7 +153,7 @@ export function practiceEntry(id: string, attempt = 0, level: ChallengeLevel = '
         `Your ${business} has current assets of ${money(assets)} and current liabilities of ${money(debt)}. What is the current ratio?`,
         'Current ratio',
         ratio,
-        `${money(assets)} ÷ ${money(debt)} = ${ratio}. There are ${money(ratio)} of current assets per $1 of current liabilities.`,
+        `${money(assets)} ÷ ${money(debt)} = ${ratio}. There are ${money(ratio)} of current assets per R1 of current liabilities.`,
         'Divide current assets by current liabilities.',
       );
       entry.answers[0].push(`${ratio}:1`, `${ratio}.0:1`);
@@ -163,8 +163,8 @@ export function practiceEntry(id: string, attempt = 0, level: ChallengeLevel = '
       const budget = 750 + n * 50,
         difference = 75 + n * 5;
       return numeric(
-        `Your ${business} budgets ${money(budget)} for supplies and spends ${money(budget - difference)}. How many dollars under budget is it?`,
-        'Favorable variance ($)',
+        `Your ${business} budgets ${money(budget)} for supplies and spends ${money(budget - difference)}. How many rand under budget is it?`,
+        'Favourable variance (R)',
         difference,
         `${money(budget)} − ${money(budget - difference)} = ${money(difference)} under budget. Check whether quality was maintained.`,
         'Subtract actual expense from budgeted expense.',
@@ -188,10 +188,10 @@ export function practiceEntry(id: string, attempt = 0, level: ChallengeLevel = '
         earned = 120 + n * 10;
       return numeric(
         `A customer prepays ${money(months * earned)} for ${months} equal months of service. After delivering one month, how much revenue is earned?`,
-        'Revenue earned this month ($)',
+        'Revenue earned this month (R)',
         earned,
         `${money(months * earned)} ÷ ${months} = ${money(earned)} earned. The rest remains deferred revenue until delivery.`,
-        'Recognize only the portion of service already delivered.',
+        'Recognise only the portion of service already delivered.',
       );
     }
     case 'consolidation': {
@@ -200,7 +200,7 @@ export function practiceEntry(id: string, attempt = 0, level: ChallengeLevel = '
         internal = 350 + n * 25;
       return numeric(
         `A parent reports ${money(parent)} of sales, including ${money(internal)} to its wholly owned subsidiary. The subsidiary sells ${money(child)} externally. What is consolidated revenue?`,
-        'Consolidated revenue ($)',
+        'Consolidated revenue (R)',
         parent + child - internal,
         `${money(parent)} + ${money(child)} − ${money(internal)} = ${money(parent + child - internal)}. Eliminate the internal sale.`,
         'Add both companies’ sales, then remove sales inside the group.',

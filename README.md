@@ -2,6 +2,8 @@
 
 **Small lessons. Big lightbulb moments.** A mobile-first, self-paced accounting tutor with interactive Three.js illustrations, everyday examples, and a gentle review rhythm.
 
+Tally uses South African English, rand (R/ZAR), local business examples and SAST calendar days. Number entry accepts both local decimal commas and decimal points. Practice calculations leave VAT out unless stated. See [South African context](docs/south-africa.md) for terminology, sources and maintenance guidance.
+
 ## Run locally
 
 Requires Node.js 22 or later.

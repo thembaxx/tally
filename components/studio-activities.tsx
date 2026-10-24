@@ -15,6 +15,7 @@ import {
 } from '@phosphor-icons/react';
 import type { ChoiceChallenge, JournalChallenge, RecallCard } from '@/lib/activity-types';
 import { accepts } from '@/lib/learning';
+import { learnerNumber, money } from '@/lib/south-africa';
 import { AnswerFeedback } from './answer-feedback';
 import { Blob } from './brand';
 const Scene = dynamic(() => import('./scene'), {
@@ -119,7 +120,7 @@ export function JournalTask({
   const [result, setResult] = useState<boolean | null>(null);
   const creditRef = useRef<HTMLInputElement>(null);
   const locked = result === true;
-  const parse = (s: string) => Number(s.replace(/[$£€,]/g, '')) || 0;
+  const parse = (s: string) => learnerNumber(s) ?? 0;
   const debitTotal = parse(amounts.debit),
     creditTotal = parse(amounts.credit);
   const balanced = debitTotal > 0 && debitTotal === creditTotal;
@@ -151,13 +152,13 @@ export function JournalTask({
         <Scene kind="bars" values={[debitTotal, creditTotal]} maxValue={c.amount * 1.2} compact />
         <div className={`journal-total ${balanced ? 'balanced' : ''}`} aria-live="polite">
           <span>
-            DEBITS <strong className="mono">${debitTotal.toLocaleString()}</strong>
+            DEBITS <strong className="mono">{money(debitTotal)}</strong>
           </span>
           <span className="balance-token">
             {balanced ? <CheckIcon weight="bold" /> : <ArrowsLeftRightIcon />}
           </span>
           <span>
-            CREDITS <strong className="mono">${creditTotal.toLocaleString()}</strong>
+            CREDITS <strong className="mono">{money(creditTotal)}</strong>
           </span>
         </div>
       </div>
@@ -203,14 +204,14 @@ export function JournalTask({
                 <span className="slot-mark">{accounts[side] ? <CheckIcon /> : '+'}</span>
               </button>
               <label>
-                {side === 'debit' ? 'Debit amount ($)' : 'Credit amount ($)'}
+                {side === 'debit' ? 'Debit amount (R)' : 'Credit amount (R)'}
                 <input
                   ref={side === 'credit' ? creditRef : undefined}
                   inputMode="decimal"
                   autoComplete="off"
                   disabled={locked}
                   value={amounts[side]}
-                  placeholder="0.00"
+                  placeholder="0,00"
                   onChange={(e) => {
                     setAmounts((v) => ({ ...v, [side]: e.target.value }));
                     setResult(null);
