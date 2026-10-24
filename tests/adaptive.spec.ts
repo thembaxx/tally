@@ -2,6 +2,7 @@ import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import {
   initialProgress,
+  localDay,
   lessons,
   dailyTasks,
   readProgress,
@@ -16,8 +17,8 @@ import { readDraft, type LessonDraft } from '../lib/session';
 import { readBackup } from '../lib/backup';
 import { skillStage } from '../lib/skills';
 
-test.use({ timezoneId: 'UTC', reducedMotion: 'reduce' });
-const today = new Date().toISOString().slice(0, 10);
+test.use({ timezoneId: 'Africa/Johannesburg', reducedMotion: 'reduce' });
+const today = localDay();
 const review = (updates: Partial<Review> = {}): Review => ({
   due: '2026-01-01',
   confidence: 'Getting there',
@@ -230,7 +231,7 @@ test('a retry inserts one guided follow-up, resumes the same question, and award
 }) => {
   await seed(page, { completed: ['equation'], reviews: { equation: review() } });
   await page.getByRole('button', { name: 'Review this concept', exact: true }).click();
-  await page.getByLabel('Owner’s equity ($)').fill('0');
+  await page.getByLabel('Owner’s equity (R)').fill('0');
   await page.getByRole('button', { name: 'Check my answer' }).click();
   await answer(page, 'equation', 1, 'standard');
   await expect(page.getByRole('note', { name: 'Why this challenge' })).toContainText(
@@ -373,14 +374,14 @@ test('a multi-part stretch problem checks every field and returns to guidance af
   await expect(page.locator('.entry-question')).toHaveText(entry.prompt);
   await page.getByLabel('Debit account', { exact: true }).fill('Equipment');
   await page.getByLabel('Debit account', { exact: true }).press('Enter');
-  await expect(page.getByLabel('Cash credit ($)', { exact: true })).toBeFocused();
-  await page.getByLabel('Cash credit ($)', { exact: true }).fill('0');
-  await page.getByLabel('Cash credit ($)', { exact: true }).press('Enter');
-  await expect(page.getByLabel('Accounts payable credit ($)', { exact: true })).toBeFocused();
-  await page.getByLabel('Accounts payable credit ($)', { exact: true }).fill(entry.answers[2][0]);
+  await expect(page.getByLabel('Cash credit (R)', { exact: true })).toBeFocused();
+  await page.getByLabel('Cash credit (R)', { exact: true }).fill('0');
+  await page.getByLabel('Cash credit (R)', { exact: true }).press('Enter');
+  await expect(page.getByLabel('Trade payables credit (R)', { exact: true })).toBeFocused();
+  await page.getByLabel('Trade payables credit (R)', { exact: true }).fill(entry.answers[2][0]);
   await page.getByRole('button', { name: 'Check my answer' }).click();
   await expect(page.getByText('Let’s think it through', { exact: true })).toBeVisible();
-  await page.getByLabel('Cash credit ($)', { exact: true }).fill(entry.answers[1][0]);
+  await page.getByLabel('Cash credit (R)', { exact: true }).fill(entry.answers[1][0]);
   await page.getByRole('button', { name: 'Check my answer' }).click();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await answer(page, 'debit', 2, 'guided');

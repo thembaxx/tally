@@ -22,8 +22,9 @@ Tally is an accounting education app, not bookkeeping software. No account is re
 ${available.map((lesson) => `- [${guideTitle(lesson)}](${absoluteUrl(`/learn/${lesson.id}`)}): ${lesson.level}; about ${lesson.minutes} minutes. ${lesson.subtitle}`).join('\n')}
 
 ## Learning experience
+- South African English, rand (ZAR), and SAST calendar days are used throughout. Practice calculations leave VAT out unless a question states otherwise. Trade receivables/payables are also called debtors/creditors; the statement of financial position is the balance sheet.
 - Swipe or tap to classify assets, liabilities and equity. A 3D balance scale illustrates Assets = Liabilities + Equity.
-- Type account names or amounts; recognized synonyms and numeric formatting are accepted.
+- Type account names or amounts; recognised synonyms and numeric formatting are accepted.
 - Rearrange statement lines and accounting steps by dragging or using arrow buttons.
 - Build journal entries by selecting accounts, assigning debit and credit sides, and entering equal amounts.
 - Recall cards ask learners to remember before revealing an answer. Difficult cards can be requeued.
@@ -33,7 +34,7 @@ ${available.map((lesson) => `- [${guideTitle(lesson)}](${absoluteUrl(`/learn/${l
 - Spaced review adapts from one to 30 days according to mistakes, hints, confidence, and successful recall on separate days.
 - Personalized reviews use guided, standard, or stretch questions for every topic. They can add one fresh follow-up per topic after hints or retries; learners can also request guidance or a harder question and report confidence. Guided work does not count as independent recall, and extra questions do not add XP. Saved plans preserve questions and difficulty across reloads and backup restore.
 - Learn's skill map shows each topic's practice stage, recall evidence, and next review date, with direct lesson and review actions. Stages reflect recorded practice rather than a mastery score.
-- A connected bakery scenario follows journal entries through profit to the balance sheet.
+- A connected bakery scenario follows journal entries through profit to the statement of financial position.
 - Unfinished sessions and written takeaways are saved; optional profile preferences follow the first learning session.
 - Focus mode runs a five-minute timer, pauses when the tab is hidden, and awards focus XP once per day.
 

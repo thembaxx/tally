@@ -5,6 +5,7 @@ import { practiceEntry } from './questions';
 import { readReviews, type Review } from './reviews';
 import { readDraft, type LessonDraft } from './session';
 import { practiceTopics, recommendedChallenge } from './adaptive';
+import { accountName, addDays, learnerNumber, southAfricanDay } from './south-africa';
 export type Category = 'Asset' | 'Liability' | 'Equity';
 export type SortItem = { name: string; category: Category; amount: number; explanation: string };
 export type Entry = {
@@ -49,7 +50,7 @@ export const sortItems: SortItem[] = [
     name: 'Your investment',
     category: 'Equity',
     amount: 400,
-    explanation: 'Your investment is the owner’s share. $1,200 of assets = $800 owed + $400 owned.',
+    explanation: 'Your investment is the owner’s share. R1 200 of assets = R800 owed + R400 owned.',
   },
 ];
 export const lessons: Lesson[] = [
@@ -64,13 +65,13 @@ export const lessons: Lesson[] = [
     concept:
       'Everything a business owns has a source: it was borrowed or belongs to its owners. Assets = Liabilities + Equity.',
     example:
-      'You open a lemonade stand with $40 of your own and borrow $60. Your $100 cash is an asset. The $60 loan is a liability. Your $40 is equity.',
+      'You open a school tuck shop with R40 of your own and borrow R60. Your R100 cash is an asset. The R60 loan is a liability. Your R40 is equity.',
     tip: 'Own it? Asset. Owe it? Liability. Your share? Equity.',
     entry: {
-      prompt: 'Your lemonade stand has $100 in assets and owes $60. How much is your equity?',
-      labels: ['Owner’s equity ($)'],
+      prompt: 'Your school tuck shop has R100 in assets and owes R60. How much is your equity?',
+      labels: ['Owner’s equity (R)'],
       answers: [['40']],
-      explanation: 'Equity = Assets − Liabilities. $100 − $60 = $40 belongs to you.',
+      explanation: 'Equity = Assets − Liabilities. R100 − R60 = R40 belongs to you.',
       tip: 'Start with what you own, then take away what you owe.',
     },
     order: ['Assets', 'Liabilities', 'Equity'],
@@ -85,19 +86,19 @@ export const lessons: Lesson[] = [
     minutes: 5,
     level: 'Foundations',
     concept:
-      'Every transaction has at least two sides. Debits go on the left, credits on the right. Total debits always equal total credits.',
+      'Every transaction has at least two sides. Debits go on the left, credits on the right. Total debits always equal total credits. Amounts owed to suppliers are trade payables (creditors).',
     example:
-      'Buy a $500 laptop with cash: debit Equipment $500 (an asset goes up), credit Cash $500 (an asset goes down). Debit doesn’t always mean “increase”: it depends on the account.',
+      'Buy a R500 laptop with cash: debit Equipment R500 (an asset goes up), credit Cash R500 (an asset goes down). Debit doesn’t always mean “increase”: it depends on the account.',
     tip: 'Assets and expenses grow with debits. Liabilities, equity, and revenue grow with credits.',
     entry: {
-      prompt: 'You buy a $500 laptop with business cash. Which accounts do you debit and credit?',
+      prompt: 'You buy a R500 laptop with business cash. Which accounts do you debit and credit?',
       labels: ['Debit account', 'Credit account'],
       answers: [
         ['equipment', 'laptop', 'computer', 'computer equipment', 'office equipment'],
         ['cash', 'bank', 'bank account', 'business cash'],
       ],
       explanation:
-        'Debit Equipment: your equipment increases. Credit Cash: your cash decreases. The $500 entries balance.',
+        'Debit Equipment: your equipment increases. Credit Cash: your cash decreases. The R500 entries balance.',
       tip: 'What came in? Equipment. What went out? Cash.',
     },
     order: [
@@ -117,26 +118,19 @@ export const lessons: Lesson[] = [
     minutes: 5,
     level: 'Foundations',
     concept:
-      'The income statement tells the story of profit over a period. Revenue minus cost of goods sold gives gross profit. Subtract operating expenses to find operating profit.',
+      'The statement of profit or loss tells the story of profit over a period. Revenue minus cost of sales gives gross profit. Subtract operating expenses to find operating profit.',
     example:
-      'A bakery earns $1,000. Ingredients cost $400. Gross profit is $600. After $200 of rent and other operating expenses, operating profit is $400.',
+      'A bakery earns R1 000. Ingredients cost R400. Gross profit is R600. After R200 of rent and other operating expenses, operating profit is R400.',
     tip: 'Revenue is the whole pie. Profit is what you keep after costs.',
     entry: {
-      prompt:
-        'Your bakery earns $1,000 in revenue. Cost of goods sold is $400. What is gross profit?',
-      labels: ['Gross profit ($)'],
+      prompt: 'Your bakery earns R1 000 in revenue. Cost of sales is R400. What is gross profit?',
+      labels: ['Gross profit (R)'],
       answers: [['600']],
       explanation:
-        'Gross profit = Revenue − Cost of goods sold. $1,000 − $400 = $600. Operating expenses come later.',
+        'Gross profit = Revenue − Cost of sales. R1 000 − R400 = R600. Operating expenses come later.',
       tip: 'Gross profit comes before rent and other operating expenses.',
     },
-    order: [
-      'Revenue',
-      'Cost of goods sold',
-      'Gross profit',
-      'Operating expenses',
-      'Operating profit',
-    ],
+    order: ['Revenue', 'Cost of sales', 'Gross profit', 'Operating expenses', 'Operating profit'],
     orderTip: 'Tell the profit story from money earned to money left.',
   },
   {
@@ -148,17 +142,17 @@ export const lessons: Lesson[] = [
     minutes: 5,
     level: 'Next level',
     concept:
-      'Accrual accounting records revenue when earned and expenses when incurred, even when cash moves on a different day.',
+      'Accrual accounting records revenue when earned and expenses when incurred, even when cash moves on a different day. Money customers owe the business is recorded as trade receivables (debtors).',
     example:
-      'You tutor a student in March and receive $80 in April. Under accrual accounting, March has $80 of revenue and $80 of accounts receivable.',
+      'You tutor a student in March and receive R80 in April. Under accrual accounting, March has R80 of revenue and R80 of trade receivables.',
     tip: 'Earned and received can happen on different days.',
     entry: {
       prompt:
-        'You earn $80 for tutoring in March, but get paid in April. In which month do you record revenue under accrual accounting?',
+        'You earn R80 for tutoring in March, but get paid in April. In which month do you record revenue under accrual accounting?',
       labels: ['Revenue month'],
       answers: [['march', 'mar']],
       explanation:
-        'March. The service was delivered then. Accounts receivable tracks the amount still owed to you.',
+        'March. The service was delivered then. Trade receivables tracks the amount still owed to you.',
       tip: 'Ask when the work happened, not when cash arrived.',
     },
     order: [
@@ -178,24 +172,24 @@ export const lessons: Lesson[] = [
     minutes: 6,
     level: 'Next level',
     concept:
-      'Inventory is an asset until it is sold. When sold, its cost becomes an expense called cost of goods sold. FIFO assumes the oldest units are sold first.',
+      'Inventory is an asset until it is sold. When sold, its cost becomes an expense called cost of sales. FIFO assumes the oldest units are sold first.',
     example:
-      'Buy 10 notebooks at $2, then 10 at $3. Sell 10 using FIFO: cost of goods sold is $20, and the remaining inventory is $30.',
+      'Buy 10 notebooks at R2, then 10 at R3. Sell 10 using FIFO: cost of sales is R20, and the remaining inventory is R30.',
     tip: 'On the shelf: asset. Sold: expense.',
     entry: {
       prompt:
-        'You buy 10 notebooks at $2, then 10 at $3. Sell the first 10 using FIFO. What is cost of goods sold?',
-      labels: ['Cost of goods sold ($)'],
+        'You buy 10 notebooks at R2, then 10 at R3. Sell the first 10 using FIFO. What is cost of sales?',
+      labels: ['Cost of sales (R)'],
       answers: [['20']],
       explanation:
-        'FIFO means first in, first out. The oldest 10 cost $2 each, so cost of goods sold is $20.',
+        'FIFO means first in, first out. The oldest 10 cost R2 each, so cost of sales is R20.',
       tip: 'FIFO starts with the oldest purchase.',
     },
     order: [
       'Purchase inventory',
       'Record an asset',
       'Sell the inventory',
-      'Recognize cost of goods sold',
+      'Recognise cost of sales',
     ],
     orderTip: 'Track the cost as inventory becomes an expense.',
   },
@@ -210,15 +204,15 @@ export const lessons: Lesson[] = [
     concept:
       'Depreciation spreads the cost of a long-lived asset over its useful life. Straight-line depreciation = (Cost − Residual value) ÷ Useful life.',
     example:
-      'A $1,200 laptop with a $200 residual value lasts 5 years. Annual depreciation is ($1,200 − $200) ÷ 5 = $200.',
+      'A R1 200 laptop with a R200 residual value lasts 5 years. Annual depreciation is (R1 200 − R200) ÷ 5 = R200.',
     tip: 'Depreciation allocates cost. It doesn’t measure today’s resale price.',
     entry: {
       prompt:
-        'A laptop costs $1,200, has a $200 residual value, and lasts 5 years. What is annual straight-line depreciation?',
-      labels: ['Annual depreciation ($)'],
+        'A laptop costs R1 200, has a R200 residual value, and lasts 5 years. What is annual straight-line depreciation?',
+      labels: ['Annual depreciation (R)'],
       answers: [['200']],
       explanation:
-        '($1,200 − $200) ÷ 5 = $200 each year. Depreciation expense rises; accumulated depreciation reduces the asset’s carrying amount.',
+        '(R1 200 − R200) ÷ 5 = R200 each year. Depreciation expense rises; accumulated depreciation reduces the asset’s carrying amount.',
       tip: 'Take away what will be left, then divide by the years.',
     },
     order: [
@@ -240,15 +234,15 @@ export const lessons: Lesson[] = [
     concept:
       'Financial ratios put numbers in context. The current ratio compares current assets with current liabilities to help assess short-term liquidity.',
     example:
-      'Current assets of $3,000 divided by current liabilities of $1,500 gives 2.0. There are $2 of current assets for each $1 due in the short term.',
+      'Current assets of R3 000 divided by current liabilities of R1 500 gives 2.0. There are R2 of current assets for each R1 due in the short term.',
     tip: 'A ratio is a clue, not a verdict. Industry and timing matter.',
     entry: {
       prompt:
-        'Current assets are $3,000 and current liabilities are $1,500. What is the current ratio?',
+        'Current assets are R3 000 and current liabilities are R1 500. What is the current ratio?',
       labels: ['Current ratio'],
       answers: [['2', '2.0', '2:1', '2.0:1']],
       explanation:
-        '$3,000 ÷ $1,500 = 2.0. This suggests a short-term cushion, but inventory quality and payment timing still matter.',
+        'R3 000 ÷ R1 500 = 2.0. This suggests a short-term cushion, but inventory quality and payment timing still matter.',
       tip: 'Current assets ÷ current liabilities.',
     },
     order: [
@@ -268,17 +262,17 @@ export const lessons: Lesson[] = [
     minutes: 6,
     level: 'Next level',
     concept:
-      'A budget is a plan. A variance compares actual results with that plan. For an expense, spending less than planned is usually favorable.',
+      'A budget is a plan. A variance compares actual results with that plan. For an expense, spending less than planned is usually favourable.',
     example:
-      'You budget $500 for supplies and spend $450. You are $50 under budget: a favorable expense variance. Check whether lower spending affected quality.',
+      'You budget R500 for supplies and spend R450. You are R50 under budget: a favourable expense variance. Check whether lower spending affected quality.',
     tip: 'A variance starts a conversation. Always ask why.',
     entry: {
       prompt:
-        'You budget $500 for supplies and actually spend $450. How many dollars under budget are you?',
-      labels: ['Favorable variance ($)'],
+        'You budget R500 for supplies and actually spend R450. How many rand under budget are you?',
+      labels: ['Favourable variance (R)'],
       answers: [['50']],
       explanation:
-        '$500 − $450 = $50 under budget. For an expense, this is favorable, assuming the business still got what it needed.',
+        'R500 − R450 = R50 under budget. For an expense, this is favourable, assuming the business still got what it needed.',
       tip: 'Compare actual spending with the plan.',
     },
     order: [
@@ -320,15 +314,15 @@ lessons.splice(
     concept:
       'Contribution margin is selling price minus variable cost. It helps cover fixed costs. Break-even units = Fixed costs ÷ Contribution margin per unit.',
     example:
-      'A smoothie sells for $10 and costs $6 to make. Each sale contributes $4 toward $200 of fixed rent. Sell 50 smoothies to break even: $200 ÷ $4 = 50.',
+      'A smoothie sells for R10 and costs R6 to make. Each sale contributes R4 toward R200 of fixed rent. Sell 50 smoothies to break even: R200 ÷ R4 = 50.',
     tip: 'First cover the cost of making one more unit. What remains pays for the business.',
     entry: {
       prompt:
-        'A smoothie sells for $10, variable cost is $6, and fixed costs are $200. How many smoothies must you sell to break even?',
+        'A smoothie sells for R10, variable cost is R6, and fixed costs are R200. How many smoothies must you sell to break even?',
       labels: ['Break-even units'],
       answers: [['50']],
       explanation:
-        'Each smoothie contributes $10 − $6 = $4. Divide $200 of fixed costs by $4: 50 smoothies. At 50 units, revenue and total costs are both $500.',
+        'Each smoothie contributes R10 − R6 = R4. Divide R200 of fixed costs by R4: 50 smoothies. At 50 units, revenue and total costs are both R500.',
       tip: 'Fixed costs ÷ (price − variable cost).',
     },
     order: [
@@ -342,30 +336,30 @@ lessons.splice(
   {
     id: 'deferrals',
     title: 'Cash Now, Revenue Later',
-    subtitle: 'A promise on the balance sheet',
+    subtitle: 'A promise on the statement of financial position',
     color: 'lavender',
     icon: 'clock',
     minutes: 7,
     level: 'Going deeper',
     concept:
-      'A payment received before a service is delivered creates deferred revenue: a liability representing a promise to the customer. Revenue is recognized as the service is delivered.',
+      'A payment received before a service is delivered creates deferred revenue: a liability representing a promise to the customer. Revenue is recognised as the service is delivered.',
     example:
-      'A customer pays $600 for six months of lessons. At first, debit Cash $600 and credit Deferred Revenue $600. Each month, debit Deferred Revenue $100 and credit Revenue $100.',
+      'A customer pays R600 for six months of lessons. At first, debit Cash R600 and credit Deferred Revenue R600. Each month, debit Deferred Revenue R100 and credit Revenue R100.',
     tip: 'Cash received is not automatically revenue earned. Ask what you still owe the customer.',
     entry: {
       prompt:
-        'A customer prepays $600 for six equal months of lessons. You deliver one month. How much revenue do you recognize now?',
-      labels: ['Revenue earned this month ($)'],
+        'A customer prepays R600 for six equal months of lessons. You deliver one month. How much revenue do you recognise now?',
+      labels: ['Revenue earned this month (R)'],
       answers: [['100']],
       explanation:
-        '$600 ÷ 6 = $100. Debit Deferred Revenue and credit Revenue by $100. The remaining $500 is still a liability until future lessons are delivered.',
+        'R600 ÷ 6 = R100. Debit Deferred Revenue and credit Revenue by R100. The remaining R500 is still a liability until future lessons are delivered.',
       tip: 'Spread the prepayment across the equal months of service.',
     },
     order: [
       'Receive the customer prepayment',
       'Record cash and deferred revenue',
       'Deliver one month of service',
-      'Reduce deferred revenue and recognize revenue',
+      'Reduce deferred revenue and recognise revenue',
     ],
     orderTip: 'Receiving cash creates a promise. Delivering service fulfills that promise.',
   },
@@ -380,15 +374,15 @@ lessons.splice(
     concept:
       'Consolidated statements show a parent and its controlled subsidiaries as one economic entity. Add their balances, then eliminate transactions and balances within the group to avoid counting internal activity.',
     example:
-      'A parent reports $1,000 of sales, including $200 to its wholly owned subsidiary. The subsidiary reports $500 of sales to outside customers. Consolidated revenue is $1,000 + $500 − $200 = $1,300.',
+      'A parent reports R1 000 of sales, including R200 to its wholly owned subsidiary. The subsidiary reports R500 of sales to outside customers. Consolidated revenue is R1 000 + R500 − R200 = R1 300.',
     tip: 'The group cannot sell to itself. Only outside-customer sales count as group revenue.',
     entry: {
       prompt:
-        'A parent has $1,000 of sales, including $200 to its subsidiary. The subsidiary has $500 of external sales. What is consolidated revenue?',
-      labels: ['Consolidated revenue ($)'],
+        'A parent has R1 000 of sales, including R200 to its subsidiary. The subsidiary has R500 of external sales. What is consolidated revenue?',
+      labels: ['Consolidated revenue (R)'],
       answers: [['1300']],
       explanation:
-        'Add $1,000 and $500, then eliminate the $200 internal sale: $1,300. This simplified exercise assumes full control and focuses only on revenue elimination.',
+        'Add R1 000 and R500, then eliminate the R200 internal sale: R1 300. This simplified exercise assumes full control and focuses only on revenue elimination.',
       tip: 'Add both companies, then remove the sale inside the group.',
     },
     order: [
@@ -405,12 +399,10 @@ lessons[lessons.findIndex((l) => l.id === 'cashflow')] = cashFlowLesson;
 lessons.splice(lessons.length - 1, 0, ...studioLessons);
 lessons.push(createBakeryLesson());
 export function localDay(date = new Date()) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  return southAfricanDay(date);
 }
 export function previousDay(day: string) {
-  const d = new Date(`${day}T12:00:00`);
-  d.setDate(d.getDate() - 1);
-  return localDay(d);
+  return addDays(day, -1);
 }
 export function dailyIndex(day: string) {
   return [...day].reduce((n, c) => n * 31 + c.charCodeAt(0), 0) >>> 0;
@@ -437,7 +429,7 @@ export function dailyTasks(day: string, reviews?: Record<string, Review>) {
         name: 'Owner’s savings invested',
         category: 'Equity',
         amount: 400,
-        explanation: 'Money invested by the owner is equity. $900 = $500 + $400.',
+        explanation: 'Money invested by the owner is equity. R900 = R500 + R400.',
       },
     ],
     [
@@ -457,7 +449,7 @@ export function dailyTasks(day: string, reviews?: Record<string, Review>) {
         name: 'The owner’s share',
         category: 'Equity',
         amount: 400,
-        explanation: 'Equity is the owner’s residual share. $600 = $200 + $400.',
+        explanation: 'Equity is the owner’s residual share. R600 = R200 + R400.',
       },
     ],
   ];
@@ -489,12 +481,14 @@ export function accepts(value: string, answers: string[]) {
     s
       .toLowerCase()
       .trim()
-      .replace(/[$£€,]/g, '')
       .replace(/\s+/g, ' ')
+      .replace(/[’‘]/g, "'")
       .replace(/[.!?]+$/, '');
   const v = clean(value);
+  const numeric = (s: string) => learnerNumber(s.match(/^(.+)\s*:\s*1$/)?.[1] || s);
+  const n = numeric(v);
   return answers.some(
-    (a) => clean(a) === v || (Number.isFinite(Number(v)) && v !== '' && Number(v) === Number(a)),
+    (a) => accountName(clean(a)) === accountName(v) || (n !== null && n === numeric(clean(a))),
   );
 }
 export const STORAGE_KEY = 'tally-progress-v1';

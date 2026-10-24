@@ -1,12 +1,12 @@
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { initialProgress, lessons, type Progress } from '../lib/learning';
+import { initialProgress, localDay, lessons, type Progress } from '../lib/learning';
 import { scheduleReview, type Review } from '../lib/reviews';
 import { recallEvidence, skillStage } from '../lib/skills';
 import { practiceEntry } from '../lib/questions';
 
-test.use({ timezoneId: 'UTC', reducedMotion: 'reduce' });
-const today = new Date().toISOString().slice(0, 10);
+test.use({ timezoneId: 'Africa/Johannesburg', reducedMotion: 'reduce' });
+const today = localDay();
 function day(by: number) {
   const date = new Date(`${today}T12:00:00Z`);
   date.setUTCDate(date.getUTCDate() + by);

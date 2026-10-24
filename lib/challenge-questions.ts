@@ -1,4 +1,5 @@
 import type { Entry } from './learning';
+import { money } from './south-africa';
 
 export const challengeLevels = ['guided', 'standard', 'stretch'] as const;
 export type ChallengeLevel = (typeof challengeLevels)[number];
@@ -9,7 +10,6 @@ export type Challenge = { id: string; attempt: number; level: ChallengeLevel; fo
 export function challengeEntry(id: string, attempt: number, level: 'guided' | 'stretch'): Entry {
   const n = Math.max(0, Math.floor(attempt)) % 24;
   const guided = level === 'guided';
-  const money = (value: number) => `$${value.toLocaleString('en-US')}`;
   const number = (
     prompt: string,
     label: string,
@@ -32,14 +32,14 @@ export function challengeEntry(id: string, attempt: number, level: 'guided' | 's
       return guided
         ? number(
             `A shop owns ${money(cash)} and owes ${money(debt)}. Use Equity = Assets − Liabilities. How much is the owner’s equity?`,
-            'Owner’s equity ($)',
+            'Owner’s equity (R)',
             cash - debt,
             `${money(cash)} − ${money(debt)} = ${money(cash - debt)} of equity.`,
             'Subtract the amount owed from the assets.',
           )
         : number(
             `A shop has ${money(cash)} cash and ${money(equipment)} equipment. Its owner’s equity is ${money(cash + equipment - debt)}. How much does the shop owe?`,
-            'Liabilities ($)',
+            'Liabilities (R)',
             debt,
             `Assets total ${money(cash + equipment)}. Assets − Equity = ${money(debt)} of liabilities.`,
             'Add both assets, then rearrange Assets = Liabilities + Equity.',
@@ -58,9 +58,9 @@ export function challengeEntry(id: string, attempt: number, level: 'guided' | 's
           )
         : {
             prompt: `A shop buys equipment for ${money(cost)}, paying ${money(cash)} cash and owing the supplier the rest. Name the debit account and enter both credit amounts.`,
-            labels: ['Debit account', 'Cash credit ($)', 'Accounts payable credit ($)'],
+            labels: ['Debit account', 'Cash credit (R)', 'Trade payables credit (R)'],
             answers: [['equipment', 'office equipment'], [String(cash)], [String(cost - cash)]],
-            explanation: `Debit Equipment ${money(cost)}; credit Cash ${money(cash)} and Accounts payable ${money(cost - cash)}. Credits total ${money(cost)}.`,
+            explanation: `Debit Equipment ${money(cost)}; credit Cash ${money(cash)} and Trade payables ${money(cost - cash)}. Credits total ${money(cost)}.`,
             tip: 'The equipment cost is split between cash paid and the amount owed.',
           };
     }
@@ -71,15 +71,15 @@ export function challengeEntry(id: string, attempt: number, level: 'guided' | 's
         rent = 40 + n;
       return guided
         ? number(
-            `Sales are ${money(revenue)} and cost of goods sold is ${money(cost)}. Gross profit = Sales − Cost of goods sold. What is gross profit?`,
-            'Gross profit ($)',
+            `Sales are ${money(revenue)} and cost of sales is ${money(cost)}. Gross profit = Sales − Cost of sales. What is gross profit?`,
+            'Gross profit (R)',
             revenue - cost,
             `${money(revenue)} − ${money(cost)} = ${money(revenue - cost)} gross profit.`,
-            'Subtract the cost of goods sold from sales.',
+            'Subtract the cost of sales from sales.',
           )
         : number(
-            `Sales are ${money(revenue)}, cost of goods sold is ${money(cost)}, and rent is ${money(rent)}. There are no other expenses. What is operating profit?`,
-            'Operating profit ($)',
+            `Sales are ${money(revenue)}, cost of sales is ${money(cost)}, and rent is ${money(rent)}. There are no other expenses. What is operating profit?`,
+            'Operating profit (R)',
             revenue - cost - rent,
             `Gross profit is ${money(revenue - cost)}. Subtract ${money(rent)} rent to get ${money(revenue - cost - rent)} operating profit.`,
             'Calculate gross profit first, then subtract operating expenses.',
@@ -99,8 +99,8 @@ export function challengeEntry(id: string, attempt: number, level: 'guided' | 's
             'Use the month in which the tutor delivered the lesson.',
           )
         : number(
-            `A tutor earns ${money(earned)} in March. Customers pay ${money(collected)} before March ends and will pay the rest in April. There was no opening receivable. What is accounts receivable at March end?`,
-            'Accounts receivable ($)',
+            `A tutor earns ${money(earned)} in March. Customers pay ${money(collected)} before March ends and will pay the rest in April. There was no opening receivable. What is trade receivables at March end?`,
+            'Trade receivables (R)',
             earned - collected,
             `${money(earned)} earned − ${money(collected)} collected = ${money(earned - collected)} still receivable.`,
             'Revenue includes the work already delivered; the receivable is the unpaid portion.',
@@ -112,15 +112,15 @@ export function challengeEntry(id: string, attempt: number, level: 'guided' | 's
         extra = 2 + (n % 2);
       return guided
         ? number(
-            `A shop’s first batch has ${first} items costing ${money(cost)} each. It sells all ${first} using FIFO. Cost of goods sold = Items sold × First purchase cost. What is cost of goods sold?`,
-            'Cost of goods sold ($)',
+            `A shop’s first batch has ${first} items costing ${money(cost)} each. It sells all ${first} using FIFO. Cost of sales = Items sold × First purchase cost. What is cost of sales?`,
+            'Cost of sales (R)',
             first * cost,
-            `${first} × ${money(cost)} = ${money(first * cost)} cost of goods sold.`,
+            `${first} × ${money(cost)} = ${money(first * cost)} cost of sales.`,
             'Use the oldest purchase cost for these items.',
           )
         : number(
-            `A shop buys ${first} items at ${money(cost)} each, then ${first + extra} at ${money(cost + 2)} each. It sells ${first + extra} using FIFO. What is cost of goods sold?`,
-            'Cost of goods sold ($)',
+            `A shop buys ${first} items at ${money(cost)} each, then ${first + extra} at ${money(cost + 2)} each. It sells ${first + extra} using FIFO. What is cost of sales?`,
+            'Cost of sales (R)',
             first * cost + extra * (cost + 2),
             `Use all ${first} older items and ${extra} newer items: ${money(first * cost)} + ${money(extra * (cost + 2))} = ${money(first * cost + extra * (cost + 2))}.`,
             'The sale crosses two batches. Exhaust the oldest batch first.',
@@ -133,14 +133,14 @@ export function challengeEntry(id: string, attempt: number, level: 'guided' | 's
       return guided
         ? number(
             `Equipment costs ${money(annual * years)}, has no residual value, and lasts ${years} years. Annual straight-line depreciation = Cost ÷ Years. What is annual depreciation?`,
-            'Annual depreciation ($)',
+            'Annual depreciation (R)',
             annual,
             `${money(annual * years)} ÷ ${years} = ${money(annual)} per year.`,
             'Divide cost by useful life.',
           )
         : number(
             `Equipment costs ${money(annual * years + residual)}, lasts ${years} years, and has ${money(residual)} residual value. After two full years of straight-line depreciation, what is its carrying amount?`,
-            'Carrying amount ($)',
+            'Carrying amount (R)',
             annual * (years - 2) + residual,
             `Annual depreciation is ${money(annual)}. Cost − two years’ depreciation = ${money(annual * (years - 2) + residual)}.`,
             'Calculate annual depreciation after subtracting residual value, then subtract two years from cost.',
@@ -159,7 +159,7 @@ export function challengeEntry(id: string, attempt: number, level: 'guided' | 's
           )
         : number(
             `A business has ${money(liabilities)} current liabilities and ${money(liabilities)} current assets. Its target current ratio is 3. How much additional cash must the owner invest to reach that target, with liabilities unchanged?`,
-            'Additional cash ($)',
+            'Additional cash (R)',
             liabilities * 2,
             `The target is ${money(liabilities * 3)} in current assets. Subtract existing ${money(liabilities)} assets: add ${money(liabilities * 2)} cash.`,
             'Find target current assets, then subtract the assets already held.',
@@ -171,15 +171,15 @@ export function challengeEntry(id: string, attempt: number, level: 'guided' | 's
         extra = 50 + n * 2;
       return guided
         ? number(
-            `Supplies were budgeted at ${money(budget)} and actually cost ${money(budget - saving)}. Favorable expense variance = Budget − Actual. How many dollars under budget is this?`,
-            'Favorable variance ($)',
+            `Supplies were budgeted at ${money(budget)} and actually cost ${money(budget - saving)}. Favourable expense variance = Budget − Actual. How many rand under budget is this?`,
+            'Favourable variance (R)',
             saving,
             `${money(budget)} − ${money(budget - saving)} = ${money(saving)} under budget.`,
             'Subtract actual spending from budgeted spending.',
           )
         : number(
-            `Supplies were budgeted at ${money(budget)} and rent at $100. Actual supplies cost ${money(budget - saving)} and actual rent cost ${money(100 + extra)}. How many dollars over the combined budget did the business spend?`,
-            'Unfavorable variance ($)',
+            `Supplies were budgeted at ${money(budget)} and rent at R100. Actual supplies cost ${money(budget - saving)} and actual rent cost ${money(100 + extra)}. How many rand over the combined budget did the business spend?`,
+            'Unfavourable variance (R)',
             extra - saving,
             `Supplies save ${money(saving)}, but rent exceeds budget by ${money(extra)}. Net overspend = ${money(extra - saving)}.`,
             'Compare total actual expenses with total budgeted expenses.',
@@ -193,16 +193,16 @@ export function challengeEntry(id: string, attempt: number, level: 'guided' | 's
       return guided
         ? number(
             `A product sells for ${money(price)} and has ${money(variable)} variable cost per unit. Contribution per unit = Price − Variable cost. How much does each unit contribute toward fixed costs?`,
-            'Contribution per unit ($)',
+            'Contribution per unit (R)',
             4,
-            `${money(price)} − ${money(variable)} = $4 per unit.`,
+            `${money(price)} − ${money(variable)} = R4 per unit.`,
             'Subtract the variable cost of one unit from its selling price.',
           )
         : number(
             `A product sells for ${money(price)} with ${money(variable)} variable cost per unit. Fixed costs are ${money(fixed)}. How many units must sell to earn ${money(profit)} operating profit?`,
             'Units for target profit',
             (fixed + profit) / 4,
-            `Each unit contributes $4. (${money(fixed)} + ${money(profit)}) ÷ $4 = ${(fixed + profit) / 4} units.`,
+            `Each unit contributes R4. (${money(fixed)} + ${money(profit)}) ÷ R4 = ${(fixed + profit) / 4} units.`,
             'Contribution must cover both fixed costs and the target profit.',
           );
     }
@@ -211,14 +211,14 @@ export function challengeEntry(id: string, attempt: number, level: 'guided' | 's
       return guided
         ? number(
             `A customer prepays ${money(monthly * 2)} for two equal months of service. Revenue per month = Prepayment ÷ Months. How much revenue is earned after delivering one month?`,
-            'Revenue earned this month ($)',
+            'Revenue earned this month (R)',
             monthly,
             `${money(monthly * 2)} ÷ 2 = ${money(monthly)} earned for one month.`,
             'Only the delivered month is earned.',
           )
         : number(
             `A customer prepays ${money(monthly * 5)} for five equal months of service. Two months have been delivered. What deferred revenue liability remains?`,
-            'Deferred revenue remaining ($)',
+            'Deferred revenue remaining (R)',
             monthly * 3,
             `Each month earns ${money(monthly)}. Three undelivered months remain: ${money(monthly * 3)} deferred revenue.`,
             'Find the monthly amount, then count the months still owed.',
@@ -231,14 +231,14 @@ export function challengeEntry(id: string, attempt: number, level: 'guided' | 's
       return guided
         ? number(
             `A parent has ${money(parent)} sales, including ${money(internal)} to its wholly owned subsidiary. The subsidiary has ${money(child)} external sales. Group revenue = Parent sales + Subsidiary sales − Internal sales. What is group revenue?`,
-            'Consolidated revenue ($)',
+            'Consolidated revenue (R)',
             parent + child - internal,
             `${money(parent)} + ${money(child)} − ${money(internal)} = ${money(parent + child - internal)}.`,
             'Remove the sale made inside the group.',
           )
         : number(
             `A parent reports ${money(parent)} sales and its wholly owned subsidiary reports ${money(child)} external sales. Consolidated revenue is ${money(parent + child - internal)}. The only elimination is a sale from parent to subsidiary. How much was that internal sale?`,
-            'Internal sale ($)',
+            'Internal sale (R)',
             internal,
             `Combined sales before elimination are ${money(parent + child)}. Subtract consolidated revenue to find ${money(internal)} internal sales.`,
             'Reverse the consolidation calculation to find the eliminated amount.',
@@ -256,14 +256,14 @@ export function challengeEntry(id: string, attempt: number, level: 'guided' | 's
           )
         : {
             prompt: `A customer prepaid ${money(monthly * 3)} for three equal months of service, recorded as Deferred revenue. After delivering one month, name the debit and credit accounts and the amount of this adjusting entry.`,
-            labels: ['Debit account', 'Credit account', 'Adjusting entry amount ($)'],
+            labels: ['Debit account', 'Credit account', 'Adjusting entry amount (R)'],
             answers: [
               ['deferred revenue', 'unearned revenue'],
               ['revenue', 'service revenue', 'income'],
               [String(monthly)],
             ],
-            explanation: `Debit Deferred revenue ${money(monthly)} and credit Revenue ${money(monthly)} to recognize the delivered month.`,
-            tip: 'Reduce the liability and recognize one month of earned revenue.',
+            explanation: `Debit Deferred revenue ${money(monthly)} and credit Revenue ${money(monthly)} to recognise the delivered month.`,
+            tip: 'Reduce the liability and recognise one month of earned revenue.',
           };
     }
     case 'spot-the-slip': {
@@ -278,7 +278,7 @@ export function challengeEntry(id: string, attempt: number, level: 'guided' | 's
           )
         : {
             prompt: `A tutor received ${money(monthly * 3)} for three equal months and incorrectly recorded it all as Revenue. Only one month has been delivered. What should total Revenue and Deferred revenue be for this contract now?`,
-            labels: ['Correct revenue ($)', 'Correct deferred revenue ($)'],
+            labels: ['Correct revenue (R)', 'Correct deferred revenue (R)'],
             answers: [[String(monthly)], [String(monthly * 2)]],
             explanation: `One month earns ${money(monthly)}; the remaining ${money(monthly * 2)} is a liability for service still owed.`,
             tip: 'Separate the delivered month from the two months still owed.',
@@ -298,7 +298,7 @@ export function challengeEntry(id: string, attempt: number, level: 'guided' | 's
           )
         : number(
             `A shop collects ${money(operating)} from customers, buys ${money(investing)} equipment with cash, and receives a ${money(financing)} bank loan. These are its only cash movements. What is the net cash increase?`,
-            'Net cash increase ($)',
+            'Net cash increase (R)',
             operating - investing + financing,
             `${money(operating)} operating − ${money(investing)} investing + ${money(financing)} financing = ${money(operating - investing + financing)} increase.`,
             'Add inflows and subtract outflows across all three categories.',

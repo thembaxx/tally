@@ -8,7 +8,7 @@ export const brand = {
   tagline: 'Make accounting click.',
   title: 'Tally — Learn accounting with interactive lessons',
   description:
-    'Learn accounting at your pace with 15 free interactive lessons, 3D models and daily practice. Make debits, credits and financial statements click.',
+    'Learn accounting with 16 free interactive lessons, South African rand examples and personalised practice. Explore debits, credits and financial statements.',
   image: '/og.png',
   imageAlt: 'Tally. Make accounting click. Free, playful accounting lessons at your pace.',
 };

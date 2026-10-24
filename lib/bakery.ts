@@ -1,9 +1,10 @@
 import type { Lesson } from './learning';
 import type { JournalChallenge, StudioActivity } from './activity-types';
+import { money } from './south-africa';
 
 export function createBakeryLesson(attempt = 0): Lesson {
   const scale = 1 + (attempt % 5);
-  const cash = (amount: number) => `$${(amount * scale).toLocaleString('en-US')}`;
+  const cash = (amount: number) => money(amount * scale);
   const entry = (
     title: string,
     story: string,
@@ -27,7 +28,7 @@ export function createBakeryLesson(attempt = 0): Lesson {
           'Owner’s capital',
           'Inventory',
           'Equipment',
-          'Cost of goods sold',
+          'Cost of sales',
         ]),
       ],
       explanation,
@@ -45,20 +46,20 @@ export function createBakeryLesson(attempt = 0): Lesson {
     format: 'story',
     concept:
       'Follow one bakery from its owner’s investment to balanced statements. Every transaction changes accounts, and those accounts tell one connected story.',
-    example: `You invest ${cash(2000)} in your bakery. Cash and owner’s capital both start at ${cash(2000)}. You will buy an oven and inventory, make a sale, then connect profit to the balance sheet. Assume no tax, debt or depreciation during this first day.`,
+    example: `You invest ${cash(2000)} in your bakery. Cash and owner’s capital both start at ${cash(2000)}. You will buy an oven and inventory, make a sale, then connect profit to the statement of financial position. Assume no tax, debt or depreciation during this first day.`,
     tip: 'Keep cash, profit, and inventory separate. A balanced journal connects them without treating them as the same thing.',
     entry: {
       prompt: `The bakery earns ${cash(400)}, with ${cash(120)} of goods sold and ${cash(100)} rent. What is net profit?`,
-      labels: ['Net profit ($)'],
+      labels: ['Net profit (R)'],
       answers: [[String(180 * scale)]],
       explanation: `${cash(400)} − ${cash(120)} − ${cash(100)} = ${cash(180)} net profit.`,
-      tip: 'Subtract cost of goods sold and rent from revenue.',
+      tip: 'Subtract cost of sales and rent from revenue.',
     },
     order: [
       'Record transactions',
-      'Summarize account balances',
+      'Summarise account balances',
       'Calculate profit',
-      'Prepare the balance sheet',
+      'Prepare the statement of financial position',
     ],
     orderTip: 'The statements grow from the same set of accounts.',
     activities: [
@@ -88,17 +89,17 @@ export function createBakeryLesson(attempt = 0): Lesson {
       ),
       entry(
         'What did that sale cost?',
-        `The goods you just sold cost ${cash(120)} from your ${cash(300)} inventory. Transfer that cost from inventory to cost of goods sold.`,
-        'Cost of goods sold',
+        `The goods you just sold cost ${cash(120)} from your ${cash(300)} inventory. Transfer that cost from inventory to cost of sales.`,
+        'Cost of sales',
         'Inventory',
         120,
-        `Debit Cost of goods sold and credit Inventory ${cash(120)}. Inventory is now ${cash(180)}. Gross profit is ${cash(400)} − ${cash(120)} = ${cash(280)}.`,
+        `Debit Cost of sales and credit Inventory ${cash(120)}. Inventory is now ${cash(180)}. Gross profit is ${cash(400)} − ${cash(120)} = ${cash(280)}.`,
       ),
       {
         type: 'choice',
         challenge: {
           title: 'From transactions to profit.',
-          story: `You also pay ${cash(100)} rent: debit Rent expense and credit Cash. Revenue is ${cash(400)}, cost of goods sold ${cash(120)}, and rent ${cash(100)}.`,
+          story: `You also pay ${cash(100)} rent: debit Rent expense and credit Cash. Revenue is ${cash(400)}, cost of sales ${cash(120)}, and rent ${cash(100)}.`,
           question: 'What is the bakery’s net profit for the day?',
           correct: 'profit',
           options: [
@@ -116,10 +117,10 @@ export function createBakeryLesson(attempt = 0): Lesson {
             {
               id: 'profit',
               label: cash(180),
-              explanation: `Revenue ${cash(400)} − cost of goods sold ${cash(120)} − rent ${cash(100)} = net profit ${cash(180)}.`,
+              explanation: `Revenue ${cash(400)} − cost of sales ${cash(120)} − rent ${cash(100)} = net profit ${cash(180)}.`,
             },
           ],
-          tip: 'Net profit subtracts both the cost of goods sold and operating expenses.',
+          tip: 'Net profit subtracts both the cost of sales and operating expenses.',
         },
       },
       {
@@ -127,12 +128,12 @@ export function createBakeryLesson(attempt = 0): Lesson {
         challenge: {
           title: 'One balanced story.',
           story: `Closing balances: cash ${cash(1400)}, equipment ${cash(600)}, inventory ${cash(180)}, and no liabilities. The owner invested ${cash(2000)} and earned ${cash(180)} profit, which stays in the business.`,
-          question: 'Which balance sheet connects all of today’s transactions?',
+          question: 'Which statement of financial position connects all of today’s transactions?',
           correct: 'balanced',
           options: [
             {
               id: 'balanced',
-              label: `Assets ${cash(2180)} = Liabilities $0 + Equity ${cash(2180)}`,
+              label: `Assets ${cash(2180)} = Liabilities R0 + Equity ${cash(2180)}`,
               explanation: `Cash + equipment + inventory = ${cash(2180)}. Equity is investment ${cash(2000)} + profit ${cash(180)}. Both sides tell the same story.`,
             },
             {

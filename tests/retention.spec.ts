@@ -1,13 +1,13 @@
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { initialProgress, lessons, readProgress, type Progress } from '../lib/learning';
+import { initialProgress, localDay, lessons, readProgress, type Progress } from '../lib/learning';
 import { practiceEntry } from '../lib/questions';
 import { scheduleReview, weakestReviews, readReviews, type Review } from '../lib/reviews';
 import { readBackup } from '../lib/backup';
 import { createBakeryLesson } from '../lib/bakery';
 
-test.use({ timezoneId: 'UTC' });
-const today = new Date().toISOString().slice(0, 10);
+test.use({ timezoneId: 'Africa/Johannesburg' });
+const today = localDay();
 function shiftDay(day: string, by: number) {
   const date = new Date(`${day}T12:00:00Z`);
   date.setUTCDate(date.getUTCDate() + by);
@@ -182,7 +182,7 @@ test('Home selects weak due concepts, records retries and hints, and persists th
   );
   await page.getByRole('button', { name: 'Review these concepts' }).click();
   await expect(page.getByRole('button', { name: 'I’m ready to try' })).toHaveCount(0);
-  await page.getByLabel('Owner’s equity ($)').fill('0');
+  await page.getByLabel('Owner’s equity (R)').fill('0');
   await page.getByRole('button', { name: 'Check my answer' }).click();
   await answer(page, 'equation', 1, 'guided');
   await answer(page, 'equation', 2, 'guided');
@@ -329,8 +329,8 @@ test('the bakery connects four journal entries to profit and balanced statements
       await page.getByRole('button', { name: 'Place account on debit', exact: true }).click();
       await page.getByRole('button', { name: c.credit, exact: true }).click();
       await page.getByRole('button', { name: 'Place account on credit', exact: true }).click();
-      await page.getByLabel('Debit amount ($)', { exact: true }).fill(String(c.amount));
-      await page.getByLabel('Credit amount ($)', { exact: true }).fill(String(c.amount));
+      await page.getByLabel('Debit amount (R)', { exact: true }).fill(String(c.amount));
+      await page.getByLabel('Credit amount (R)', { exact: true }).fill(String(c.amount));
       await page.getByRole('button', { name: 'Check my entry' }).click();
     } else if (task.type === 'choice') {
       const label = task.challenge.options.find((o) => o.id === task.challenge.correct)!.label;

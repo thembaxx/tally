@@ -32,6 +32,7 @@ import { practiceEntry } from '@/lib/questions';
 import { challengeLevels, type Challenge } from '@/lib/challenge-questions';
 import { followUp, recommendedChallenge } from '@/lib/adaptive';
 import { createBakeryLesson } from '@/lib/bakery';
+import { learningContext, money } from '@/lib/south-africa';
 import {
   matchesDraft,
   sessionId,
@@ -355,6 +356,7 @@ export function LessonPlayer({
           style={{ width: `${intro ? 5 : reflect ? 95 : ((step + 0.5) / tasks.length) * 85}%` }}
         />
       </div>
+      <p className="fine">{learningContext}</p>
       <AnimatePresence mode="wait">
         <motion.div
           key={intro ? 'intro' : reflect ? 'reflect' : step}
@@ -607,13 +609,13 @@ function requireSort(): SortItem[] {
       name: 'A bank loan',
       category: 'Liability',
       amount: 800,
-      explanation: 'The business owes the bank $800. That makes the loan a liability.',
+      explanation: 'The business owes the bank R800. That makes the loan a liability.',
     },
     {
       name: 'Your investment',
       category: 'Equity',
       amount: 400,
-      explanation: 'The owner contributed $400. Assets $1,200 = Liabilities $800 + Equity $400.',
+      explanation: 'The owner contributed R400. Assets R1 200 = Liabilities R800 + Equity R400.',
     },
   ];
 }
@@ -658,11 +660,11 @@ function SortTask({
         <Scene tilt={tilt} blocks={sorted.length} />
         <div className="scene-readout mono">
           <span>
-            A <b>${left.toLocaleString()}</b>
+            A <b>{money(left)}</b>
           </span>
           <span>=</span>
           <span>
-            L + E <b>${right.toLocaleString()}</b>
+            L + E <b>{money(right)}</b>
           </span>
         </div>
       </div>
@@ -686,7 +688,7 @@ function SortTask({
           ITEM {index + 1} OF {items.length}
         </span>
         <h3>{item.name}</h3>
-        <strong className="mono">${item.amount.toLocaleString()}</strong>
+        <strong className="mono">{money(item.amount)}</strong>
         <span className="swipe-hint">
           <HandSwipeLeftIcon /> Swipe, or choose below
         </span>

@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import type { Lesson } from '@/lib/learning';
+import { formatNumber, money } from '@/lib/south-africa';
 import {
   ArrowsOutSimpleIcon,
   CardsIcon,
@@ -44,7 +45,7 @@ export function ConceptExplorer({ lesson }: { lesson: Lesson }) {
         <h3>From your first sale to balanced statements.</h3>
         <p>
           Follow the same cash, inventory, and equipment through journal entries, profit, and the
-          balance sheet.
+          statement of financial position.
         </p>
         <span>6 connected activities · your own bakery</span>
       </div>
@@ -89,65 +90,66 @@ export function ConceptExplorer({ lesson }: { lesson: Lesson }) {
     min = 0;
     max = 3;
     readout = [
-      'Start with $1,000 in cash',
-      'Operating: collect $500 → $1,500 cash',
-      'Investing: buy a $900 oven → $600 cash',
-      'Financing: borrow $600 → $1,200 cash',
+      'Start with R1 000 in cash',
+      'Operating: collect R500 → R1 500 cash',
+      'Investing: buy a R900 oven → R600 cash',
+      'Financing: borrow R600 → R1 200 cash',
     ][value];
-    caption = 'The same cash takes three different paths. The net change is +$200.';
+    caption = 'The same cash takes three different paths. The net change is +R200.';
   } else if (id === 'debit') {
     labels = ['Debit equipment', 'Credit cash'];
     values = [value, value];
-    control = 'Laptop purchase ($)';
+    control = 'Laptop purchase (R)';
     min = 100;
     max = 1000;
     step = 100;
-    caption = 'Every dollar debited is also credited. Both sides always match.';
-    readout = `$${value} debit = $${value} credit`;
+    caption = 'Every rand debited is also credited. Both sides always match.';
+    readout = `${money(value)} debit = ${money(value)} credit`;
   } else if (id === 'statements') {
-    labels = ['Revenue', 'Cost of goods sold', 'Gross profit'];
+    labels = ['Revenue', 'Cost of sales', 'Gross profit'];
     values = [1000, value, 1000 - value];
-    control = 'Ingredient costs ($)';
+    control = 'Ingredient costs (R)';
     min = 100;
     max = 900;
     step = 100;
     caption = 'Watch profit change while revenue stays the same.';
-    readout = `$1,000 − $${value} = $${1000 - value} gross profit`;
+    readout = `${money(1000)} − ${money(value)} = ${money(1000 - value)} gross profit`;
   } else if (id === 'depreciation') {
     labels = ['Carrying value', 'Accumulated depreciation'];
     values = [1200 - value * 200, value * 200];
     control = 'Year of use';
     min = 0;
     max = 5;
-    caption = 'The same $200 of cost moves to depreciation each year. Residual value remains $200.';
-    readout = `Year ${value} · carrying value $${1200 - value * 200}`;
+    caption = 'The same R200 of cost moves to depreciation each year. Residual value remains R200.';
+    readout = `Year ${value} · carrying value ${money(1200 - value * 200)}`;
   } else if (id === 'ratios') {
     labels = ['Current assets', 'Current liabilities'];
     values = [3000, value];
-    control = 'Current liabilities ($)';
+    control = 'Current liabilities (R)';
     min = 500;
     max = 3000;
     step = 500;
     caption = 'The same assets offer a smaller cushion as short-term obligations grow.';
-    readout = `$3,000 ÷ $${value.toLocaleString()} = ${(3000 / value).toFixed(1)}`;
+    readout = `${money(3000)} ÷ ${money(value)} = ${formatNumber(3000 / value, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}`;
   } else if (id === 'inventory') {
-    labels = ['Inventory left', 'Cost of goods sold'];
+    labels = ['Inventory left', 'Cost of sales'];
     values = [50 - value * 2, value * 2];
     control = 'Notebooks sold (FIFO)';
     min = 0;
     max = 10;
     caption =
-      'The first 10 notebooks cost $2 each. Selling them moves their cost from an asset to an expense.';
-    readout = `${value} sold · $${value * 2} cost · $${50 - value * 2} inventory left`;
+      'The first 10 notebooks cost R2 each. Selling them moves their cost from an asset to an expense.';
+    readout = `${value} sold · ${money(value * 2)} cost · ${money(50 - value * 2)} inventory left`;
   } else if (id === 'budgeting') {
     labels = ['Budget', 'Actual spending'];
     values = [500, value];
-    control = 'Actual supply spending ($)';
+    control = 'Actual supply spending (R)';
     min = 100;
     max = 700;
     step = 50;
-    caption = 'A smaller actual expense is usually favorable. Ask whether quality stayed the same.';
-    readout = `$${Math.abs(500 - value)} ${value > 500 ? 'over budget' : value < 500 ? 'under budget' : 'variance · on budget'}`;
+    caption =
+      'A smaller actual expense is usually favourable. Ask whether quality stayed the same.';
+    readout = `${money(Math.abs(500 - value))} ${value > 500 ? 'over budget' : value < 500 ? 'under budget' : 'variance · on budget'}`;
   } else if (id === 'accruals') {
     labels = ['Revenue earned', 'Cash received', 'Still receivable'];
     values = [80, value === 0 ? 0 : 80, value === 0 ? 80 : 0];
@@ -156,7 +158,7 @@ export function ConceptExplorer({ lesson }: { lesson: Lesson }) {
     max = 1;
     caption = 'Revenue belongs in March. April collects the cash and clears the receivable.';
     readout =
-      value === 0 ? 'March · $80 earned, $0 received' : 'April · $80 collected, $0 still owed';
+      value === 0 ? 'March · R80 earned, R0 received' : 'April · R80 collected, R0 still owed';
   } else if (id === 'breakeven') {
     labels = ['Revenue', 'Total costs'];
     values = [value * 10, 200 + value * 6];
@@ -165,8 +167,8 @@ export function ConceptExplorer({ lesson }: { lesson: Lesson }) {
     max = 100;
     step = 10;
     caption =
-      'Each $10 cup contributes $4 after its $6 variable cost. The first 50 cups cover $200 of fixed costs.';
-    readout = `${value} cups · $${value * 4 - 200} ${value * 4 >= 200 ? 'profit' : 'loss'}`;
+      'Each R10 cup contributes R4 after its R6 variable cost. The first 50 cups cover R200 of fixed costs.';
+    readout = `${value} cups · ${money(value * 4 - 200)} ${value * 4 >= 200 ? 'profit' : 'loss'}`;
   } else if (id === 'deferrals') {
     labels = ['Earned revenue', 'Still owed in service'];
     values = [value * 100, 600 - value * 100];
@@ -174,17 +176,17 @@ export function ConceptExplorer({ lesson }: { lesson: Lesson }) {
     min = 0;
     max = 6;
     caption = 'Cash arrived first. Revenue appears as each month of service is delivered.';
-    readout = `Month ${value} · $${value * 100} earned · $${600 - value * 100} deferred`;
+    readout = `Month ${value} · ${money(value * 100)} earned · ${money(600 - value * 100)} deferred`;
   } else if (id === 'consolidation') {
     labels = ['Combined sales', 'Group revenue'];
     values = [1500, 1500 - value];
-    control = 'Sales within the group ($)';
+    control = 'Sales within the group (R)';
     min = 0;
     max = 500;
     step = 100;
     caption =
       'A group cannot earn revenue by selling to itself. Eliminate internal sales to show the group as one entity.';
-    readout = `$1,500 − $${value} internal = $${1500 - value} group revenue`;
+    readout = `${money(1500)} − ${money(value)} internal = ${money(1500 - value)} group revenue`;
   }
   if (id === 'equation')
     return (
@@ -227,7 +229,7 @@ export function ConceptExplorer({ lesson }: { lesson: Lesson }) {
             <i style={{ background: ['#7a94ed', '#ba96e4', '#7ac6a1'][i % 3] }} />
             <span>
               {l}
-              <strong className="mono">${values[i].toLocaleString()}</strong>
+              <strong className="mono">{money(values[i])}</strong>
             </span>
           </span>
         ))}
@@ -235,7 +237,7 @@ export function ConceptExplorer({ lesson }: { lesson: Lesson }) {
       <label className="explorer-control" htmlFor={`explorer-${id}`}>
         <span>
           {control}
-          <b className="mono">{value.toLocaleString()}</b>
+          <b className="mono">{formatNumber(value)}</b>
         </span>
         <input
           id={`explorer-${id}`}
