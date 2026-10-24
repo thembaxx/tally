@@ -45,6 +45,9 @@ async function seed(page: Page, updates: Partial<Progress>, path = '/') {
     { ...initialProgress, onboarded: true, theme: 'light', ...updates },
   );
   await page.goto(path);
+  // The app keeps controls inert until the saved progress has loaded. Focus()
+  // does not wait for that guard, unlike the subsequent click-based flows.
+  await expect(page.locator('.content-shell')).toHaveAttribute('aria-busy', 'false');
 }
 
 test('skill stages require independent recall across days and preserve uncertain legacy evidence', () => {
@@ -120,18 +123,18 @@ test('the map explains evidence and dates, then updates after a real targeted re
     await expect(legacy).toContainText('A short review will show what you can recall.');
   }
   await equation.getByRole('button', { name: 'Review The Equation', exact: true }).click();
-  const entry = practiceEntry('equation', 1);
+  const entry = practiceEntry('equation', 1, 'guided');
   await expect(page.locator('.entry-question')).toHaveText(entry.prompt, { timeout: 15000 });
   await page.getByLabel(entry.labels[0], { exact: true }).fill(entry.answers[0][0]);
   await page.getByRole('button', { name: 'Check my answer' }).click();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await expect(page.locator('.earned-xp')).toContainText('+10');
   await page.getByRole('button', { name: 'Done' }).click();
-  await expect(equation.locator('.skill-status')).toHaveText('Strengthening');
-  await expect(equation).toContainText('1 separate day');
-  await expect(equation.locator('time')).toHaveAttribute('datetime', day(3));
+  await expect(equation.locator('.skill-status')).toHaveText('Building');
+  await expect(equation).toContainText('step-by-step guidance');
+  await expect(equation.locator('time')).toHaveAttribute('datetime', day(1));
   await page.reload();
-  await expect(equation.locator('.skill-status')).toHaveText('Strengthening');
+  await expect(equation.locator('.skill-status')).toHaveText('Building');
   const progress = await page.evaluate(
     () => JSON.parse(localStorage.getItem('tally-progress-v1') || '{}') as Progress,
   );

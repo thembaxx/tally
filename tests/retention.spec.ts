@@ -42,8 +42,13 @@ async function saved(page: Page) {
     () => JSON.parse(localStorage.getItem('tally-progress-v1') || '{}') as Progress,
   );
 }
-async function answer(page: Page, id: string, attempt = 0) {
-  const entry = practiceEntry(id, attempt);
+async function answer(
+  page: Page,
+  id: string,
+  attempt = 0,
+  level: 'guided' | 'standard' | 'stretch' = 'standard',
+) {
+  const entry = practiceEntry(id, attempt, level);
   // The outgoing 3D activity can take longer to settle on software-rendered CI.
   await expect(page.locator('.entry-question')).toHaveText(entry.prompt, { timeout: 15000 });
   for (let i = 0; i < entry.labels.length; i++)
@@ -179,13 +184,15 @@ test('Home selects weak due concepts, records retries and hints, and persists th
   await expect(page.getByRole('button', { name: 'I’m ready to try' })).toHaveCount(0);
   await page.getByLabel('Owner’s equity ($)').fill('0');
   await page.getByRole('button', { name: 'Check my answer' }).click();
-  await answer(page, 'equation', 1);
+  await answer(page, 'equation', 1, 'guided');
+  await answer(page, 'equation', 2, 'guided');
   await page.getByRole('button', { name: 'Show hint' }).click();
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
     .analyze();
   expect(results.violations.map((v) => v.id)).toEqual([]);
-  await answer(page, 'debit', 1);
+  await answer(page, 'debit', 1, 'guided');
+  await answer(page, 'debit', 2, 'guided');
   await expect(page.locator('.earned-xp')).toContainText('+20');
   await expect.poll(async () => (await saved(page)).xp).toBe(140);
   const p = await saved(page);

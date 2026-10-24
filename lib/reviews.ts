@@ -9,6 +9,8 @@ export type Review = {
   firstTry: number;
   total: number;
   lastReviewed?: string;
+  guided?: boolean;
+  nextQuestion?: number;
 };
 export type ConceptResult = {
   id: string;
@@ -16,6 +18,8 @@ export type ConceptResult = {
   hints: number;
   firstTry: number;
   total: number;
+  guided?: boolean;
+  nextQuestion?: number;
 };
 export const confidenceOptions = ['Still learning', 'Getting there', 'It clicked!'];
 export function isDay(value: unknown): value is string {
@@ -50,6 +54,12 @@ export function readReviews(value: unknown, ids: string[]): Record<string, Revie
             total,
             firstTry: Math.min(total, natural(raw.firstTry)),
             ...(isDay(raw.lastReviewed) ? { lastReviewed: raw.lastReviewed } : {}),
+            ...(raw.guided === true ? { guided: true } : {}),
+            ...(typeof raw.nextQuestion === 'number' &&
+            Number.isSafeInteger(raw.nextQuestion) &&
+            raw.nextQuestion >= 0
+              ? { nextQuestion: natural(raw.nextQuestion) }
+              : {}),
           },
         ],
       ];
@@ -63,7 +73,10 @@ export function scheduleReview(
   day: string,
 ): Review {
   const independent =
-    result.mistakes === 0 && result.hints === 0 && confidence !== 'Still learning';
+    result.mistakes === 0 &&
+    result.hints === 0 &&
+    !result.guided &&
+    confidence !== 'Still learning';
   // A second run on the same day is useful practice, but not spaced recall.
   const streak = independent
     ? Math.min(4, (previous?.streak || 0) + (previous?.lastReviewed === day ? 0 : 1))
@@ -83,6 +96,8 @@ export function scheduleReview(
     firstTry: (previous?.firstTry || 0) + result.firstTry,
     total: (previous?.total || 0) + result.total,
     lastReviewed: day,
+    ...(result.guided ? { guided: true } : {}),
+    nextQuestion: result.nextQuestion ?? (previous?.nextQuestion ?? previous?.attempts ?? 0) + 1,
   };
 }
 export function weakestReviews(reviews: Record<string, Review>, today: string) {

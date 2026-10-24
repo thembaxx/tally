@@ -1,4 +1,58 @@
 /* Tally's expressive layer: cobalt ink, warm paper, and purposeful color. */
+.challenge-context {
+  padding: 14px 16px;
+  margin: 16px 0;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--blue);
+}
+.challenge-context strong {
+  font-size: 14px;
+}
+.challenge-context p {
+  margin: 4px 0 0;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.challenge-decisions {
+  margin: 16px 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.challenge-decisions fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.challenge-decisions legend {
+  font-size: 13px;
+  font-weight: 600;
+}
+.challenge-decisions .confidence-options {
+  margin: 10px 0;
+}
+.challenge-decisions .confidence-options button {
+  font-size: 12px;
+  line-height: 1.4;
+  min-height: 44px;
+  padding: 8px;
+  white-space: normal;
+}
+.challenge-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+.challenge-options button {
+  white-space: normal;
+  min-height: 44px;
+  text-align: left;
+}
+.challenge-options button[aria-pressed='true'] {
+  text-decoration: underline;
+}
 .learn-view-switch {
   margin-bottom: 24px;
 }

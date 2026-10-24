@@ -16,6 +16,7 @@ export function skillStage(review: Review | undefined, explored: boolean) {
     !review.attempts ||
     review.mistakes ||
     review.hints ||
+    review.guided ||
     review.confidence === 'Still learning' ||
     !review.streak
   )
@@ -33,6 +34,8 @@ export function recallEvidence(review: Review | undefined, explored = true) {
     review.hints ? `${review.hints} ${review.hints === 1 ? 'hint' : 'hints'}` : '',
   ].filter(Boolean);
   if (support.length) return `Your last practice included ${support.join(' and ')}.`;
+  if (review.guided)
+    return 'Your last practice used step-by-step guidance. Try a question without the steps next.';
   if (review.confidence === 'Still learning') return 'You marked this “Still learning”.';
   if (!review.streak) return 'Try another day to begin building independent recall.';
   return `You recalled this without hints or retries on ${review.streak === 4 ? 'at least ' : ''}${review.streak} ${review.streak === 1 ? 'separate day' : 'separate days'} in your current streak.`;

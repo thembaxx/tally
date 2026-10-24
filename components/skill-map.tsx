@@ -70,7 +70,7 @@ export function SkillMap({
                     <p>{recallEvidence(review, explored)}</p>
                     {!!review?.total && (
                       <p className="skill-history">
-                        {review.firstTry} of {review.total} activities without hints or retries
+                        {review.firstTry} of {review.total} activities answered independently
                         overall.
                       </p>
                     )}

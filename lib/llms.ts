@@ -28,9 +28,10 @@ ${available.map((lesson) => `- [${guideTitle(lesson)}](${absoluteUrl(`/learn/${l
 - Build journal entries by selecting accounts, assigning debit and credit sides, and entering equal amounts.
 - Recall cards ask learners to remember before revealing an answer. Difficult cards can be requeued.
 - Story decisions and error-spotting exercises explain every selection.
-- Daily challenges contain three date-based tasks. Repeat runs earn less XP.
+- Daily challenges contain three date-based tasks, with an entry question tailored to the learner's practice history. Repeat runs earn less XP.
 - Fresh question variants test concepts beyond worked examples. Short reviews target up to two weak due concepts.
 - Spaced review adapts from one to 30 days according to mistakes, hints, confidence, and successful recall on separate days.
+- Personalized reviews use guided, standard, or stretch questions for every topic. They can add one fresh follow-up per topic after hints or retries; learners can also request guidance or a harder question and report confidence. Guided work does not count as independent recall, and extra questions do not add XP. Saved plans preserve questions and difficulty across reloads and backup restore.
 - Learn's skill map shows each topic's practice stage, recall evidence, and next review date, with direct lesson and review actions. Stages reflect recorded practice rather than a mastery score.
 - A connected bakery scenario follows journal entries through profit to the balance sheet.
 - Unfinished sessions and written takeaways are saved; optional profile preferences follow the first learning session.
