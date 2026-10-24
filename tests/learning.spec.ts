@@ -21,7 +21,7 @@ async function returning(page: Page) {
     },
   );
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'A little wiser, Alex.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Welcome back, Alex.' })).toBeVisible();
 }
 test('accounting model, loose checks, daily variation, and real streaks', () => {
   expect(accepts(' $1,200.00 ', ['1200'])).toBe(true);
@@ -44,7 +44,7 @@ test('onboarding, swipe sorting, loose answer, XP and review persistence', async
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto('/');
-  await page.getByRole('button', { name: 'Let’s make it click' }).click();
+  await page.getByRole('button', { name: 'Start learning' }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
   await expect(page.getByLabel('What should I call you?')).toHaveCount(0);
   await page.getByRole('button', { name: 'Liability', exact: true }).click();
@@ -79,18 +79,16 @@ test('onboarding, swipe sorting, loose answer, XP and review persistence', async
   await page.getByRole('button', { name: 'Still learning', exact: true }).click();
   await page.getByRole('button', { name: 'Finish lesson' }).click();
   await expect(page.locator('.earned-xp')).toContainText('+60');
-  await page.getByRole('button', { name: 'Keep the good feeling' }).click();
+  await page.getByRole('button', { name: 'Done' }).click();
   await page.getByLabel('What should I call you?').fill('Sam');
-  await page.getByRole('button', { name: /A steady glow/ }).click();
+  await page.getByRole('button', { name: /5 minutes/ }).click();
   await page.getByRole('button', { name: 'Save my preferences' }).click();
-  await expect(page.getByRole('heading', { name: 'A little wiser, Sam.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Welcome back, Sam.' })).toBeVisible();
   await page.reload();
   await expect(page.locator('.xp-chip')).toContainText('60');
   await expect(page.locator('.streak-chip')).toContainText('1');
   await page.getByRole('button', { name: 'Practice', exact: true }).click();
-  await expect(
-    page.getByRole('button', { name: /The Equation.*Next gentle review/ }),
-  ).toBeVisible();
+  await expect(page.getByRole('button', { name: /The Equation.*Next review/ })).toBeVisible();
   const saved = await page.evaluate(() =>
     JSON.parse(localStorage.getItem('tally-progress-v1') || '{}'),
   );
@@ -120,7 +118,7 @@ test('debit synonyms, Enter advance, accessible reorder, and reduced repeat XP',
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByRole('button', { name: 'Finish lesson' }).click();
   await expect(page.locator('.earned-xp')).toContainText('+60');
-  await page.getByRole('button', { name: 'Keep the good feeling' }).click();
+  await page.getByRole('button', { name: 'Done' }).click();
   await page.getByRole('button', { name: 'Debit & Credit, review lesson', exact: true }).click();
   await page.getByRole('button', { name: 'I’m ready to try' }).click();
   await page.getByLabel('Debit account').fill(practiceEntry('debit', 1).answers[0][0]);
@@ -175,7 +173,7 @@ test('navigation and responsive layouts at five widths', async ({ page }) => {
   }
   await page.getByRole('button', { name: 'Learn', exact: true }).click();
   await page.goBack();
-  await expect(page.getByRole('heading', { name: 'A little wiser, Alex.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Welcome back, Alex.' })).toBeVisible();
 });
 
 test('daily mix completes all three tasks and repeat rewards decrease', async ({ page }) => {
@@ -190,7 +188,7 @@ test('daily mix completes all three tasks and repeat rewards decrease', async ({
   for (const expected of [90, 15]) {
     await page
       .getByRole('button', {
-        name: expected === 90 ? 'Take the challenge' : 'Play it again',
+        name: expected === 90 ? 'Start daily mix' : 'Repeat daily mix',
         exact: true,
       })
       .click();
@@ -207,7 +205,7 @@ test('daily mix completes all three tasks and repeat rewards decrease', async ({
     await page.getByRole('button', { name: 'Check the order' }).click();
     await page.getByRole('button', { name: 'Continue', exact: true }).click();
     await expect(page.locator('.earned-xp')).toContainText(`+${expected}`);
-    await page.getByRole('button', { name: 'Keep the good feeling' }).click();
+    await page.getByRole('button', { name: 'Done' }).click();
   }
   await expect(page.locator('.xp-chip')).toContainText('105');
 });
@@ -217,9 +215,9 @@ test('Me shows personal progress while appearance and other preferences live in 
 }) => {
   await returning(page);
   await page.getByRole('button', { name: 'Me', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Your little corner of Tally.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your progress' })).toBeVisible();
   await expect(page.getByText('Total XP', { exact: true })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'A few things to be proud of.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your achievements' })).toBeVisible();
   await expect(page.getByRole('group', { name: 'Theme' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'All settings' })).toHaveCount(0);
 
@@ -235,7 +233,7 @@ test('Me shows personal progress while appearance and other preferences live in 
   await page.getByRole('button', { name: 'Dark', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await page.getByRole('button', { name: 'Close', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Your little corner of Tally.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your progress' })).toBeVisible();
   await expect(page.getByRole('group', { name: 'Choose theme' })).toHaveCount(0);
 });
 

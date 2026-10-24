@@ -229,18 +229,12 @@ export function LessonPlayer({
           <Blob happy />
           <SparkleIcon size={22} weight="fill" />
         </div>
-        <span className="eyebrow">LOOK AT THAT. YOU MADE IT CLICK.</span>
+        <span className="eyebrow">SESSION COMPLETE</span>
         <h2>
-          {review
-            ? 'A little stronger in your memory.'
-            : daily
-              ? 'Daily challenge, done.'
-              : 'That’s a lightbulb moment.'}
+          {review ? 'Review complete.' : daily ? 'Daily challenge, done.' : 'Lesson complete.'}
         </h2>
         <p>
-          {daily
-            ? 'Three ways to think. One stronger accounting brain.'
-            : 'Understanding grows one small step at a time. You just took a good one.'}
+          {tasks.length} {tasks.length === 1 ? 'activity' : 'activities'} completed.
         </p>
         <div className="earned-xp">
           <SparkleIcon weight="fill" />
@@ -251,8 +245,8 @@ export function LessonPlayer({
           {mistakes === 0 && hints === 0
             ? 'You worked through every activity without hints or retries.'
             : mistakes === 0
-              ? 'A little guidance helped you make the connection.'
-              : `You worked through ${mistakes} ${mistakes === 1 ? 'tricky moment' : 'tricky moments'}. That’s how learning happens.`}
+              ? `You used ${hints} ${hints === 1 ? 'hint' : 'hints'} and completed every activity without retries.`
+              : `You completed every activity with ${mistakes} ${mistakes === 1 ? 'retry' : 'retries'} and ${hints} ${hints === 1 ? 'hint' : 'hints'}.`}
         </div>
         <p className="fine">
           {daily
@@ -260,7 +254,7 @@ export function LessonPlayer({
             : 'Your next review is scheduled around how this session went.'}
         </p>
         <button className="button primary full" onClick={onClose}>
-          Keep the good feeling <ArrowRightIcon />
+          Done <ArrowRightIcon />
         </button>
       </div>
     );
@@ -348,7 +342,7 @@ export function LessonPlayer({
                 <Blob small />
                 <p>
                   {confidence === 'Still learning'
-                    ? 'That’s okay. I’ll bring this back for a gentle review tomorrow.'
+                    ? 'This topic will return for review tomorrow.'
                     : 'Your answers and hint use will help choose when this returns.'}
                 </p>
               </div>
@@ -646,7 +640,7 @@ function EntryTask({
         }}
       >
         <LightbulbIcon weight="duotone" />
-        {hint ? 'Hide hint' : 'A little nudge?'}
+        {hint ? 'Hide hint' : 'Show hint'}
       </button>
       {hint && (
         <div className="tutor-tip">
@@ -654,7 +648,6 @@ function EntryTask({
           <p>{entry.tip}</p>
         </div>
       )}
-      <p className="fine center">Natural answers welcome. “Laptop” works just like “equipment”.</p>
     </>
   );
 }
@@ -765,7 +758,7 @@ function OrderTask({
           text={
             result
               ? `Exactly. ${items.join(' → ')}. Each step builds on the one before it.`
-              : `A couple of pieces need another look. ${tip}`
+              : `The order isn’t correct yet. ${tip}`
           }
           onNext={onNext}
         />
@@ -779,7 +772,7 @@ function OrderTask({
           setHint(!hint);
         }}
       >
-        <LightbulbIcon /> A little nudge?
+        <LightbulbIcon /> {hint ? 'Hide hint' : 'Show hint'}
       </button>
       {hint && (
         <div className="tutor-tip">

@@ -221,7 +221,7 @@ export const studioLessons: Lesson[] = [
 export const cashFlowLesson: Lesson = {
   id: 'cashflow',
   title: 'Follow the Cash',
-  subtitle: 'Profit and cash have different stories.',
+  subtitle: 'Track cash entering and leaving a business',
   color: 'mint',
   icon: 'flow',
   minutes: 6,

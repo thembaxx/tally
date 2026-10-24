@@ -200,8 +200,8 @@ export const lessons: Lesson[] = [
   },
   {
     id: 'depreciation',
-    title: 'A Little Over Time',
-    subtitle: 'Make long-term costs click',
+    title: 'Depreciation',
+    subtitle: 'Spread an asset’s cost over its useful life',
     color: 'lavender',
     icon: 'chart',
     minutes: 6,
@@ -291,7 +291,7 @@ export const lessons: Lesson[] = [
   {
     id: 'cashflow',
     title: 'Cash Flow',
-    subtitle: 'Something good is flowing',
+    subtitle: 'Track cash entering and leaving a business',
     color: 'blue',
     icon: 'lock',
     minutes: 6,

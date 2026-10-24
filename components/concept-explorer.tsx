@@ -62,16 +62,16 @@ export function ConceptExplorer({ lesson }: { lesson: Lesson }) {
         <Icon weight="duotone" />
         <h3>
           {lesson.format === 'journal'
-            ? 'One story. Two sides.'
+            ? 'Build a balanced entry'
             : lesson.format === 'recall'
-              ? 'Give the idea a little room.'
-              : 'Your curious eye is a superpower.'}
+              ? 'Recall before revealing'
+              : 'Find the accounting error'}
         </h3>
         <p>
           {lesson.format === 'journal'
             ? 'Pick the accounts, build the entry, and watch the two sides come together.'
             : lesson.format === 'recall'
-              ? 'Try to remember. Turn the card. Bring the fuzzy ones back for another little look.'
+              ? 'Try recalling the answer, then turn the card. Repeat any cards you want to practice again.'
               : 'Read a real-life story, spot what needs another look, and discover why.'}
         </p>
         <span>
