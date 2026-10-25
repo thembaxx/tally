@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     title: brand.title,
     description: brand.description,
     siteName: brand.name,
-    locale: 'en_US',
+    locale: 'en_ZA',
     images: [
       {
         url: brand.image,
@@ -57,7 +57,7 @@ export const viewport: Viewport = {
 const themeScript = `try{let t=localStorage.getItem('tally-theme')||'system';let d=t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';document.documentElement.style.colorScheme=d?'dark':'light';document.querySelector('meta[name="theme-color"]')?.setAttribute('content',d?'#111524':'#faf8f2')}catch{}`;
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en-ZA" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <link
@@ -95,7 +95,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   name: brand.name,
                   url: absoluteUrl('/'),
                   description: brand.description,
-                  inLanguage: 'en',
+                  inLanguage: 'en-ZA',
                   publisher: { '@id': absoluteUrl('/#organization') },
                 },
               ],

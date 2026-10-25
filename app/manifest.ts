@@ -4,8 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
     id: '/',
     name: 'Tally — Make accounting click',
     short_name: 'Tally',
-    description:
-      'A patient little accounting tutor. Learn through playful 3D lessons at your pace.',
+    description: 'Learn accounting with worked examples, interactive lessons, and daily practice.',
     start_url: '/',
     scope: '/',
     display: 'standalone',
@@ -14,7 +13,7 @@ export default function manifest(): MetadataRoute.Manifest {
     background_color: '#faf8f2',
     theme_color: '#faf8f2',
     categories: ['education', 'finance'],
-    lang: 'en',
+    lang: 'en-ZA',
     icons: [
       { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
       { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },

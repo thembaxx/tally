@@ -9,8 +9,8 @@ import {
   UserIcon,
   ArrowRightIcon,
   ArrowUpRightIcon,
-  ArrowLeftIcon,
   GearSixIcon,
+  PencilSimpleIcon,
   FireIcon,
   SparkleIcon,
   TargetIcon,
@@ -53,18 +53,31 @@ import {
   type Progress,
 } from '@/lib/learning';
 import { useTally, useFocus, useTheme } from './use-tally';
+import { useSoundscape } from './use-soundscape';
 import { Logo, Blob } from './brand';
 import { Modal } from './modal';
 import { LessonPlayer } from './lesson-player';
 import { Segmented, Switch } from './ui/controls';
 import { MotionPage } from './motion-page';
 import { PracticeStudio } from './practice-studio';
+import { SkillMap } from './skill-map';
+import { recallEvidence } from '@/lib/skills';
+import { readBackup } from '@/lib/backup';
+import { scheduleReview, weakestReviews } from '@/lib/reviews';
+import { practiceTopics, recommendedChallenge } from '@/lib/adaptive';
+import { addDays, dateLabel, learningContext } from '@/lib/south-africa';
+import {
+  matchesDraft,
+  sessionId,
+  type LessonDraft,
+  type Session,
+  type SessionResult,
+} from '@/lib/session';
 const Scene = dynamic(() => import('./scene'), {
   ssr: false,
   loading: () => <div className="scene scene-loading" />,
 });
 type Tab = 'home' | 'learn' | 'practice' | 'me';
-type Review = { due: string; confidence: string; mistakes: number };
 type InstallEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: string }>;
@@ -100,40 +113,39 @@ function lessonIcon(icon: string, size = 25) {
               : LockKeyIcon;
   return <Icon size={size} weight="duotone" />;
 }
-const enter = {
-  initial: { opacity: 0, y: 16 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.45 },
-};
 export default function TallyApp() {
   const { progress: p, setProgress, ready, storageError, today } = useTally();
   const [tab, setTab] = useState<Tab>('home');
   const [settings, setSettings] = useState(false);
-  const [active, setActive] = useState<Lesson | 'daily' | null>(null);
+  const [active, setActive] = useState<Session | null>(null);
   const [onboarding, setOnboarding] = useState(false);
-  const [onboardStep, setOnboardStep] = useState(0);
   const [draftName, setDraftName] = useState('');
   const [draftGoal, setDraftGoal] = useState(5);
-  const [pending, setPending] = useState<Lesson | 'daily' | null>(null);
   const [toast, setToast] = useState('');
   const [filter, setFilter] = useState('all');
+  const [learnView, setLearnView] = useState('lessons');
   const [install, setInstall] = useState<InstallEvent | null>(null);
   const [installInfo, setInstallInfo] = useState(false);
   const [online, setOnline] = useState(true);
   const [reset, setReset] = useState(false);
-  const [reviews, setReviews] = useState<Record<string, Review>>({});
+  const reviews = p.reviews;
+  const [imported, setImported] = useState<Progress | null>(null);
+  const [importError, setImportError] = useState('');
+  const importInput = useRef<HTMLInputElement | null>(null);
   const [about, setAbout] = useState(false);
   const [updateReady, setUpdateReady] = useState(false);
   const sw = useRef<ServiceWorkerRegistration | null>(null);
   const lessonLinkOpened = useRef(false);
   const showToast = useCallback((s: string) => setToast(s), []);
+  const playSound = useSoundscape(p.sound, p.soundVolume);
   const focus = useFocus(() => {
+    playSound('focus-end');
     const day = localDay();
     const alreadyEarned = p.focusDays.includes(day);
     showToast(
       alreadyEarned
-        ? 'Five calm minutes. Nicely done. Your focus XP is already collected today.'
-        : 'A little more focused. +10 XP earned.',
+        ? 'Focus session complete. You already earned focus XP today.'
+        : 'Focus session complete. +10 XP earned.',
     );
     setProgress((old) =>
       old.focusDays.includes(day)
@@ -154,41 +166,18 @@ export default function TallyApp() {
     const lesson = lessons.find((item) => item.id === id && !item.locked);
     if (!lesson) return;
     setTab('learn');
-    if (p.onboarded) setActive(lesson);
-    else {
-      setPending(lesson);
-      setDraftName(p.name);
-      setDraftGoal(p.goal);
-      setOnboardStep(0);
-      setOnboarding(true);
-    }
-  }, [ready, p.onboarded, p.name, p.goal]);
+    setActive(lesson);
+  }, [ready]);
   useEffect(() => {
-    try {
-      const raw = JSON.parse(localStorage.getItem('tally-reviews-v1') || '{}');
-      if (raw && typeof raw === 'object') {
-        const safe = Object.fromEntries(
-          Object.entries(raw).filter(
-            ([id, v]) =>
-              lessons.some((l) => l.id === id) &&
-              v &&
-              typeof v === 'object' &&
-              'due' in v &&
-              typeof v.due === 'string' &&
-              /^\d{4}-\d{2}-\d{2}$/.test(v.due),
-          ),
-        );
-        setReviews(safe as Record<string, Review>);
-      }
-    } catch {
-      /* A fresh review schedule will be created. */
-    }
     const params = new URLSearchParams(location.search);
     const t = params.get('tab');
     if (navItems.some((i) => i.id === t)) setTab(t as Tab);
+    setLearnView(params.get('view') === 'skills' ? 'skills' : 'lessons');
     const pop = () => {
-      const value = new URLSearchParams(location.search).get('tab');
+      const params = new URLSearchParams(location.search);
+      const value = params.get('tab');
       setTab(navItems.some((i) => i.id === value) ? (value as Tab) : 'home');
+      setLearnView(params.get('view') === 'skills' ? 'skills' : 'lessons');
     };
     addEventListener('popstate', pop);
     return () => removeEventListener('popstate', pop);
@@ -258,12 +247,16 @@ export default function TallyApp() {
     addEventListener('keydown', key);
     return () => removeEventListener('keydown', key);
   }, []);
-  function navigate(next: Tab) {
+  function navigate(next: Tab, view = 'lessons') {
+    if (next !== tab) playSound('navigate');
     setTab(next);
+    setLearnView(view);
     const url = new URL(location.href);
     url.searchParams.delete('lesson');
     if (next === 'home') url.searchParams.delete('tab');
     else url.searchParams.set('tab', next);
+    if (next === 'learn' && view === 'skills') url.searchParams.set('view', 'skills');
+    else url.searchParams.delete('view');
     history.pushState({}, '', url);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -272,79 +265,102 @@ export default function TallyApp() {
   }
   function feedback(success: boolean) {
     if (p.haptics && 'vibrate' in navigator) navigator.vibrate(success ? [12, 35, 12] : 25);
-    if (p.sound && success) {
-      try {
-        const ctx = new AudioContext();
-        const osc = ctx.createOscillator(),
-          gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.frequency.setValueAtTime(660, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(990, ctx.currentTime + 0.15);
-        gain.gain.setValueAtTime(0.045, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.24);
-        osc.onended = () => void ctx.close();
-      } catch {
-        /* Feedback remains visual. */
-      }
+    playSound(success ? 'correct' : 'incorrect');
+  }
+  function celebrate() {
+    if (p.haptics && 'vibrate' in navigator) navigator.vibrate([12, 40, 16, 55, 22]);
+    playSound('complete');
+  }
+  function launch(lesson: Session) {
+    playSound('open');
+    setActive(lesson);
+  }
+  function resumeLesson() {
+    const draft = p.draft;
+    if (!draft) return;
+    if (draft.lessonId === 'review') launch({ kind: 'review', ids: draft.reviewIds });
+    else if (draft.lessonId === 'daily' && draft.day === today) launch('daily');
+    else {
+      const lesson = lessons.find((l) => l.id === draft.lessonId);
+      if (lesson) launch(lesson);
     }
   }
-  function launch(lesson: Lesson | 'daily') {
-    if (lesson !== 'daily' && lesson.locked) {
-      showToast('Cash Flow is coming soon. There’s plenty to discover in the meantime.');
-      return;
-    }
-    if (!p.onboarded) {
-      setPending(lesson);
+  function closeLesson() {
+    setActive(null);
+    if (!p.onboarded && !p.draft) {
       setDraftName(p.name);
       setDraftGoal(p.goal);
-      setOnboardStep(0);
       setOnboarding(true);
-    } else setActive(lesson);
+    }
   }
   function finishOnboarding() {
     patch({ name: draftName.trim(), goal: draftGoal, onboarded: true });
     setOnboarding(false);
-    if (pending) setActive(pending);
   }
-  function complete(mistakes: number, confidence: string) {
+  const saveDraft = useCallback(
+    (draft: LessonDraft) => {
+      setProgress((old) => ({ ...old, draft }));
+    },
+    [setProgress],
+  );
+  function complete(result: SessionResult) {
+    if (!active) return 0;
     const day = localDay();
     const daily = active === 'daily';
-    const lesson = active !== 'daily' ? active : null;
+    const challengeDay = daily ? result.day : day;
+    const review = typeof active === 'object' && 'kind' in active;
+    const lesson = typeof active === 'object' && !('kind' in active) ? active : null;
     const amount = daily
-      ? p.dailyRuns[day]
+      ? p.dailyRuns[challengeDay]
         ? 15
         : 90
-      : p.completed.includes(lesson?.id || '')
-        ? 10
-        : 60;
-    setProgress((old) => ({
-      ...old,
-      xp: old.xp + amount,
-      completed:
-        lesson && !old.completed.includes(lesson.id)
-          ? [...old.completed, lesson.id]
-          : old.completed,
-      activity: {
-        ...old.activity,
-        [day]: (old.activity[day] || 0) + (daily ? 5 : lesson?.minutes || 4),
-      },
-      dailyRuns: daily ? { ...old.dailyRuns, [day]: (old.dailyRuns[day] || 0) + 1 } : old.dailyRuns,
-    }));
-    if (lesson) {
-      const d = new Date();
-      d.setDate(d.getDate() + (mistakes || confidence === 'Still learning' ? 1 : 3));
-      const next = { ...reviews, [lesson.id]: { due: localDay(d), confidence, mistakes } };
-      setReviews(next);
-      try {
-        localStorage.setItem('tally-reviews-v1', JSON.stringify(next));
-      } catch {
-        showToast('Review reminders are available for this visit. Device storage is full.');
+      : review
+        ? result.concepts.length * 10
+        : p.completed.includes(lesson?.id || '')
+          ? 10
+          : 60;
+    setProgress((old) => {
+      const nextReviews = { ...old.reviews };
+      for (const concept of result.concepts) {
+        nextReviews[concept.id] = scheduleReview(
+          old.reviews[concept.id],
+          concept,
+          result.confidence,
+          day,
+        );
       }
-    }
+      return {
+        ...old,
+        xp: old.xp + amount,
+        draft: null,
+        reviews: nextReviews,
+        notes: lesson ? { ...old.notes, [lesson.id]: result.note } : old.notes,
+        completed:
+          lesson && !old.completed.includes(lesson.id)
+            ? [...old.completed, lesson.id]
+            : old.completed,
+        activity: {
+          ...old.activity,
+          [day]:
+            (old.activity[day] || 0) +
+            (daily ? 5 : review ? result.concepts.length : lesson?.minutes || 4),
+        },
+        dailyRuns: daily
+          ? { ...old.dailyRuns, [challengeDay]: (old.dailyRuns[challengeDay] || 0) + 1 }
+          : old.dailyRuns,
+      };
+    });
     return amount;
+  }
+  async function readImport(file: File) {
+    setImportError('');
+    setImported(null);
+    try {
+      if (file.size > 1000000) throw new Error('Choose a Tally backup smaller than 1 MB.');
+      setImported(readBackup(await file.text()));
+    } catch (error) {
+      setImportError(error instanceof Error ? error.message : 'This backup could not be read.');
+    }
   }
   async function installApp() {
     if (install) {
@@ -357,9 +373,12 @@ export default function TallyApp() {
     } else setInstallInfo(true);
   }
   function exportProgress() {
-    const blob = new BlobConstructor([JSON.stringify({ progress: p, reviews }, null, 2)], {
-      type: 'application/json',
-    });
+    const blob = new BlobConstructor(
+      [JSON.stringify({ version: 2, exportedAt: new Date().toISOString(), progress: p }, null, 2)],
+      {
+        type: 'application/json',
+      },
+    );
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -371,16 +390,51 @@ export default function TallyApp() {
   const count = p.completed.length;
   const nextLesson = lessons.find((l) => !l.locked && !p.completed.includes(l.id)) || lessons[0];
   const dayStreak = streak(p.activity, today);
-  const due = lessons.filter((l) => reviews[l.id] && reviews[l.id].due <= today);
+  const dueIds = weakestReviews(reviews, today);
+  const due = lessons.filter((l) => dueIds.includes(l.id));
+  const reviewIds = practiceTopics(
+    reviews,
+    today,
+    p.completed,
+    lessons.filter((l) => !l.locked).map((l) => l.id),
+  );
+  const resumable = p.draft && (p.draft.lessonId !== 'daily' || p.draft.day === today);
+  const reviewAction = reviewIds.length ? (
+    <section className="next-action review-action" aria-label="Your next review">
+      <div>
+        <span className="eyebrow">PERSONALIZED PRACTICE</span>
+        <h2>{reviewIds.length === 1 ? 'One topic to review.' : 'Two topics to review.'}</h2>
+        <p>
+          {reviewIds.map((id) => lessons.find((l) => l.id === id)?.title).join(' · ')} · about{' '}
+          {reviewIds.length}–{reviewIds.length * 2} min
+        </p>
+        <ul className="review-reasons">
+          {reviewIds.map((id) => (
+            <li key={id}>
+              <strong>{lessons.find((l) => l.id === id)?.title}:</strong>{' '}
+              {(reviews[id] || p.completed.includes(id)) &&
+                `${recallEvidence(reviews[id], p.completed.includes(id))} `}
+              {recommendedChallenge(reviews[id]).reason}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <button className="button primary" onClick={() => launch({ kind: 'review', ids: reviewIds })}>
+        {reviewIds.some((id) => p.completed.includes(id) || reviews[id]?.attempts)
+          ? `Review ${reviewIds.length === 1 ? 'this concept' : 'these concepts'}`
+          : 'Start guided practice'}{' '}
+        <ArrowRightIcon />
+      </button>
+    </section>
+  ) : null;
   const todayMinutes = p.activity[today] || 0;
   const level = Math.floor(p.xp / 200) + 1;
   const week = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(`${today}T12:00:00`);
-    d.setDate(d.getDate() - 6 + i);
+    const day = addDays(today, -6 + i);
     return {
-      key: localDay(d),
-      label: d.toLocaleDateString('en', { weekday: 'narrow' }),
-      full: d.toLocaleDateString('en', { weekday: 'long', month: 'short', day: 'numeric' }),
+      key: day,
+      label: dateLabel(day, { weekday: 'narrow' }),
+      full: dateLabel(day, { weekday: 'long', month: 'short', day: 'numeric' }),
     };
   });
   return (
@@ -393,7 +447,7 @@ export default function TallyApp() {
           <button className="brand-button" onClick={() => navigate('home')} aria-label="Tally home">
             <Logo />
           </button>
-          <div className="sidebar-caption">YOUR LITTLE LEARNING SPACE</div>
+          <div className="sidebar-caption">ACCOUNTING PRACTICE</div>
           <nav className="main-nav" aria-label="Main navigation">
             {navItems.map((item) => (
               <button
@@ -420,11 +474,11 @@ export default function TallyApp() {
             <div className="sidebar-mascot">
               <Blob />
               <p>
-                Big things start
+                Learn at
                 <br />
-                with little steps.
+                your pace.
               </p>
-              <span>A little better, every day.</span>
+              <span>Pick up where you left off.</span>
             </div>
             <button onClick={() => setSettings(true)} className="sidebar-settings">
               <GearSixIcon size={21} /> Settings <span>⌘ ,</span>
@@ -499,50 +553,72 @@ export default function TallyApp() {
           )}
           <main id="main" className="main-content">
             <AnimatePresence mode="wait">
-              <MotionPage key={tab} ready={ready} revealKey={tab === 'learn' ? filter : tab}>
+              <MotionPage
+                key={tab}
+                ready={ready}
+                revealKey={tab === 'learn' ? `${learnView}-${filter}` : tab}
+              >
                 {tab === 'home' ? (
                   <>
                     <section className="page-heading">
                       <div>
-                        <span className="eyebrow">YOUR NEXT CHAPTER STARTS HERE</span>
+                        <span className="eyebrow">YOUR LEARNING</span>
                         <h1>
-                          {p.name ? `A little wiser, ${p.name}.` : 'Hey, future numbers person.'}
+                          {p.name ? `Welcome back, ${p.name}.` : 'Welcome to Tally.'}
                           <SparkleIcon className="greeting-spark" weight="duotone" />
                         </h1>
-                        <p>Learn accounting through tiny, satisfying discoveries.</p>
+                        <p>Learn accounting with South African examples, in rand.</p>
                       </div>
                       <div className="date-display">
                         <CalendarDotsIcon size={18} />
-                        {ready
-                          ? new Date(`${today}T12:00:00`).toLocaleDateString('en', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })
-                          : 'A new day to learn'}
+                        {ready ? dateLabel(today) : 'A new day to learn'}
                       </div>
                     </section>
+                    {resumable && (
+                      <section
+                        className="next-action resume-action"
+                        aria-label="Unfinished session"
+                      >
+                        <div>
+                          <span className="eyebrow">PICK UP WHERE YOU LEFT OFF</span>
+                          <h2>
+                            {p.draft?.lessonId === 'review'
+                              ? 'Your targeted review'
+                              : p.draft?.lessonId === 'daily'
+                                ? 'The Daily Mix'
+                                : lessons.find((l) => l.id === p.draft?.lessonId)?.title}
+                          </h2>
+                          <p>
+                            Your place and takeaway are saved. Continue with the current activity.
+                          </p>
+                        </div>
+                        <button className="button dark" onClick={resumeLesson}>
+                          Resume learning <ArrowRightIcon />
+                        </button>
+                      </section>
+                    )}
+                    {reviewAction}
                     <div className="welcome-grid">
                       <section className="hero-card">
                         <div className="hero-text">
                           <span className="hero-tag">
-                            <span /> YOUR DAILY DOSE OF “I GET IT”
+                            <span /> YOUR NEXT LESSON
                           </span>
                           <h2>
-                            Small steps.
+                            Accounting,
                             <br />
                             <span>
-                              Big “aha!”
-                              <br className="desktop-break" /> energy.
+                              one lesson
+                              <br className="desktop-break" /> at a time.
                             </span>
                           </h2>
                           <p>
-                            Make sense of money.
+                            Work through an example.
                             <br />
-                            Have a little fun figuring it out.
+                            Then try it yourself.
                           </p>
                           <button className="button dark" onClick={() => launch(nextLesson)}>
-                            {count ? 'Continue learning' : 'Let’s make it click'}
+                            {count ? 'Continue learning' : 'Start learning'}
                             <ArrowRightIcon />
                           </button>
                           <div className="hero-footnote">
@@ -554,7 +630,7 @@ export default function TallyApp() {
                           <span className="floating-equation mono">A = L + E</span>
                           <Scene minimalControls />
                           <span className="scene-hint">
-                            <span className="tiny-dot" /> A little balance goes a long way
+                            <span className="tiny-dot" /> Assets = Liabilities + Equity
                           </span>
                           <span className="orbit-dot one" />
                           <span className="orbit-dot two" />
@@ -570,13 +646,13 @@ export default function TallyApp() {
                           </span>
                         </div>
                         <h2>
-                          Three tiny challenges.
+                          Three challenges.
                           <br />
-                          One happy brain.
+                          About five minutes.
                         </h2>
                         <p>
-                          A fresh mix to stretch your
-                          <br className="desktop-break" /> accounting brain.
+                          Sort accounts, answer a question,
+                          <br className="desktop-break" /> and order the steps.
                         </p>
                         <div className="daily-steps">
                           <span>
@@ -595,14 +671,14 @@ export default function TallyApp() {
                           </span>
                         </div>
                         <button className="button daily-button" onClick={() => launch('daily')}>
-                          {p.dailyRuns[today] ? 'Play it again' : 'Take the challenge'}
+                          {p.dailyRuns[today] ? 'Repeat daily mix' : 'Start daily mix'}
                           <ArrowUpRightIcon />
                         </button>
                         <div className="daily-reward">
                           <span>
                             <SparkleIcon weight="fill" /> +{p.dailyRuns[today] ? 15 : 90} XP
                           </span>
-                          <span>~5 min · no pressure</span>
+                          <span>Resets at 00:00 SAST</span>
                         </div>
                       </section>
                     </div>
@@ -610,10 +686,10 @@ export default function TallyApp() {
                       <div className="section-heading">
                         <div>
                           <span className="eyebrow">BUILD YOUR FOUNDATION</span>
-                          <h2>Your next “aha!” moment</h2>
+                          <h2>Foundation lessons</h2>
                         </div>
                         <button className="text-button" onClick={() => navigate('learn')}>
-                          Explore the path <ArrowRightIcon />
+                          View all lessons <ArrowRightIcon />
                         </button>
                       </div>
                       <div className="lesson-grid">
@@ -628,12 +704,20 @@ export default function TallyApp() {
                         ))}
                       </div>
                     </section>
+                    <button className="skill-map-link" onClick={() => navigate('learn', 'skills')}>
+                      <PathIcon size={28} weight="duotone" />
+                      <span>
+                        <strong>See how your skills are growing.</strong>
+                        <small>What’s steady, what needs practice, and your next step.</small>
+                      </span>
+                      <ArrowRightIcon size={22} />
+                    </button>
                     <div className="home-bottom">
                       <section className="weekly-card">
                         <div className="section-heading">
                           <div>
-                            <h2>A little consistency, a lot of growth.</h2>
-                            <p>Every small step counts. This is your week.</p>
+                            <h2>Your activity this week</h2>
+                            <p>Minutes spent learning over the last seven days.</p>
                           </div>
                           <span className="week-total mono">
                             {week.reduce((sum, d) => sum + (p.activity[d.key] || 0), 0)}
@@ -662,8 +746,8 @@ export default function TallyApp() {
                         <div className="goal-caption">
                           <span>
                             {todayMinutes >= p.goal
-                              ? 'Your daily goal? Beautifully done.'
-                              : `${todayMinutes} of ${p.goal} minutes today. Your future self says thanks.`}
+                              ? 'Daily goal reached.'
+                              : `${todayMinutes} of ${p.goal} minutes today.`}
                           </span>
                           <span className="mono">
                             {Math.min(100, Math.round((todayMinutes / p.goal) * 100))}%
@@ -681,9 +765,9 @@ export default function TallyApp() {
                             <TargetIcon size={22} weight="duotone" />
                           </span>
                           <span>
-                            Less noise.
+                            Focus mode.
                             <br />
-                            <strong>More you.</strong>
+                            <strong>Five minutes.</strong>
                           </span>
                           <Switch
                             checked={focus.active}
@@ -692,15 +776,20 @@ export default function TallyApp() {
                           />
                         </div>
                         <p>
-                          A calm space. Five minutes.
+                          Start a five-minute timer.
                           <br />
-                          One thing at a time.
+                          It pauses when you leave the tab.
                         </p>
                         <button
                           className="text-button"
-                          onClick={() => (focus.active ? focus.stop() : focus.start())}
+                          onClick={() => {
+                            playSound(focus.active ? 'focus-pause' : 'focus-start');
+                            if (focus.active) focus.stop();
+                            else focus.start();
+                          }}
                         >
-                          {focus.active ? 'Leave focus mode' : 'Find your focus'} <ArrowRightIcon />
+                          {focus.active ? 'End focus session' : 'Start focus session'}{' '}
+                          <ArrowRightIcon />
                         </button>
                         <span className="focus-decoration" />
                       </section>
@@ -718,8 +807,8 @@ export default function TallyApp() {
                     <div className="billi-note">
                       <Blob small />
                       <p>
-                        <strong>A little note from Tali</strong>“An asset is just something that
-                        helps your business do its thing. Even a lemonade stand has them.”
+                        <strong>A note from Tali</strong>“An asset is a resource the business owns
+                        or controls, such as cash or equipment.”
                       </p>
                       <button
                         className="icon-button"
@@ -733,103 +822,122 @@ export default function TallyApp() {
                 ) : tab === 'learn' ? (
                   <>
                     <PageHeading
-                      eyebrow="UNDERSTANDING STARTS WITH CURIOSITY"
-                      title="Little steps. Lasting skills."
-                      description="From your first equation to the stories behind the statements. Go at your pace."
+                      eyebrow="LEARN ACCOUNTING"
+                      title="Lessons and skills"
+                      description="Choose a lesson or check your practice history in the skill map."
                     />
-                    <div className="path-summary">
-                      <div className="path-progress">
-                        <GraduationCapIcon size={30} weight="duotone" />
-                        <div>
-                          <h3>Your accounting journey</h3>
-                          <p>
-                            {count} of {lessons.filter((l) => !l.locked).length} lessons explored
-                          </p>
-                        </div>
-                      </div>
-                      <span className="mono">
-                        {Math.round((count / lessons.filter((l) => !l.locked).length) * 100)}%
-                      </span>
-                      <div className="thin-progress">
-                        <div
-                          style={{
-                            width: `${(count / lessons.filter((l) => !l.locked).length) * 100}%`,
-                          }}
-                        />
-                      </div>
-                    </div>
-                    <div className="learn-toolbar">
+                    <div className="learn-view-switch">
                       <Segmented
-                        label="Lesson level"
+                        label="Learn view"
                         items={[
-                          { id: 'all', label: 'All lessons' },
-                          { id: 'Foundations', label: 'Basics' },
-                          { id: 'Next level', label: 'Next level' },
-                          { id: 'Going deeper', label: 'Deeper' },
+                          { id: 'lessons', label: 'Lessons' },
+                          { id: 'skills', label: 'Skill map' },
                         ]}
-                        value={filter}
-                        onChange={setFilter}
+                        value={learnView}
+                        onChange={(view) => navigate('learn', view)}
                       />
-                      <span className="fine">No rush. No finish line.</span>
                     </div>
-                    {['Foundations', 'Next level', 'Going deeper']
-                      .filter((g) => filter === 'all' || filter === g)
-                      .map((group) => (
-                        <section className="path-section" key={group}>
-                          <div className="section-heading">
+                    {learnView === 'skills' ? (
+                      <SkillMap progress={p} today={today} onLaunch={launch} />
+                    ) : (
+                      <>
+                        <div className="path-summary">
+                          <div className="path-progress">
+                            <GraduationCapIcon size={30} weight="duotone" />
                             <div>
-                              <span className="eyebrow">
-                                {group.toUpperCase()} ·{' '}
-                                {lessons.filter((l) => l.level === group).length} LESSONS
-                              </span>
-                              <h2>
-                                {group === 'Foundations'
-                                  ? 'First, find your footing.'
-                                  : group === 'Next level'
-                                    ? 'Now, connect the dots.'
-                                    : 'Think like an accountant.'}
-                              </h2>
+                              <h3>Lesson progress</h3>
                               <p>
-                                {group === 'Foundations'
-                                  ? 'Every great accountant started right here.'
-                                  : group === 'Next level'
-                                    ? 'Make the leap from recording numbers to understanding them.'
-                                    : 'Explore decisions, timing, and the bigger financial picture.'}
+                                {count} of {lessons.filter((l) => !l.locked).length} lessons
+                                explored
                               </p>
                             </div>
-                            <span className="chapter-tag">
-                              {group === 'Foundations' ? 'START HERE' : 'A LITTLE DEEPER'}
-                            </span>
                           </div>
-                          <div className="lesson-grid">
-                            {lessons
-                              .filter((l) => l.level === group)
-                              .map((l, i) => (
-                                <LessonCard
-                                  key={l.id}
-                                  lesson={l}
-                                  index={i}
-                                  completed={p.completed.includes(l.id)}
-                                  onClick={() => launch(l)}
-                                />
-                              ))}
+                          <span className="mono">
+                            {Math.round((count / lessons.filter((l) => !l.locked).length) * 100)}%
+                          </span>
+                          <div className="thin-progress">
+                            <div
+                              style={{
+                                width: `${(count / lessons.filter((l) => !l.locked).length) * 100}%`,
+                              }}
+                            />
                           </div>
-                        </section>
-                      ))}
-                    <div className="tutor-tip wide-tip">
-                      <Blob small />
-                      <p>
-                        You can explore any open lesson. If an idea feels new, come back to the
-                        foundations for a little boost.
-                      </p>
-                    </div>
+                        </div>
+                        <div className="learn-toolbar">
+                          <Segmented
+                            label="Lesson level"
+                            items={[
+                              { id: 'all', label: 'All lessons' },
+                              { id: 'Foundations', label: 'Basics' },
+                              { id: 'Next level', label: 'Next level' },
+                              { id: 'Going deeper', label: 'Deeper' },
+                            ]}
+                            value={filter}
+                            onChange={setFilter}
+                          />
+                          <span className="fine">Choose any lesson.</span>
+                        </div>
+                        {['Foundations', 'Next level', 'Going deeper']
+                          .filter((g) => filter === 'all' || filter === g)
+                          .map((group) => (
+                            <section className="path-section" key={group}>
+                              <div className="section-heading">
+                                <div>
+                                  <span className="eyebrow">
+                                    {group.toUpperCase()} ·{' '}
+                                    {lessons.filter((l) => l.level === group).length} LESSONS
+                                  </span>
+                                  <h2>
+                                    {group === 'Foundations'
+                                      ? 'Accounting basics'
+                                      : group === 'Next level'
+                                        ? 'Apply the basics'
+                                        : 'More accounting topics'}
+                                  </h2>
+                                  <p>
+                                    {group === 'Foundations'
+                                      ? 'Start with the accounting equation, entries, and statements.'
+                                      : group === 'Next level'
+                                        ? 'Make the leap from recording numbers to understanding them.'
+                                        : 'Explore decisions, timing, and the bigger financial picture.'}
+                                  </p>
+                                </div>
+                                <span className="chapter-tag">
+                                  {group === 'Foundations' ? 'START HERE' : 'MORE TOPICS'}
+                                </span>
+                              </div>
+                              <div className="lesson-grid">
+                                {lessons
+                                  .filter((l) => l.level === group)
+                                  .map((l, i) => (
+                                    <LessonCard
+                                      key={l.id}
+                                      lesson={l}
+                                      index={i}
+                                      completed={p.completed.includes(l.id)}
+                                      onClick={() => launch(l)}
+                                    />
+                                  ))}
+                              </div>
+                            </section>
+                          ))}
+                        <div className="tutor-tip wide-tip">
+                          <Blob small />
+                          <p>
+                            You can explore any open lesson. If an idea feels new, come back to the
+                            foundations for a refresher.
+                          </p>
+                        </div>
+                      </>
+                    )}
                   </>
                 ) : tab === 'practice' ? (
                   <>
+                    {reviewAction}
                     <PageHeading
                       eyebrow="MAKE IT STICK"
-                      title="Make a little room for play."
-                      description="Different ways to learn. The same lovely feeling when it clicks."
+                      title="Practice accounting"
+                      description="Try a daily mix, choose an activity, or review a topic."
                     />
                     <div className="practice-hero">
                       <div>
@@ -837,17 +945,17 @@ export default function TallyApp() {
                           <LightningIcon weight="fill" /> TODAY’S DAILY MIX
                         </span>
                         <h2>
-                          Find your
+                          Sort, answer,
                           <br />
-                          learning groove.
+                          and build.
                         </h2>
                         <p>
-                          Sort, type, and build. Three different ways
+                          Three activities from different topics
                           <br />
-                          to make accounting feel second nature.
+                          in today’s daily mix.
                         </p>
                         <button className="button dark" onClick={() => launch('daily')}>
-                          {p.dailyRuns[today] ? 'Try today’s mix again' : 'Let’s play'}{' '}
+                          {p.dailyRuns[today] ? 'Repeat daily mix' : 'Start daily mix'}{' '}
                           <ArrowRightIcon />
                         </button>
                       </div>
@@ -861,25 +969,25 @@ export default function TallyApp() {
                     <section className="path-section">
                       <div className="section-heading">
                         <div>
-                          <span className="eyebrow">YOUR MEMORY, A LITTLE STRONGER</span>
-                          <h2>
-                            {due.length ? 'Ready for a little refresh?' : 'Your review space'}
-                          </h2>
-                          <p>
-                            Revisit ideas after a little time away. That’s when the learning sticks.
-                          </p>
+                          <span className="eyebrow">SPACED REVIEW</span>
+                          <h2>{due.length ? 'Topics due for review' : 'Your review schedule'}</h2>
+                          <p>Review dates adapt to your answers, hints, and confidence.</p>
                         </div>
                         <span className="count-badge mono">{due.length} DUE</span>
                       </div>
-                      {p.completed.length ? (
+                      {p.completed.length || Object.keys(reviews).length ? (
                         <div className="review-list">
                           {lessons
-                            .filter((l) => p.completed.includes(l.id))
+                            .filter((l) => p.completed.includes(l.id) || reviews[l.id])
                             .sort((a, b) =>
                               (reviews[a.id]?.due || '').localeCompare(reviews[b.id]?.due || ''),
                             )
                             .map((l) => (
-                              <button key={l.id} className="review-row" onClick={() => launch(l)}>
+                              <button
+                                key={l.id}
+                                className="review-row"
+                                onClick={() => launch({ kind: 'review', ids: [l.id] })}
+                              >
                                 <span className={`lesson-icon ${l.color}`}>
                                   {lessonIcon(l.icon)}
                                 </span>
@@ -889,9 +997,21 @@ export default function TallyApp() {
                                     {reviews[l.id]?.due <= today
                                       ? 'Ready to revisit'
                                       : reviews[l.id]?.due
-                                        ? `Next gentle review: ${new Date(reviews[l.id].due + 'T12:00:00').toLocaleDateString('en', { month: 'short', day: 'numeric' })}`
+                                        ? `Next review: ${dateLabel(reviews[l.id].due, { month: 'short', day: 'numeric' })}`
                                         : 'Practice whenever you like'}
                                   </small>
+                                  {reviews[l.id]?.total > 0 && (
+                                    <small>
+                                      {reviews[l.id].firstTry} of {reviews[l.id].total} activities
+                                      answered independently · {reviews[l.id].interval || 1}-day
+                                      spacing
+                                    </small>
+                                  )}
+                                  {p.notes[l.id] && (
+                                    <small className="saved-takeaway">
+                                      My takeaway: {p.notes[l.id]}
+                                    </small>
+                                  )}
                                 </span>
                                 <span className="review-status">
                                   {reviews[l.id]?.confidence || 'Keep growing'}
@@ -905,14 +1025,14 @@ export default function TallyApp() {
                           <span className="empty-icon">
                             <LeafIcon size={35} weight="duotone" />
                           </span>
-                          <h3>A little learning goes a long way.</h3>
+                          <h3>No reviews scheduled yet</h3>
                           <p>
-                            Finish your first lesson and I’ll build you a gentle review rhythm.
+                            Complete a lesson to schedule your first review.
                             <br />
-                            Come back tomorrow to help the new ideas take root.
+                            Your review date will appear here.
                           </p>
                           <button className="text-button" onClick={() => launch(lessons[0])}>
-                            Find your first lightbulb moment <ArrowRightIcon />
+                            Start your first lesson <ArrowRightIcon />
                           </button>
                         </div>
                       )}
@@ -920,17 +1040,17 @@ export default function TallyApp() {
                     <div className="billi-note">
                       <Blob small />
                       <p>
-                        <strong>Trying to remember is the practice.</strong>A little effort is good.
-                        If you get stuck, ask for a nudge. No hearts lost, no pressure added.
+                        <strong>Try recalling before checking.</strong> If you get stuck, use a
+                        hint. You can retry any activity.
                       </p>
                     </div>
                   </>
                 ) : (
                   <>
                     <PageHeading
-                      eyebrow="LOOK HOW YOU’RE GROWING"
-                      title="Your little corner of Tally."
-                      description="Every attempt, every discovery. It all adds up."
+                      eyebrow="YOUR PROFILE"
+                      title="Your progress"
+                      description="View your activity, completed lessons, and achievements."
                     />
                     <section className="profile-card">
                       <div className="profile-avatar">
@@ -938,11 +1058,11 @@ export default function TallyApp() {
                       </div>
                       <div>
                         <span className="eyebrow">CURIOUS MIND · LEVEL {level}</span>
-                        <h2>{p.name || 'A future numbers person'}</h2>
+                        <h2>{p.name || 'Tally learner'}</h2>
                         <p>
                           {count
-                            ? 'Building a little confidence, every day.'
-                            : 'Your accounting story is just beginning.'}
+                            ? `${count} ${count === 1 ? 'lesson' : 'lessons'} explored.`
+                            : 'No lessons completed yet.'}
                         </p>
                       </div>
                       <button
@@ -950,7 +1070,7 @@ export default function TallyApp() {
                         aria-label="Edit profile"
                         onClick={() => setSettings(true)}
                       >
-                        <GearSixIcon size={22} />
+                        <PencilSimpleIcon size={22} />
                       </button>
                     </section>
                     <div className="stats-grid">
@@ -982,8 +1102,8 @@ export default function TallyApp() {
                     <section className="badges-section">
                       <div className="section-heading">
                         <div>
-                          <span className="eyebrow">LITTLE MILESTONES, BIG FEELINGS</span>
-                          <h2>A few things to be proud of.</h2>
+                          <span className="eyebrow">MILESTONES</span>
+                          <h2>Your achievements</h2>
                         </div>
                       </div>
                       <div className="badges">
@@ -1040,30 +1160,11 @@ export default function TallyApp() {
                         ))}
                       </div>
                     </section>
-                    <div className="me-settings">
-                      <div>
-                        <h3>A space that feels like you.</h3>
-                        <p>Your pace. Your theme. Your little preferences.</p>
-                      </div>
-                      <Segmented
-                        label="Theme"
-                        value={p.theme}
-                        onChange={(v) => patch({ theme: v as Progress['theme'] })}
-                        items={[
-                          { id: 'system', label: 'Auto', icon: <MonitorIcon /> },
-                          { id: 'light', label: 'Light', icon: <SunIcon /> },
-                          { id: 'dark', label: 'Dark', icon: <MoonIcon /> },
-                        ]}
-                      />
-                      <button className="text-button" onClick={() => setSettings(true)}>
-                        All settings <ArrowRightIcon />
-                      </button>
-                    </div>
                   </>
                 )}
                 <footer className="page-footer">
                   <span>
-                    <Logo /> <span>A little better, every day.</span>
+                    <Logo /> <span>Accounting at your pace.</span>
                   </span>
                   <a className="public-guides-link" href="/learn">
                     Learn accounting · Free guides
@@ -1086,10 +1187,8 @@ export default function TallyApp() {
             >
               <span className="breathing-dot" />
               <div>
-                <strong>A little room to focus.</strong>
-                <span>
-                  {focus.paused ? 'Paused. Your time is yours.' : 'One calm moment at a time.'}
-                </span>
+                <strong>Focus timer</strong>
+                <span>{focus.paused ? 'Paused' : 'Session in progress'}</span>
               </div>
               <span className="focus-time mono">
                 {Math.floor(Math.ceil(focus.remaining) / 60)
@@ -1100,11 +1199,21 @@ export default function TallyApp() {
               <button
                 aria-label={focus.paused ? 'Resume focus timer' : 'Pause focus timer'}
                 className="icon-button"
-                onClick={focus.togglePause}
+                onClick={() => {
+                  playSound(focus.paused ? 'focus-start' : 'focus-pause');
+                  focus.togglePause();
+                }}
               >
                 {focus.paused ? <PlayIcon weight="fill" /> : <PauseIcon weight="fill" />}
               </button>
-              <button className="icon-button" aria-label="End focus session" onClick={focus.stop}>
+              <button
+                className="icon-button"
+                aria-label="End focus session"
+                onClick={() => {
+                  playSound('focus-pause');
+                  focus.stop();
+                }}
+              >
                 <XIcon />
               </button>
             </motion.div>
@@ -1112,20 +1221,59 @@ export default function TallyApp() {
         </AnimatePresence>
         <Modal
           open={!!active}
-          onClose={() => setActive(null)}
-          title={active === 'daily' ? 'The Daily Mix' : active?.title || 'Your lesson'}
+          onClose={closeLesson}
+          title={
+            active === 'daily'
+              ? 'The Daily Mix'
+              : active && 'kind' in active
+                ? 'Your targeted review'
+                : active?.title || 'Your lesson'
+          }
           wide
         >
           {active && (
             <LessonPlayer
-              key={active === 'daily' ? `daily-${today}` : active.id}
+              key={`${sessionId(active)}-${active !== 'daily' && 'kind' in active ? active.ids.join('-') : ''}`}
+              draft={matchesDraft(p.draft, active, today) ? p.draft : null}
+              attempt={
+                active === 'daily'
+                  ? p.dailyRuns[today] || 0
+                  : 'kind' in active
+                    ? active.ids.reduce(
+                        (n, id) => n + (reviews[id]?.nextQuestion ?? reviews[id]?.attempts ?? 0),
+                        0,
+                      )
+                    : (reviews[active.id]?.nextQuestion ?? reviews[active.id]?.attempts ?? 0)
+              }
+              reviewAttempts={
+                active !== 'daily' && 'kind' in active
+                  ? Object.fromEntries(
+                      active.ids.map((id) => [
+                        id,
+                        reviews[id]?.nextQuestion ?? reviews[id]?.attempts ?? 0,
+                      ]),
+                    )
+                  : {}
+              }
+              reviews={reviews}
+              savedNote={active !== 'daily' && !('kind' in active) ? p.notes[active.id] : ''}
+              quickStart={
+                !p.onboarded &&
+                active !== 'daily' &&
+                !('kind' in active) &&
+                active.id === 'equation'
+              }
+              onDraft={saveDraft}
               lesson={active}
               day={today}
               onComplete={complete}
-              onClose={() => setActive(null)}
+              onCelebrate={celebrate}
+              onCue={playSound}
+              onClose={closeLesson}
               onFocus={() => {
+                playSound('focus-start');
                 focus.start();
-                showToast('Focus is on. Take a breath, then take your next step.');
+                showToast('Focus session started.');
               }}
               feedback={feedback}
             />
@@ -1133,125 +1281,57 @@ export default function TallyApp() {
         </Modal>
         <Modal
           open={onboarding}
-          onClose={() => setOnboarding(false)}
-          title="A little hello."
-          description="Let’s make this your kind of learning."
+          onClose={() => {
+            patch({ onboarded: true });
+            setOnboarding(false);
+          }}
+          title="Your preferences"
+          description="Set your name and daily learning goal."
         >
           <div className="onboarding">
-            <div className="onboarding-dots">
-              {[0, 1, 2].map((i) => (
-                <span key={i} className={i === onboardStep ? 'active' : ''} />
+            <Blob happy />
+            <h2>Set a daily goal</h2>
+            <p>Make this your learning space. You can change these preferences anytime.</p>
+            <label htmlFor="first-name">
+              What should I call you? <span className="muted">(optional)</span>
+            </label>
+            <input
+              id="first-name"
+              maxLength={30}
+              value={draftName}
+              onChange={(e) => setDraftName(e.target.value)}
+              placeholder="Your first name"
+            />
+            <p>How many minutes would you like to practice each day?</p>
+            <div className="goal-options">
+              {[
+                { n: 3, title: '3 minutes' },
+                { n: 5, title: '5 minutes' },
+                { n: 10, title: '10 minutes' },
+              ].map((g) => (
+                <button
+                  key={g.n}
+                  className={draftGoal === g.n ? 'selected' : ''}
+                  aria-pressed={draftGoal === g.n}
+                  onClick={() => setDraftGoal(g.n)}
+                >
+                  <strong>{g.title}</strong>
+                  <span className="mono">per day {draftGoal === g.n && <CheckIcon />}</span>
+                </button>
               ))}
             </div>
-            <AnimatePresence mode="wait">
-              <motion.div key={onboardStep} {...enter}>
-                {onboardStep === 0 ? (
-                  <>
-                    <Blob happy />
-                    <h2>
-                      Numbers are for everyone.
-                      <br />
-                      You included.
-                    </h2>
-                    <p>
-                      I’m Tali, your little learning companion. We’ll turn big accounting ideas into
-                      small, satisfying discoveries.
-                    </p>
-                    <label htmlFor="first-name">
-                      What should I call you? <span className="muted">(optional)</span>
-                    </label>
-                    <input
-                      id="first-name"
-                      maxLength={30}
-                      value={draftName}
-                      onChange={(e) => setDraftName(e.target.value)}
-                      placeholder="Your first name"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') setOnboardStep(1);
-                      }}
-                    />
-                  </>
-                ) : onboardStep === 1 ? (
-                  <>
-                    <span className="onboarding-symbol">
-                      <ClockIcon size={48} weight="duotone" />
-                    </span>
-                    <h2>
-                      A little time,
-                      <br />
-                      just for you.
-                    </h2>
-                    <p>
-                      Choose a daily rhythm. You can change it anytime. There’s no penalty for
-                      taking a break.
-                    </p>
-                    <div className="goal-options">
-                      {[
-                        { n: 3, title: 'A tiny spark', sub: 'Just getting curious' },
-                        { n: 5, title: 'A steady glow', sub: 'A little every day' },
-                        { n: 10, title: 'A brighter light', sub: 'Room to go deeper' },
-                      ].map((g) => (
-                        <button
-                          key={g.n}
-                          className={draftGoal === g.n ? 'selected' : ''}
-                          onClick={() => setDraftGoal(g.n)}
-                        >
-                          <span>
-                            <strong>{g.title}</strong>
-                            <small>{g.sub}</small>
-                          </span>
-                          <span className="mono">
-                            {g.n} min {draftGoal === g.n && <CheckIcon />}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <span className="onboarding-symbol">
-                      <ScalesIcon size={48} weight="duotone" />
-                    </span>
-                    <h2>
-                      See it. Try it.
-                      <br />
-                      Make it click.
-                    </h2>
-                    <p>
-                      Play with the idea, try an answer, and discover why it works. Mistakes are
-                      welcome here. Hints, too.
-                    </p>
-                    <div className="onboarding-promises">
-                      <span>
-                        <CheckIcon /> Clear, everyday examples
-                      </span>
-                      <span>
-                        <CheckIcon /> Playful practice, at your pace
-                      </span>
-                      <span>
-                        <CheckIcon /> Gentle reviews to make it stick
-                      </span>
-                    </div>
-                  </>
-                )}
-              </motion.div>
-            </AnimatePresence>
-            <button
-              className="button primary full"
-              onClick={() =>
-                onboardStep < 2 ? setOnboardStep(onboardStep + 1) : finishOnboarding()
-              }
-            >
-              {onboardStep === 2
-                ? 'Let’s find your first lightbulb moment'
-                : 'A little more about you'}
-              <ArrowRightIcon />
+            <button className="button primary full" onClick={finishOnboarding}>
+              Save my preferences <ArrowRightIcon />
             </button>
-            {onboardStep > 0 && (
-              <button className="text-button" onClick={() => setOnboardStep(onboardStep - 1)}>
-                <ArrowLeftIcon /> Back
-              </button>
-            )}
+            <button
+              className="text-button"
+              onClick={() => {
+                patch({ onboarded: true });
+                setOnboarding(false);
+              }}
+            >
+              Maybe later
+            </button>
           </div>
         </Modal>
         <Modal
@@ -1260,10 +1340,11 @@ export default function TallyApp() {
             setSettings(false);
             setReset(false);
           }}
-          title="Your little preferences."
-          description="Make Tally feel a little more like you."
+          title="Settings"
+          description="Make Tally work your way."
         >
           <div className="settings-body">
+            <h3 className="settings-section-title">Profile</h3>
             <label htmlFor="profile-name">
               Your name
               <input
@@ -1274,18 +1355,12 @@ export default function TallyApp() {
                 placeholder="What should we call you?"
               />
             </label>
-            <div className="setting-row">
-              <span>
-                <strong>
-                  <SunIcon /> Appearance
-                </strong>
-                <small>
-                  {focus.active
-                    ? 'Focus is keeping things calm and dark.'
-                    : 'Follow your system, or set your own mood.'}
-                </small>
-              </span>
-            </div>
+            <h3 className="settings-section-title">Appearance</h3>
+            <p className="settings-section-note">
+              {focus.active
+                ? 'Focus is keeping things calm and dark.'
+                : 'Follow your system, or set your own mood.'}
+            </p>
             <Segmented
               label="Choose theme"
               value={p.theme}
@@ -1296,12 +1371,13 @@ export default function TallyApp() {
                 { id: 'dark', label: 'Dark', icon: <MoonIcon /> },
               ]}
             />
+            <h3 className="settings-section-title">Learning</h3>
             <div className="setting-row">
               <span>
                 <strong>
-                  <TargetIcon /> Daily rhythm
+                  <TargetIcon /> Daily goal
                 </strong>
-                <small>A gentle goal, never a deadline.</small>
+                <small>Minutes of practice per day.</small>
               </span>
               <select
                 aria-label="Daily goal"
@@ -1315,12 +1391,13 @@ export default function TallyApp() {
                 ))}
               </select>
             </div>
+            <h3 className="settings-section-title">Feedback</h3>
             <div className="setting-row">
               <span>
                 <strong>
-                  <VibrateIcon /> Little haptics
+                  <VibrateIcon /> Haptic feedback
                 </strong>
-                <small>A little tap when something clicks, on supported phones.</small>
+                <small>Vibration feedback on supported phones.</small>
               </span>
               <Switch
                 checked={p.haptics}
@@ -1331,16 +1408,52 @@ export default function TallyApp() {
             <div className="setting-row">
               <span>
                 <strong>
-                  <SpeakerHighIcon /> Sounds of progress
+                  <SpeakerHighIcon /> Sound effects
                 </strong>
-                <small>A soft chime for your lightbulb moments.</small>
+                <small>Audio cues for navigation, answers, and completed sessions.</small>
               </span>
               <Switch
                 checked={p.sound}
-                onChange={(v) => patch({ sound: v })}
+                onChange={(v) => {
+                  patch({ sound: v });
+                  if (v) playSound('correct', { force: true });
+                }}
                 label="Sound effects"
               />
             </div>
+            <div className="setting-row sound-volume-row">
+              <span>
+                <strong>Sound volume</strong>
+                <small>Gentle, short cues. No background music.</small>
+              </span>
+              <div className="sound-volume-control">
+                <input
+                  aria-label="Sound volume"
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="5"
+                  value={p.soundVolume}
+                  disabled={!p.sound}
+                  onChange={(e) => patch({ soundVolume: Number(e.target.value) })}
+                  onPointerUp={() => playSound('select')}
+                  onKeyUp={() => playSound('select')}
+                />
+                <span className="mono" aria-hidden="true">
+                  {p.soundVolume}%
+                </span>
+                <button
+                  className="small-button"
+                  type="button"
+                  disabled={!p.sound || p.soundVolume === 0}
+                  aria-label="Preview sounds"
+                  onClick={() => playSound('complete')}
+                >
+                  <SpeakerHighIcon /> Try
+                </button>
+              </div>
+            </div>
+            <h3 className="settings-section-title">App &amp; data</h3>
             <div className="setting-row">
               <span>
                 <strong>
@@ -1356,13 +1469,26 @@ export default function TallyApp() {
               <button onClick={exportProgress}>
                 <ExportIcon /> Export my progress <ArrowUpRightIcon />
               </button>
+              <input
+                ref={importInput}
+                type="file"
+                accept=".json,application/json"
+                aria-label="Tally progress backup"
+                hidden
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) void readImport(file);
+                  e.target.value = '';
+                }}
+              />
+              <button onClick={() => importInput.current?.click()}>
+                <DownloadSimpleIcon /> Import my progress <ArrowRightIcon />
+              </button>
               <button
                 onClick={() => {
                   setSettings(false);
-                  setPending(null);
                   setDraftName(p.name);
                   setDraftGoal(p.goal);
-                  setOnboardStep(0);
                   setOnboarding(true);
                 }}
               >
@@ -1377,6 +1503,38 @@ export default function TallyApp() {
                 <InfoIcon /> How learning works <ArrowRightIcon />
               </button>
             </div>
+            {importError && (
+              <p role="alert" className="import-error">
+                {importError}
+              </p>
+            )}
+            {imported && (
+              <div className="import-confirm" role="region" aria-label="Review imported progress">
+                <h3>Restore this backup?</h3>
+                <p>
+                  {imported.name || 'Learner'} · {imported.xp} XP · {imported.completed.length}{' '}
+                  completed lessons.
+                </p>
+                <p>
+                  This replaces the progress and preferences on this device. Export your current
+                  progress first if you want to keep both.
+                </p>
+                <button
+                  className="button primary"
+                  onClick={() => {
+                    setProgress(imported);
+                    setImported(null);
+                    setImportError('');
+                    showToast('Your progress, takeaways, and review schedule have been restored.');
+                  }}
+                >
+                  Restore this progress
+                </button>
+                <button className="text-button" onClick={() => setImported(null)}>
+                  Keep current progress
+                </button>
+              </div>
+            )}
             <div className="privacy-note">
               <LockKeyIcon /> Your progress lives on this device. No account, no tracking.
             </div>
@@ -1387,10 +1545,9 @@ export default function TallyApp() {
                   className="small-button"
                   onClick={() => {
                     setProgress({ ...initialProgress, theme: p.theme });
-                    setReviews({});
                     localStorage.removeItem('tally-reviews-v1');
                     setReset(false);
-                    showToast('A fresh page. Your next chapter is waiting.');
+                    showToast('Progress reset.');
                   }}
                 >
                   Yes, start fresh
@@ -1406,11 +1563,7 @@ export default function TallyApp() {
             )}
           </div>
         </Modal>
-        <Modal
-          open={installInfo}
-          onClose={() => setInstallInfo(false)}
-          title="Take a little learning with you."
-        >
+        <Modal open={installInfo} onClose={() => setInstallInfo(false)} title="Install Tally">
           <div className="install-instructions">
             <DownloadSimpleIcon size={45} weight="duotone" />
             <p>
@@ -1433,14 +1586,28 @@ export default function TallyApp() {
         <Modal
           open={about}
           onClose={() => setAbout(false)}
-          title="A tutor with a little patience."
+          title="How learning works"
           description="Built for understanding, one discovery at a time."
         >
           <div className="about-learning">
             <Blob small />
+            <h3>South African context</h3>
+            <p>{learningContext}</p>
             <p>
-              Tally uses familiar examples, visual models, active recall, and gentle spaced review.
-              You try an idea, get specific feedback, then revisit it after a break.
+              Trade receivables and payables are also called debtors and creditors. The statement of
+              profit or loss is the income statement; the statement of financial position is the
+              balance sheet. Daily practice and streaks use South African Standard Time (SAST).
+            </p>
+            <a
+              href="https://www.sars.gov.za/types-of-tax/value-added-tax/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Read SARS guidance on VAT <ArrowUpRightIcon />
+            </a>
+            <p>
+              Tally uses familiar examples, visual models, active recall, and spaced review. You try
+              an idea, get specific feedback, then revisit it after a break.
             </p>
             <ul>
               <li>
@@ -1454,8 +1621,14 @@ export default function TallyApp() {
                 penalties.
               </li>
               <li>
-                <strong>Make it stick.</strong> Explain it in your own words. Reviews return after 1
-                or 3 days, based on your experience.
+                <strong>Make it stick.</strong> Save your own takeaway. Reviews return after 1 to 30
+                days, adapting to your answers, hints, and confidence.
+              </li>
+              <li>
+                <strong>Practice at the right difficulty.</strong> Guided questions show the method;
+                stretch questions ask you to apply it in more steps. Reviews use your practice
+                history and choices to select questions. You can ask for guidance or a harder
+                follow-up. Extra questions do not add XP.
               </li>
             </ul>
             <p>

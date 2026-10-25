@@ -1,6 +1,7 @@
 import { test, expect, type CDPSession, type Locator, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { initialProgress } from '../lib/learning';
+import { practiceEntry } from '../lib/questions';
 
 test.use({ hasTouch: true, isMobile: true });
 type Point = { x: number; y: number };
@@ -267,8 +268,9 @@ test('3D pinch and drag work while one-finger vertical swipes and wheels scroll 
 
 test('touch reorder handles move rows and controls remain accessible', async ({ page }) => {
   await startLesson(page, 'debit');
-  await page.getByLabel('Debit account', { exact: true }).fill('equipment');
-  await page.getByLabel('Credit account', { exact: true }).fill('cash');
+  const entry = practiceEntry('debit');
+  for (const [index, label] of entry.labels.entries())
+    await page.getByLabel(label, { exact: true }).fill(entry.answers[index][0]);
   await page.getByRole('button', { name: 'Check my answer' }).click();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   const rows = page.locator('.order-row');

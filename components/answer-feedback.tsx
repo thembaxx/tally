@@ -1,14 +1,17 @@
 'use client';
 import { motion, useReducedMotion } from 'motion/react';
+import type { ReactNode } from 'react';
 import { CheckIcon, ArrowRightIcon, ArrowCounterClockwiseIcon } from '@phosphor-icons/react';
 export function AnswerFeedback({
   correct,
   text,
   onNext,
+  children,
 }: {
   correct: boolean;
   text: string;
   onNext: () => void;
+  children?: ReactNode;
 }) {
   const still = useReducedMotion();
   return (
@@ -31,6 +34,7 @@ export function AnswerFeedback({
         {correct ? 'That’s it!' : 'Let’s think it through'}
       </strong>
       <p>{text}</p>
+      {children}
       {correct && (
         <button className="button primary full" onClick={onNext}>
           Continue <ArrowRightIcon />

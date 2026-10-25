@@ -16,7 +16,7 @@ async function finish(page: Page) {
   await expect(page.locator('.earned-xp')).toContainText('+60');
 }
 test('all formats have complete, playable lesson data; existing progress remains valid', () => {
-  expect(lessons).toHaveLength(15);
+  expect(lessons).toHaveLength(16);
   expect(lessons.every((l) => !l.locked && l.concept && l.example)).toBe(true);
   for (const format of ['journal', 'recall', 'detective', 'story'])
     expect(lessons.some((l) => l.format === format && l.activities?.length)).toBe(true);
@@ -32,10 +32,10 @@ test('journal lab checks the accounts as well as equal totals', async ({ page })
   await page.getByRole('button', { name: 'Place account on debit', exact: true }).click();
   await page.getByRole('button', { name: 'Cash', exact: true }).click();
   await page.getByRole('button', { name: 'Place account on credit', exact: true }).click();
-  await page.getByLabel('Debit amount ($)', { exact: true }).fill('$500.00');
-  await page.getByLabel('Debit amount ($)', { exact: true }).press('Enter');
-  await expect(page.getByLabel('Credit amount ($)', { exact: true })).toBeFocused();
-  await page.getByLabel('Credit amount ($)', { exact: true }).fill('500');
+  await page.getByLabel('Debit amount (R)', { exact: true }).fill('R500.00');
+  await page.getByLabel('Debit amount (R)', { exact: true }).press('Enter');
+  await expect(page.getByLabel('Credit amount (R)', { exact: true })).toBeFocused();
+  await page.getByLabel('Credit amount (R)', { exact: true }).fill('500');
   await page.getByRole('button', { name: 'Check my entry' }).click();
   await expect(page.getByText(/Your totals balance. Now check/)).toBeVisible();
   await page.getByRole('button', { name: 'Equipment', exact: true }).click();
@@ -45,10 +45,10 @@ test('journal lab checks the accounts as well as equal totals', async ({ page })
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByRole('button', { name: 'Supplies', exact: true }).click();
   await page.getByRole('button', { name: 'Place account on debit', exact: true }).click();
-  await page.getByRole('button', { name: 'Accounts payable', exact: true }).click();
+  await page.getByRole('button', { name: 'Trade payables', exact: true }).click();
   await page.getByRole('button', { name: 'Place account on credit', exact: true }).click();
-  await page.getByLabel('Debit amount ($)', { exact: true }).fill('200');
-  await page.getByLabel('Credit amount ($)', { exact: true }).fill('200');
+  await page.getByLabel('Debit amount (R)', { exact: true }).fill('200');
+  await page.getByLabel('Credit amount (R)', { exact: true }).fill('200');
   await page.getByRole('button', { name: 'Check my entry' }).click();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await finish(page);
@@ -59,7 +59,7 @@ test('recall cards revisit a fuzzy idea before completing the deck', async ({ pa
   await page.getByRole('button', { name: 'Turn the card', exact: true }).click();
   await expect(page.locator('.recall-back')).toContainText('An asset.');
   await page.getByRole('button', { name: 'Let’s see it again' }).click();
-  for (const answer of ['The debit side.', '$60.', 'An asset.']) {
+  for (const answer of ['The debit side.', 'R60.', 'An asset.']) {
     await page.getByRole('button', { name: 'Turn the card', exact: true }).click();
     await expect(page.locator('.recall-back')).toContainText(answer);
     await page.getByRole('button', { name: 'It’s connecting', exact: true }).click();
@@ -74,7 +74,7 @@ test('story decisions explain incorrect choices and unlock cash-flow understandi
   await expect(page.getByText(/buying a long-term asset is an investing cash flow/)).toBeVisible();
   await page.getByRole('button', { name: /Investing: the business bought/ }).click();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
-  await page.getByRole('button', { name: /Revenue and accounts receivable increased/ }).click();
+  await page.getByRole('button', { name: /Revenue and trade receivables increased/ }).click();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await finish(page);
 });
@@ -110,10 +110,10 @@ test('reduced-motion studio is readable, keyboard accessible, and has no AA viol
 test('lesson filters recalculate scroll entrances and preserve all chapters', async ({ page }) => {
   await page.goto('/?tab=learn');
   for (const [filter, count] of [
-    ['Deeper', 4],
+    ['Deeper', 5],
     ['Basics', 4],
     ['Next level', 7],
-    ['All lessons', 15],
+    ['All lessons', 16],
   ] as const) {
     await page.getByRole('button', { name: filter, exact: true }).click();
     await expect(page.locator('.path-section').first()).toHaveCSS('opacity', '1');
@@ -129,9 +129,23 @@ test('the 3D recall flip shows a readable answer face and restores focus on clos
 }) => {
   await studio(page, 'Turn a card');
   await page.getByRole('button', { name: 'Turn the card', exact: true }).click();
-  await expect(page.locator('.recall-card')).toHaveScreenshot('recall-answer.png', {
+  const flippedCard = page.locator('.recall-card');
+  await expect(flippedCard).toHaveAttribute('aria-label', /Answer:/);
+  // Observe the completed flip instead of assuming a fixed spring duration.
+  await expect
+    .poll(
+      () =>
+        flippedCard.evaluate((element) => {
+          const transform = new DOMMatrixReadOnly(getComputedStyle(element).transform);
+          return Math.abs(transform.m11 + 1) < 0.000001 && Math.abs(transform.m13) < 0.000001;
+        }),
+      { timeout: 15000 },
+    )
+    .toBe(true);
+  await expect(flippedCard).toHaveScreenshot('recall-answer.png', {
     animations: 'disabled',
     maxDiffPixelRatio: 0.01,
+    timeout: 15000,
   });
   await page.getByRole('button', { name: 'Close', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Try Turn a card', exact: true })).toBeFocused();

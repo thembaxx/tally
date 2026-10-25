@@ -16,6 +16,7 @@ import {
 } from '@phosphor-icons/react';
 import type { ChoiceChallenge, JournalChallenge, RecallCard } from '@/lib/activity-types';
 import { accepts } from '@/lib/learning';
+import { learnerNumber, money } from '@/lib/south-africa';
 import { AnswerFeedback } from './answer-feedback';
 import { Blob } from './brand';
 import {
@@ -31,19 +32,24 @@ const Scene = dynamic(() => import('./scene'), {
 type TaskCallbacks = {
   onNext: () => void;
   onMistake: () => void;
+  onHint?: () => void;
   feedback: (success: boolean) => void;
 };
-function Nudge({ text }: { text: string }) {
+function Nudge({ text, onHint }: { text: string; onHint?: () => void }) {
   const [open, setOpen] = useState(false);
   return (
     <>
       <button
         className="text-button hint-button"
+        data-tally-sound="hint"
         aria-expanded={open}
-        onClick={() => setOpen(!open)}
+        onClick={() => {
+          if (!open) onHint?.();
+          setOpen(!open);
+        }}
       >
         <LightbulbIcon weight="duotone" />
-        {open ? 'Keep going' : 'A little nudge?'}
+        {open ? 'Hide hint' : 'Show hint'}
       </button>
       {open && (
         <div className="tutor-tip">
@@ -55,6 +61,7 @@ function Nudge({ text }: { text: string }) {
   );
 }
 export function ChoiceTask({
+  onHint,
   challenge: c,
   onNext,
   onMistake,
@@ -73,7 +80,7 @@ export function ChoiceTask({
   return (
     <div className="choice-task">
       <div className="activity-kicker">
-        <MagnifyingGlassIcon weight="duotone" /> LOOK A LITTLE CLOSER
+        <MagnifyingGlassIcon weight="duotone" /> EXAMINE THE TRANSACTION
       </div>
       <h2>{c.title}</h2>
       <div className="story-slip">
@@ -103,7 +110,7 @@ export function ChoiceTask({
         ))}
       </div>
       {option && <AnswerFeedback correct={correct} text={option.explanation} onNext={onNext} />}
-      <Nudge text={c.tip} />
+      <Nudge text={c.tip} onHint={onHint} />
     </div>
   );
 }
@@ -139,6 +146,7 @@ function AccountChip({
       disabled={disabled}
       aria-pressed={selected}
       className={selected ? 'selected' : ''}
+      data-tally-sound="select"
       onClick={onSelect}
       {...gesture}
       onContextMenu={(event) => event.preventDefault()}
@@ -149,6 +157,7 @@ function AccountChip({
 }
 
 export function JournalTask({
+  onHint,
   challenge: c,
   onNext,
   onMistake,
@@ -172,7 +181,7 @@ export function JournalTask({
   const ghostX = useMotionValue(0),
     ghostY = useMotionValue(0);
   const locked = result === true;
-  const parse = (s: string) => Number(s.replace(/[$£€,]/g, '')) || 0;
+  const parse = (s: string) => learnerNumber(s) ?? 0;
   const debitTotal = parse(amounts.debit),
     creditTotal = parse(amounts.credit);
   const balanced = debitTotal > 0 && debitTotal === creditTotal;
@@ -226,13 +235,13 @@ export function JournalTask({
         <Scene kind="bars" values={[debitTotal, creditTotal]} maxValue={c.amount * 1.2} compact />
         <div className={`journal-total ${balanced ? 'balanced' : ''}`} aria-live="polite">
           <span>
-            DEBITS <strong className="mono">${debitTotal.toLocaleString()}</strong>
+            DEBITS <strong className="mono">{money(debitTotal)}</strong>
           </span>
           <span className="balance-token">
             {balanced ? <CheckIcon weight="bold" /> : <ArrowsLeftRightIcon />}
           </span>
           <span>
-            CREDITS <strong className="mono">${creditTotal.toLocaleString()}</strong>
+            CREDITS <strong className="mono">{money(creditTotal)}</strong>
           </span>
         </div>
       </div>
@@ -277,6 +286,7 @@ export function JournalTask({
                   slots.current[side] = element;
                 }}
                 className={`journal-slot ${selected ? 'ready' : ''} ${hovered === side ? 'drag-over' : ''}`}
+                data-tally-sound={selected ? 'select' : undefined}
                 disabled={locked}
                 aria-label={`Place account on ${side}${accounts[side] ? `: ${accounts[side]}` : ''}`}
                 onClick={() => put(side)}
@@ -286,14 +296,14 @@ export function JournalTask({
                 <span className="slot-mark">{accounts[side] ? <CheckIcon /> : '+'}</span>
               </button>
               <label>
-                {side === 'debit' ? 'Debit amount ($)' : 'Credit amount ($)'}
+                {side === 'debit' ? 'Debit amount (R)' : 'Credit amount (R)'}
                 <input
                   ref={side === 'credit' ? creditRef : undefined}
                   inputMode="decimal"
                   autoComplete="off"
                   disabled={locked}
                   value={amounts[side]}
-                  placeholder="0.00"
+                  placeholder="0,00"
                   onChange={(e) => {
                     setAmounts((v) => ({ ...v, [side]: e.target.value }));
                     setResult(null);
@@ -349,7 +359,7 @@ export function JournalTask({
           onNext={onNext}
         />
       )}
-      <Nudge text={c.tip} />
+      <Nudge text={c.tip} onHint={onHint} />
     </div>
   );
 }
@@ -432,6 +442,7 @@ export function RecallTask({
               className="recall-card"
               {...gesture}
               type="button"
+              data-tally-sound="flip"
               onClick={() => setFlipped((v) => !v)}
               aria-label={
                 flipped
@@ -485,7 +496,11 @@ export function RecallTask({
               placeholder="I think it’s…"
             />
           </label>
-          <button className="button primary full" onClick={() => setFlipped(true)}>
+          <button
+            className="button primary full"
+            data-tally-sound="flip"
+            onClick={() => setFlipped(true)}
+          >
             Turn the card <ArrowRightIcon />
           </button>
         </>

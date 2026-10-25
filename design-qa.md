@@ -95,3 +95,9 @@ All **26** production-build Playwright tests passed in **4.5 minutes**. Eight ne
 TypeScript, oxlint, oxfmt and the optimized build passed. An offline reload opened the recall lesson and its answer, preserved 120 XP and existing progress, and used only `tally-offline-v4`; capture and offline checks observed no page errors. The shared pointer hook removes capture and document listeners on completion, cancellation, blur, hidden tabs and unmount. Motion values handle transient movement; reduced motion suppresses rebound/flip animation.
 
 Physical iOS/Android and pen hardware were not available. Browser touch-input emulation verifies gesture routing and multi-touch behavior, not device-specific haptics or operating-system edge gestures. No P0/P1/P2 issues remain in this scope.
+
+### Integration with current main — October 25, 2026
+
+The release incorporates main `da58dc4`, preserving all 16 lessons, adaptive question plans, session recovery, skill stages, the opt-in soundscape, settings separation, South African English, rand and SAST calendars. Gesture tests use the adaptive question source for entry answers. The offline cache advances from main's v7 to v8; it does not revert to the earlier gesture build's v4. PWA captures were refreshed from the integrated app, and journal drag captures show rand and trade-payables terminology.
+
+All eight touch scenarios passed again after integration. TypeScript, oxlint, oxfmt and the production build passed. The expanded 55-case suite is the release regression suite; its final result is recorded in the pull request's Verify app check. The 26-case result above documents the earlier gesture-only build before main advanced.

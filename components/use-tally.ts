@@ -11,12 +11,14 @@ export function useTally() {
   const [progress, setProgress] = useState<Progress>(initialProgress);
   const [ready, setReady] = useState(false);
   const [storageError, setStorageError] = useState(false);
-  // Keep prerendered HTML identical across dates and time zones; use the device's
-  // calendar after hydration for challenges and streaks.
+  // Keep prerendered HTML identical across dates and time zones; use the
+  // SAST calendar after hydration for challenges and streaks.
   const [today, setToday] = useState('2000-01-01');
   useEffect(() => {
     try {
-      setProgress(readProgress(localStorage.getItem(STORAGE_KEY)));
+      setProgress(
+        readProgress(localStorage.getItem(STORAGE_KEY), localStorage.getItem('tally-reviews-v1')),
+      );
     } catch {
       setStorageError(true);
     }

@@ -7,9 +7,9 @@ export default defineConfig({
   use: {
     baseURL: process.env.BASE_URL || 'http://localhost:3000',
     headless: true,
+    timezoneId: 'Africa/Johannesburg',
     viewport: { width: 390, height: 844 },
     launchOptions: {
-      executablePath: '/usr/bin/chromium',
       args: [
         '--no-sandbox',
         '--enable-unsafe-swiftshader',

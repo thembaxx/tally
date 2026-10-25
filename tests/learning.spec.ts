@@ -8,6 +8,7 @@ import {
   readProgress,
   dailyTasks,
 } from '../lib/learning';
+import { practiceEntry } from '../lib/questions';
 async function returning(page: Page) {
   await page.addInitScript(
     (p) => {
@@ -21,10 +22,10 @@ async function returning(page: Page) {
     },
   );
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'A little wiser, Alex.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Welcome back, Alex.' })).toBeVisible();
 }
 test('accounting model, loose checks, daily variation, and real streaks', () => {
-  expect(accepts(' $1,200.00 ', ['1200'])).toBe(true);
+  expect(accepts(' R1 200.00 ', ['1200'])).toBe(true);
   expect(accepts('Laptop', ['equipment', 'laptop'])).toBe(true);
   expect(accepts('', ['0'])).toBe(false);
   expect(accepts('cash flow', ['cash'])).toBe(false);
@@ -34,20 +35,19 @@ test('accounting model, loose checks, daily variation, and real streaks', () => 
   expect(dailyTasks(day)).toEqual(dailyTasks(day));
   expect(dailyTasks(day)).not.toEqual(dailyTasks(previousDay(day)));
   expect(readProgress('{broken').xp).toBe(0);
+  expect(readProgress('{"sound":true,"soundVolume":900}').soundVolume).toBe(100);
+  expect(readProgress('{"sound":true,"soundVolume":-2}').soundVolume).toBe(0);
+  expect(readProgress('{"sound":true,"soundVolume":"loud"}').soundVolume).toBe(45);
+  expect(readProgress('{"sound":false}').sound).toBe(false);
   expect(readProgress('{"xp":"fake","completed":["bad"]}').completed).toEqual([]);
 });
 test('onboarding, swipe sorting, loose answer, XP and review persistence', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto('/');
-  await page.getByRole('button', { name: 'Let’s make it click' }).click();
+  await page.getByRole('button', { name: 'Start learning' }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
-  await page.getByLabel('What should I call you?').fill('Sam');
-  await page.getByRole('button', { name: 'A little more about you' }).click();
-  await page.getByRole('button', { name: /A steady glow/ }).click();
-  await page.getByRole('button', { name: 'A little more about you' }).click();
-  await page.getByRole('button', { name: 'Let’s find your first lightbulb moment' }).click();
-  await page.getByRole('button', { name: 'I’m ready to try' }).click();
+  await expect(page.getByLabel('What should I call you?')).toHaveCount(0);
   await page.getByRole('button', { name: 'Liability', exact: true }).click();
   await expect(page.getByText('Let’s think it through')).toBeVisible();
   await page.getByRole('button', { name: 'Asset', exact: true }).click();
@@ -62,27 +62,34 @@ test('onboarding, swipe sorting, loose answer, XP and review persistence', async
   await page.mouse.move(box.x + box.width / 2, box.y + 20, { steps: 8 });
   await page.mouse.up();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
-  await page.getByLabel('Owner’s equity ($)').fill('$40.00');
+  await page
+    .getByLabel('Owner’s equity (R)')
+    .fill(`R${practiceEntry('equation').answers[0][0]}.00`);
   await page.getByRole('button', { name: 'Check my answer' }).click();
-  await expect(page.getByText(/\$100 − \$60 = \$40/)).toBeVisible();
+  await expect(
+    page.getByText(practiceEntry('equation').explanation, { exact: true }),
+  ).toBeVisible();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByLabel('My takeaway').fill('What we own equals what we owe plus our share.');
   await page.getByRole('button', { name: 'Still learning', exact: true }).click();
   await page.getByRole('button', { name: 'Finish lesson' }).click();
   await expect(page.locator('.earned-xp')).toContainText('+60');
-  await page.getByRole('button', { name: 'Keep the good feeling' }).click();
-  await expect(page.getByRole('heading', { name: 'A little wiser, Sam.' })).toBeVisible();
+  await page.getByRole('button', { name: 'Done' }).click();
+  await page.getByLabel('What should I call you?').fill('Sam');
+  await page.getByRole('button', { name: /5 minutes/ }).click();
+  await page.getByRole('button', { name: 'Save my preferences' }).click();
+  await expect(page.getByRole('heading', { name: 'Welcome back, Sam.' })).toBeVisible();
   await page.reload();
   await expect(page.locator('.xp-chip')).toContainText('60');
   await expect(page.locator('.streak-chip')).toContainText('1');
   await page.getByRole('button', { name: 'Practice', exact: true }).click();
-  await expect(
-    page.getByRole('button', { name: /The Equation.*Next gentle review/ }),
-  ).toBeVisible();
+  await expect(page.getByRole('button', { name: /The Equation.*Next review/ })).toBeVisible();
   const saved = await page.evaluate(() =>
     JSON.parse(localStorage.getItem('tally-progress-v1') || '{}'),
   );
   expect(saved.completed).toContain('equation');
+  expect(saved.notes.equation).toBe('What we own equals what we owe plus our share.');
+  expect(saved.reviews.equation.interval).toBe(1);
   expect(errors).toEqual([]);
 });
 test('debit synonyms, Enter advance, accessible reorder, and reduced repeat XP', async ({
@@ -106,11 +113,11 @@ test('debit synonyms, Enter advance, accessible reorder, and reduced repeat XP',
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByRole('button', { name: 'Finish lesson' }).click();
   await expect(page.locator('.earned-xp')).toContainText('+60');
-  await page.getByRole('button', { name: 'Keep the good feeling' }).click();
+  await page.getByRole('button', { name: 'Done' }).click();
   await page.getByRole('button', { name: 'Debit & Credit, review lesson', exact: true }).click();
   await page.getByRole('button', { name: 'I’m ready to try' }).click();
-  await page.getByLabel('Debit account').fill('equipment');
-  await page.getByLabel('Credit account').fill('cash');
+  await page.getByLabel('Debit account').fill(practiceEntry('debit', 1).answers[0][0]);
+  await page.getByLabel('Credit account').fill(practiceEntry('debit', 1).answers[1][0]);
   await page.getByRole('button', { name: 'Check my answer' }).click();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   for (let i = 0; i < 3; i++)
@@ -161,17 +168,22 @@ test('navigation and responsive layouts at five widths', async ({ page }) => {
   }
   await page.getByRole('button', { name: 'Learn', exact: true }).click();
   await page.goBack();
-  await expect(page.getByRole('heading', { name: 'A little wiser, Alex.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Welcome back, Alex.' })).toBeVisible();
 });
 
 test('daily mix completes all three tasks and repeat rewards decrease', async ({ page }) => {
-  const day = localDay();
+  test.setTimeout(120000);
+  // Use the SAST calendar; keep native animation timers running.
   await returning(page);
-  const tasks = dailyTasks(day);
+  const day = localDay();
   for (const expected of [90, 15]) {
+    const history = await page.evaluate(
+      () => JSON.parse(localStorage.getItem('tally-progress-v1') || '{}').reviews || {},
+    );
+    const tasks = dailyTasks(day, history);
     await page
       .getByRole('button', {
-        name: expected === 90 ? 'Take the challenge' : 'Play it again',
+        name: expected === 90 ? 'Start daily mix' : 'Repeat daily mix',
         exact: true,
       })
       .click();
@@ -188,7 +200,66 @@ test('daily mix completes all three tasks and repeat rewards decrease', async ({
     await page.getByRole('button', { name: 'Check the order' }).click();
     await page.getByRole('button', { name: 'Continue', exact: true }).click();
     await expect(page.locator('.earned-xp')).toContainText(`+${expected}`);
-    await page.getByRole('button', { name: 'Keep the good feeling' }).click();
+    await page.getByRole('button', { name: 'Done' }).click();
   }
   await expect(page.locator('.xp-chip')).toContainText('105');
+});
+
+test('Me shows personal progress while appearance and other preferences live in Settings', async ({
+  page,
+}) => {
+  await returning(page);
+  await page.getByRole('button', { name: 'Me', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Your progress' })).toBeVisible();
+  await expect(page.getByText('Total XP', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your achievements' })).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Theme' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'All settings' })).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Edit profile' }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
+  await expect(page.getByLabel('Your name')).toHaveValue('Alex');
+  await expect(page.getByRole('group', { name: 'Choose theme' })).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Daily goal' })).toBeVisible();
+  await expect(page.getByRole('switch', { name: 'Haptic feedback' })).toBeVisible();
+  await expect(page.getByRole('switch', { name: 'Sound effects' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Export my progress' })).toBeVisible();
+  await page.getByRole('button', { name: 'Dark', exact: true }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await page.getByRole('button', { name: 'Close', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Your progress' })).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Choose theme' })).toHaveCount(0);
+});
+
+test('sound is opt-in with accessible volume, preview and persisted preference', async ({
+  page,
+}) => {
+  await returning(page);
+  await page.getByRole('button', { name: 'Open settings' }).click();
+  const sound = page.getByRole('switch', { name: 'Sound effects' });
+  const volume = page.getByRole('slider', { name: 'Sound volume' });
+  const preview = page.getByRole('button', { name: 'Preview sounds' });
+  await expect(sound).toHaveAttribute('aria-checked', 'false');
+  await expect(volume).toBeDisabled();
+  await expect(preview).toBeDisabled();
+
+  await sound.click();
+  await expect(sound).toHaveAttribute('aria-checked', 'true');
+  await expect(volume).toBeEnabled();
+  await expect(preview).toBeEnabled();
+  await volume.press('End');
+  for (let i = 0; i < 7; i++) await volume.press('ArrowLeft');
+  await expect(volume).toHaveValue('65');
+  await preview.click();
+  await page.getByRole('button', { name: 'Close', exact: true }).click();
+  await page.reload();
+  await page.getByRole('button', { name: 'Open settings' }).click();
+  await expect(page.getByRole('switch', { name: 'Sound effects' })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+  await expect(page.getByRole('slider', { name: 'Sound volume' })).toHaveValue('65');
+  await page.getByRole('switch', { name: 'Sound effects' }).click();
+  await expect(page.getByRole('button', { name: 'Preview sounds' })).toBeDisabled();
 });
