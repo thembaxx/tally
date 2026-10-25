@@ -173,3 +173,37 @@ on the desktop page. The sync helper now waits for the visible accessible Settin
 control instead of making a one-time rendering assumption. This is a test-only
 change; production sync and feedback code are unchanged. The focused sync suite
 passes with the corrected helper.
+
+## Personal tutor — October 25, 2026
+
+Added a validated, portable tutor profile with editable guidance, explanation and
+practice-size preferences, plus an optional untimed three-idea starting point.
+The check resumes across reloads, explains every answer and provides starting clues
+without awarding XP, completing lessons or creating independent-recall evidence.
+Existing recorded practice takes priority over the check. No IQ, diagnosis,
+reading-speed score or fixed learning-style classification is inferred.
+
+Home/Practice explain the next tutor plan and link to the same learning-fit panel
+as Settings. Automatic plans can focus on one idea when support is needed, revisit
+a demonstrated prerequisite gap or prioritise an unresolved authored reasoning
+check. Learners retain explicit one/two-topic and guidance controls. Explanation
+formats are remembered per lesson, shop and case. The panel lists recent topic
+observations rather than an overall ability score.
+
+Ordinary numerical lessons now use the topic's guided/standard/stretch evidence.
+Repeated retries/hints offer another worked example and can ease the next entry
+activity before it starts. Authored connected stories retain their numbers and
+sequence. Questions already being answered do not change silently. New ordinary
+lesson drafts save their challenge, and older drafts keep their original question.
+The profile survives validated backups and encrypted sync; device themes/audio/
+graphics remain local. Offline cache advances to v11.
+
+Local proof: TypeScript, Oxlint, Oxfmt and the production build pass. Across the
+focused runs, 49 Chromium checks and four WebKit mobile checks pass, including
+per-topic ability decisions, misconception/prerequisite repair, check-in recovery,
+no check-in XP, learner overrides, stretch lessons, retry scaffolding, legacy
+question preservation, encrypted profile transfer, existing lessons/cases/shop,
+retention/backup restore, sound/haptics, daily rewards and public SEO pages.
+Light/dark 390px learning-fit and starting-point captures were visually reviewed;
+AA/overflow/focus tests cover 320 × 480px and nested Settings restoration.
+Teaching sources, decision rules and limits are in `docs/personal-tutoring.md`.

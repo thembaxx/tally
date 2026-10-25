@@ -56,6 +56,8 @@ import { useProgressSync } from './use-progress-sync';
 import { useTally, useFocus, useTheme } from './use-tally';
 import { useFeedback } from './use-feedback';
 import { FeedbackSettings } from './feedback-settings';
+import { TutorPreferences } from './tutor-preferences';
+import { tutorPlan, personalChallenge, type TutorProfile } from '@/lib/personalisation';
 import { Logo, Blob } from './brand';
 import { Modal } from './modal';
 import { LessonPlayer } from './lesson-player';
@@ -68,7 +70,6 @@ import { projectIds } from '@/lib/experiences';
 import { recallEvidence } from '@/lib/skills';
 import { readBackup } from '@/lib/backup';
 import { scheduleReview, weakestReviews } from '@/lib/reviews';
-import { practiceTopics, recommendedChallenge } from '@/lib/adaptive';
 import { addDays, dateLabel, learningContext } from '@/lib/south-africa';
 import {
   matchesDraft,
@@ -122,6 +123,7 @@ export default function TallyApp() {
   const cloudSync = useProgressSync(p, setProgress, ready);
   const [tab, setTab] = useState<Tab>('home');
   const [settings, setSettings] = useState(false);
+  const [learningFit, setLearningFit] = useState(false);
   const [active, setActive] = useState<Session | null>(null);
   const [onboarding, setOnboarding] = useState(false);
   const [draftName, setDraftName] = useState('');
@@ -297,6 +299,12 @@ export default function TallyApp() {
   function patch(update: Partial<Progress>) {
     setProgress((v) => ({ ...v, ...update }));
   }
+  const updateTutor = useCallback(
+    (change: (old: TutorProfile) => TutorProfile) => {
+      setProgress((old) => ({ ...old, tutor: change(old.tutor) }));
+    },
+    [setProgress],
+  );
   function feedback(success: boolean) {
     playSound(success ? 'correct' : 'incorrect');
   }
@@ -424,17 +432,21 @@ export default function TallyApp() {
   const dayStreak = streak(p.activity, today);
   const dueIds = weakestReviews(reviews, today);
   const due = lessons.filter((l) => dueIds.includes(l.id));
-  const reviewIds = practiceTopics(
+  const plan = tutorPlan(
     reviews,
     today,
     p.completed,
     lessons.filter((l) => !l.locked).map((l) => l.id),
+    p.tutor,
+    p.goal,
+    p.experiences.coaching,
   );
+  const reviewIds = plan.topics;
   const resumable = p.draft && (p.draft.lessonId !== 'daily' || p.draft.day === today);
   const reviewAction = reviewIds.length ? (
     <section className="next-action review-action" aria-label="Your next review">
       <div>
-        <span className="eyebrow">PERSONALIZED PRACTICE</span>
+        <span className="eyebrow">YOUR TUTOR PLAN</span>
         <h2>{reviewIds.length === 1 ? 'One topic to review.' : 'Two topics to review.'}</h2>
         <p>
           {reviewIds.map((id) => lessons.find((l) => l.id === id)?.title).join(' · ')} · about{' '}
@@ -446,15 +458,30 @@ export default function TallyApp() {
               <strong>{lessons.find((l) => l.id === id)?.title}:</strong>{' '}
               {(reviews[id] || p.completed.includes(id)) &&
                 `${recallEvidence(reviews[id], p.completed.includes(id))} `}
-              {recommendedChallenge(reviews[id]).reason}
+              {personalChallenge(id, reviews[id], p.tutor, p.experiences.coaching[id]).reason}
             </li>
           ))}
         </ul>
+        <p className="tutor-plan-note">{plan.reason}</p>
+        <button
+          type="button"
+          className="text-button tutor-tune"
+          data-tally-sound="open"
+          onClick={() => setLearningFit(true)}
+        >
+          <SparkleIcon weight="duotone" /> Tune my learning
+        </button>
       </div>
       <button className="button primary" onClick={() => launch({ kind: 'review', ids: reviewIds })}>
         {reviewIds.some((id) => p.completed.includes(id) || reviews[id]?.attempts)
           ? `Review ${reviewIds.length === 1 ? 'this concept' : 'these concepts'}`
-          : 'Start guided practice'}{' '}
+          : reviewIds.every(
+                (id) =>
+                  personalChallenge(id, reviews[id], p.tutor, p.experiences.coaching[id]).level ===
+                  'guided',
+              )
+            ? 'Start guided practice'
+            : 'Start my practice'}{' '}
         <ArrowRightIcon />
       </button>
     </section>
@@ -1008,6 +1035,14 @@ export default function TallyApp() {
                     </div>
                     <ExperienceLab
                       data={p.experiences}
+                      tutor={p.tutor}
+                      reviews={reviews}
+                      onFormat={(id, format) =>
+                        updateTutor((old) => ({
+                          ...old,
+                          formats: { ...old.formats, [id]: format },
+                        }))
+                      }
                       update={updateExperience}
                       feedback={feedback}
                     />
@@ -1303,6 +1338,10 @@ export default function TallyApp() {
                   : {}
               }
               reviews={reviews}
+              tutor={p.tutor}
+              onFormat={(id, format) =>
+                updateTutor((old) => ({ ...old, formats: { ...old.formats, [id]: format } }))
+              }
               coaching={p.experiences.coaching}
               onCoaching={(id, evidence) =>
                 updateExperience((old) => ({
@@ -1389,6 +1428,19 @@ export default function TallyApp() {
           </div>
         </Modal>
         <Modal
+          open={learningFit}
+          onClose={() => setLearningFit(false)}
+          title="Your learning fit"
+          description="Shape a tutor that works with you."
+        >
+          <TutorPreferences
+            progress={p}
+            update={updateTutor}
+            day={today}
+            onClose={() => setLearningFit(false)}
+          />
+        </Modal>
+        <Modal
           open={settings}
           onClose={() => {
             setSettings(false);
@@ -1459,6 +1511,19 @@ export default function TallyApp() {
                 ))}
               </select>
             </div>
+            <button
+              type="button"
+              className="fit-settings-link"
+              data-tally-sound="open"
+              onClick={() => setLearningFit(true)}
+            >
+              <SparkleIcon size={24} weight="duotone" />
+              <span>
+                <strong>Personalise my tutor</strong>
+                <small>Starting point, guidance, explanations and practice size.</small>
+              </span>
+              <ArrowRightIcon />
+            </button>
             <FeedbackSettings progress={p} patch={patch} engine={feedbackEngine} />
             <h3 className="settings-section-title">App &amp; data</h3>
             <div className="setting-row">

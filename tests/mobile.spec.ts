@@ -111,3 +111,40 @@ test('WebKit offers honest vibration support and decodes the sound previews', as
   );
   expect(errors).toEqual([]);
 });
+
+test('WebKit keeps personal tutoring controls usable and saves an untimed starting point', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Tune my learning', exact: true }).tap();
+  await page
+    .getByRole('combobox', { name: 'How much guidance?', exact: true })
+    .selectOption('guided');
+  await page.getByRole('combobox', { name: 'My practice size', exact: true }).selectOption('one');
+  await page.getByRole('button', { name: 'Try it', exact: true }).tap();
+  await page.getByRole('button', { name: 'Not sure yet — show me', exact: true }).tap();
+  await page.getByRole('button', { name: 'Next idea', exact: true }).tap();
+  await page.reload();
+  await page.getByRole('button', { name: 'Tune my learning', exact: true }).tap();
+  await expect(page.getByRole('combobox', { name: 'How much guidance?', exact: true })).toHaveValue(
+    'guided',
+  );
+  await expect(page.getByRole('combobox', { name: 'My practice size', exact: true })).toHaveValue(
+    'one',
+  );
+  await page.getByRole('button', { name: 'Continue', exact: true }).tap();
+  await expect(page.getByRole('heading', { name: 'Follow the value.', exact: true })).toBeFocused();
+  await page.setViewportSize({ width: 320, height: 480 });
+  expect(await page.getByRole('dialog').evaluate((e) => e.scrollWidth <= e.clientWidth + 1)).toBe(
+    true,
+  );
+  expect(
+    (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations,
+  ).toEqual([]);
+  const p = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem('tally-progress-v1') || '{}'),
+  );
+  expect(p.tutor.startingPoint.answers.equation).toBe('support');
+  expect(p.completed).toEqual([]);
+  expect(p.xp).toBe(0);
+});

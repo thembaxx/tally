@@ -3,23 +3,43 @@ import { createContext, useContext, useState, type ReactNode } from 'react';
 import { LightbulbIcon, BookOpenIcon, ChatCircleDotsIcon } from '@phosphor-icons/react';
 import { coachPlans, glossary } from '@/lib/coaching';
 import type { CoachingEvidence } from '@/lib/experiences';
+import {
+  explanationFor,
+  initialTutor,
+  type TutorProfile,
+  type Explanation,
+} from '@/lib/personalisation';
+import type { Review } from '@/lib/reviews';
 import { Segmented } from './ui/controls';
 type CoachContext = {
   id: string;
   evidence?: CoachingEvidence;
   save?: (id: string, evidence: CoachingEvidence) => void;
+  tutor?: TutorProfile;
+  review?: Review;
+  onFormat?: (id: string, format: Explanation) => void;
 };
 const Context = createContext<CoachContext>({ id: 'equation' });
 export function CoachScope({
   id,
   evidence,
   save,
+  tutor,
+  review,
+  onFormat,
   children,
 }: CoachContext & { children: ReactNode }) {
-  return <Context.Provider value={{ id, evidence, save }}>{children}</Context.Provider>;
+  return (
+    <Context.Provider value={{ id, evidence, save, tutor, review, onFormat }}>
+      {children}
+    </Context.Provider>
+  );
 }
 export function ExplanationTools({ id }: { id: string }) {
-  const [mode, setMode] = useState('simple');
+  const context = useContext(Context);
+  const [mode, setMode] = useState(() =>
+    explanationFor(id, context.tutor || initialTutor, context.review, context.evidence),
+  );
   const p = coachPlans[id] || coachPlans.equation;
   return (
     <details className="coach-tools">
@@ -30,7 +50,10 @@ export function ExplanationTools({ id }: { id: string }) {
         <Segmented
           label="Explanation style"
           value={mode}
-          onChange={setMode}
+          onChange={(value) => {
+            setMode(value as Explanation);
+            context.onFormat?.(id, value as Explanation);
+          }}
           items={[
             { id: 'simple', label: 'Simply' },
             { id: 'example', label: 'Example' },

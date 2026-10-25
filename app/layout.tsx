@@ -4,6 +4,7 @@ import './globals.css';
 import './expressive.css';
 import './guides.css';
 import './experiences.css';
+import './tutor.css';
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: { default: brand.title, template: '%s · Tally' },

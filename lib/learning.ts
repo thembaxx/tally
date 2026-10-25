@@ -7,6 +7,7 @@ import { readReviews, type Review } from './reviews';
 import { readDraft, type LessonDraft } from './session';
 import { practiceTopics, recommendedChallenge } from './adaptive';
 import { accountName, addDays, learnerNumber, southAfricanDay } from './south-africa';
+import { initialTutor, readTutor, type TutorProfile } from './personalisation';
 export type Category = 'Asset' | 'Liability' | 'Equity';
 export type SortItem = { name: string; category: Category; amount: number; explanation: string };
 export type Entry = {
@@ -511,6 +512,7 @@ export type Progress = {
   notes: Record<string, string>;
   draft: LessonDraft | null;
   experiences: Experiences;
+  tutor: TutorProfile;
 };
 export const initialProgress: Progress = {
   name: '',
@@ -530,6 +532,7 @@ export const initialProgress: Progress = {
   notes: {},
   draft: null,
   experiences: emptyExperiences,
+  tutor: initialTutor,
 };
 export function readProgress(raw: string | null, legacyReviews?: string | null): Progress {
   try {
@@ -546,6 +549,10 @@ export function readProgress(raw: string | null, legacyReviews?: string | null):
     return {
       ...initialProgress,
       experiences: readExperiences(p.experiences),
+      tutor: readTutor(
+        p.tutor,
+        lessons.map((l) => l.id),
+      ),
       name: typeof p.name === 'string' ? p.name.slice(0, 30) : '',
       onboarded: p.onboarded === true,
       goal: [3, 5, 10].includes(p.goal) ? p.goal : 5,

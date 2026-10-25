@@ -19,6 +19,7 @@ export type LessonDraft = {
   results: Record<string, TaskResult>;
   reviewPlan?: Challenge[];
   dailyChallenge?: Challenge;
+  lessonChallenge?: Challenge;
 };
 export type SessionResult = {
   day: string;
@@ -110,6 +111,13 @@ export function readDraft(raw: unknown, ids: string[]): LessonDraft | null {
     (d.lessonId !== 'daily' || !dailyChallenge || dailyChallenge.followUp)
   )
     return null;
+  const lessonChallenge =
+    d.lessonChallenge === undefined ? undefined : challenge(d.lessonChallenge, [d.lessonId]);
+  if (
+    d.lessonChallenge !== undefined &&
+    (!ids.includes(d.lessonId) || !lessonChallenge || lessonChallenge.followUp)
+  )
+    return null;
   const results =
     d.results && typeof d.results === 'object'
       ? Object.fromEntries(
@@ -143,5 +151,6 @@ export function readDraft(raw: unknown, ids: string[]): LessonDraft | null {
     results,
     ...(reviewPlan ? { reviewPlan } : {}),
     ...(dailyChallenge ? { dailyChallenge } : {}),
+    ...(lessonChallenge ? { lessonChallenge } : {}),
   };
 }
