@@ -65,6 +65,7 @@ import { MotionPage } from './motion-page';
 import { ExperienceLab, type UpdateExperience } from './experience-lab';
 import { PracticeStudio } from './practice-studio';
 import { SkillMap } from './skill-map';
+import { projectIds } from '@/lib/experiences';
 import { recallEvidence } from '@/lib/skills';
 import { readBackup } from '@/lib/backup';
 import { scheduleReview, weakestReviews } from '@/lib/reviews';
@@ -137,6 +138,10 @@ export default function TallyApp() {
     (change) => {
       setProgress((old) => {
         const next = change(old.experiences);
+        if (next === old.experiences) return old;
+        const practiced =
+          next.transactions.length > old.experiences.transactions.length ||
+          projectIds.some((id) => (next.projects[id] || 0) > (old.experiences.projects[id] || 0));
         const earned = next.awards
           .filter((id) => !old.experiences.awards.includes(id))
           .reduce((sum, id) => sum + (id.startsWith('shop-') ? 5 : 30), 0);
@@ -144,7 +149,7 @@ export default function TallyApp() {
           ...old,
           experiences: next,
           xp: old.xp + earned,
-          activity: earned
+          activity: practiced
             ? { ...old.activity, [localDay()]: (old.activity[localDay()] || 0) + 1 }
             : old.activity,
         };

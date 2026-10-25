@@ -2,6 +2,18 @@ import { test, expect, type BrowserContext, type Page } from '@playwright/test';
 import { initialProgress } from '../lib/learning';
 import { createCode, accessToken, seal, unseal, fingerprint } from '../lib/vault';
 import { GET, HEAD, POST, PUT } from '../app/api/sync/route';
+test('running sync endpoint answers GET and HEAD without exposing progress or caching it', async ({
+  request,
+}) => {
+  const get = await request.get('/api/sync');
+  const head = await request.head('/api/sync');
+  expect(get.status()).toBe(200);
+  expect(typeof (await get.json()).configured).toBe('boolean');
+  expect(head.status()).toBe(get.status());
+  expect(await head.text()).toBe('');
+  expect(head.headers()['cache-control']).toContain('no-store');
+  expect(head.headers()['x-robots-tag']).toContain('noindex');
+});
 test('sync API rejects invalid capabilities, origins and payloads, and uses revision checks without caching', async () => {
   const beforeUrl = process.env.TALLY_SYNC_URL;
   const beforeKey = process.env.TALLY_SYNC_PUBLISHABLE_KEY;

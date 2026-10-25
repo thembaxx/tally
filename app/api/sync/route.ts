@@ -29,19 +29,18 @@ async function limitedBody(request: Request) {
   return JSON.parse(Buffer.concat(chunks).toString('utf8'));
 }
 async function handle(request: Request) {
+  const method = request.method === 'HEAD' ? 'GET' : request.method;
   const url = process.env.TALLY_SYNC_URL;
   const key = process.env.TALLY_SYNC_PUBLISHABLE_KEY;
   const token = request.headers.get('authorization')?.replace(/^Bearer /, '');
-  if (!url || !key)
-    return reply({ configured: false }, request.method === 'GET' && !token ? 200 : 503);
-  if (request.method === 'GET' && !token) return reply({ configured: true });
+  if (!url || !key) return reply({ configured: false }, method === 'GET' && !token ? 200 : 503);
+  if (method === 'GET' && !token) return reply({ configured: true });
   if (!token || !/^[a-f0-9]{64}$/.test(token)) return reply({ error: 'Invalid sync access' }, 401);
   const origin = request.headers.get('origin');
   if (origin && origin !== new URL(request.url).origin)
     return reply({ error: 'Invalid origin' }, 403);
   const id = createHash('sha256').update(token).digest('hex');
   const remote = new URL('/rest/v1/progress_vaults', url);
-  const method = request.method;
   let body: string | undefined;
   if (method !== 'POST') remote.searchParams.set('id', `eq.${id}`);
   if (method === 'PUT' || method === 'POST') {
@@ -105,6 +104,6 @@ export const POST = handle;
 export const PUT = handle;
 export const DELETE = handle;
 export async function HEAD(request: Request) {
-  const response = await handle(new Request(request, { method: 'GET' }));
+  const response = await handle(request);
   return new Response(null, { status: response.status, headers: response.headers });
 }

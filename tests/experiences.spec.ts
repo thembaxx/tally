@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { initialProgress, readProgress } from '../lib/learning';
+import { initialProgress, localDay, readProgress } from '../lib/learning';
 import {
   assets,
   decisions,
@@ -134,7 +134,9 @@ test('shop persists a credit sale, traces both journal entries, balances stateme
   await page.getByRole('button', { name: 'Start a fresh shop', exact: true }).click();
   await page.getByRole('button', { name: 'Start fresh', exact: true }).click();
   await decision(page, 'Stock the shelf', 'Profit stays the same');
-  expect((await saved(page)).xp).toBe(10);
+  const repeated = await saved(page);
+  expect(repeated.xp).toBe(10);
+  expect(repeated.activity[localDay()]).toBeGreaterThan(p.activity[localDay()]);
   await expect(page.getByRole('button', { name: 'Inspect stock', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Inspect stock', exact: true }).click();
   await expect(page.locator('.inspection-note')).toContainText('5 items at R20');
