@@ -228,7 +228,7 @@ test('offline reload retains sound choices and plays the locally cached exports'
   });
   await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
   const cached = await page.evaluate(async () => {
-    const cache = await caches.open('tally-offline-v10');
+    const cache = await caches.open('tally-offline-v11');
     return Promise.all(
       ['felt', 'tab', 'unfold', 'check', 'place', 'tally', 'bloom'].map(
         async (name) => !!(await cache.match(`/sounds/${name}-v1.mp3`)),

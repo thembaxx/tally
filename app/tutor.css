@@ -1,0 +1,358 @@
+.tutor-tune {
+  margin-top: 12px;
+  gap: 7px;
+}
+.next-action .tutor-plan-note {
+  font-size: 12px;
+  line-height: 1.6;
+}
+.fit-settings-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 16px;
+  margin: 10px 0 24px;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--blue);
+}
+.fit-settings-link > span {
+  flex: 1;
+  min-width: 0;
+}
+.fit-settings-link strong {
+  display: block;
+  font-size: 13px;
+}
+.fit-settings-link small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.tutor-fit {
+  padding-bottom: 8px;
+}
+.fit-intro {
+  text-align: center;
+  padding: 6px 0 24px;
+}
+.fit-mascot {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 112px;
+  height: 105px;
+  margin: 4px 0 14px;
+}
+.fit-mascot > svg {
+  width: 86px;
+  height: 86px;
+  position: relative;
+  z-index: 1;
+}
+.fit-mascot:before {
+  content: '';
+  position: absolute;
+  inset: 5px 0;
+  background: var(--lavender);
+  border-radius: 43% 57% 64% 36%;
+  transform: rotate(-12deg);
+}
+.fit-mascot i {
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  background: var(--coral);
+  border-radius: 5px;
+  right: -3px;
+  top: 8px;
+  transform: rotate(15deg);
+}
+.fit-mascot i:last-child {
+  width: 9px;
+  height: 9px;
+  top: auto;
+  bottom: 10px;
+  right: auto;
+  left: -4px;
+  border-radius: 50%;
+  background: var(--brand);
+}
+.fit-intro h2,
+.fit-summary h2 {
+  font-size: clamp(25px, 6vw, 32px);
+  margin: 10px 0;
+  line-height: 1.15;
+  letter-spacing: -0.8px;
+}
+.tutor-fit p {
+  line-height: 1.7;
+}
+.fit-intro > p,
+.fit-summary > p {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 12px auto 0;
+  max-width: 380px;
+}
+.fit-check-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 18px;
+  border-radius: 20px;
+  background: var(--mint);
+  margin-bottom: 24px;
+  border: 1px solid var(--line);
+}
+.fit-check-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  background: var(--surface);
+}
+.fit-check-card strong {
+  font-size: 13px;
+}
+.fit-check-card p {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 5px 0 0;
+}
+.fit-check-card .small-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 44px;
+  padding: 8px;
+}
+.fit-retake {
+  grid-column: 2 / -1;
+  justify-self: start;
+  font-size: 11px;
+}
+.fit-controls {
+  display: grid;
+  gap: 22px;
+}
+.fit-controls label {
+  display: grid;
+  gap: 9px;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+.fit-controls select {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 12px;
+  font-size: 16px;
+}
+.fit-controls small {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.7;
+  font-weight: 400;
+}
+.fit-noticed {
+  padding-top: 24px;
+  margin-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.fit-noticed h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  margin: 0 0 16px;
+}
+.fit-observation {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+}
+.fit-observation > svg {
+  margin-top: 3px;
+  flex-shrink: 0;
+  color: var(--green);
+}
+.fit-observation > .lesson-icon {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+.fit-observation strong {
+  font-size: 13px;
+}
+.fit-observation p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+.tutor-fit > .fine {
+  margin: 22px 0 16px;
+}
+.fit-step-track {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 20px 0 26px;
+}
+.fit-step-track > span {
+  flex: 1;
+  height: 5px;
+  background: var(--line);
+  border-radius: 10px;
+}
+.fit-step-track > .filled {
+  background: var(--brand);
+}
+.fit-step-track small {
+  color: var(--muted);
+  font-size: 11px;
+  margin-left: 8px;
+}
+.fit-question {
+  font-size: 15px;
+  margin: 16px 0 24px;
+}
+.fit-choices {
+  display: grid;
+  gap: 10px;
+}
+.fit-choices button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+  min-height: 58px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  font-size: 14px;
+  line-height: 1.6;
+  transition:
+    border-color 150ms,
+    background 150ms,
+    transform 150ms;
+}
+.fit-choices button > svg {
+  flex-shrink: 0;
+}
+.fit-choices button[aria-pressed='true'] {
+  border-color: var(--brand);
+  background: var(--blue);
+}
+.fit-choices button:disabled {
+  cursor: default;
+  opacity: 1;
+  color: var(--muted);
+}
+.fit-choices button[aria-pressed='true']:disabled {
+  color: var(--text);
+  font-weight: 600;
+}
+.fit-choices button:not(:disabled):active {
+  transform: scale(0.985);
+}
+.fit-choices + .text-button {
+  margin: 18px 0 0;
+}
+.fit-feedback {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: var(--butter);
+  padding: 18px;
+  border-radius: 18px;
+  margin: 20px 0;
+}
+.fit-feedback > svg {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+}
+.fit-feedback strong {
+  font-size: 14px;
+}
+.fit-feedback p {
+  margin: 6px 0 0;
+  font-size: 13px;
+}
+.fit-summary > svg {
+  display: block;
+  width: 86px;
+  height: 86px;
+  margin: 10px auto 20px;
+}
+.fit-summary > h2 {
+  text-align: center;
+}
+.fit-summary > .fine {
+  margin: 18px 0;
+  font-size: 11px;
+}
+.fit-back {
+  margin: 22px auto 0;
+  display: flex;
+}
+.tutor-rescue {
+  padding: 16px;
+  margin: 14px 0 20px;
+  background: var(--butter);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+}
+.tutor-rescue-heading {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.tutor-rescue-heading > svg {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+}
+.tutor-rescue-heading strong {
+  font-size: 13px;
+}
+.tutor-rescue-heading p {
+  margin: 5px 0 10px;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.tutor-rescue-example p {
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 12px 0 0;
+}
+@media (max-width: 360px) {
+  .fit-check-card {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .fit-check-card .small-button {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fit-choices button {
+    transition: none;
+  }
+  .fit-choices button:not(:disabled):active {
+    transform: none;
+  }
+}

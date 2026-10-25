@@ -42,7 +42,14 @@ import type { SoundCue } from './use-soundscape';
 import { emitFeedback } from '@/lib/feedback';
 import { practiceEntry } from '@/lib/questions';
 import { challengeLevels, type Challenge } from '@/lib/challenge-questions';
-import { followUp, recommendedChallenge } from '@/lib/adaptive';
+import { followUp } from '@/lib/adaptive';
+import {
+  initialTutor,
+  personalChallenge,
+  type TutorProfile,
+  type Explanation,
+} from '@/lib/personalisation';
+import { TutorSupport } from './tutor-support';
 import { createBakeryLesson } from '@/lib/bakery';
 import { learningContext, money } from '@/lib/south-africa';
 import {
@@ -69,6 +76,8 @@ type Props = {
   attempt: number;
   reviewAttempts: Record<string, number>;
   reviews: Record<string, Review>;
+  tutor?: TutorProfile;
+  onFormat?: (id: string, format: Explanation) => void;
   draft: LessonDraft | null;
   savedNote?: string;
   coaching?: Experiences['coaching'];
@@ -88,6 +97,8 @@ export function LessonPlayer({
   attempt: nextAttempt,
   reviewAttempts: nextReviewAttempts,
   reviews,
+  tutor = initialTutor,
+  onFormat,
   draft,
   savedNote = '',
   quickStart = false,
@@ -111,21 +122,52 @@ export function LessonPlayer({
   const [reviewAttempts] = useState(checkpoint?.reviewAttempts ?? nextReviewAttempts);
   const [sessionDay] = useState(checkpoint?.day ?? day);
   const [history] = useState(reviews);
+  const [startingTutor] = useState(tutor);
+  const [coachingHistory] = useState(coaching);
+  const [lessonChallenge, setLessonChallenge] = useState<Challenge | undefined>(
+    () =>
+      checkpoint?.lessonChallenge ??
+      (!checkpoint && fullLesson && !fullLesson.activities
+        ? {
+            id: fullLesson.id,
+            attempt,
+            level: personalChallenge(
+              fullLesson.id,
+              history[fullLesson.id],
+              startingTutor,
+              coachingHistory?.[fullLesson.id],
+              true,
+            ).level,
+          }
+        : undefined),
+  );
   const [reviewPlan, setReviewPlan] = useState<Challenge[]>(
     () =>
       checkpoint?.reviewPlan ??
       review?.ids.map((id) => ({
         id,
         attempt: reviewAttempts[id] ?? attempt,
-        level: checkpoint ? 'standard' : recommendedChallenge(history[id]).level,
+        level: checkpoint
+          ? 'standard'
+          : personalChallenge(id, history[id], startingTutor, coachingHistory?.[id]).level,
       })) ??
       [],
   );
-  const [dailyChallenge] = useState(
-    () =>
-      checkpoint?.dailyChallenge ??
-      dailyTasks(sessionDay, checkpoint ? undefined : history).challenge,
-  );
+  const [dailyChallenge] = useState(() => {
+    if (checkpoint?.dailyChallenge) return checkpoint.dailyChallenge;
+    const chosen = dailyTasks(sessionDay, checkpoint ? undefined : history).challenge;
+    return checkpoint
+      ? chosen
+      : {
+          ...chosen,
+          level: personalChallenge(
+            chosen.id,
+            history[chosen.id],
+            startingTutor,
+            coachingHistory?.[chosen.id],
+          ).level,
+        };
+  });
   const data = dailyTasks(sessionDay);
   const tasks: { task: Task; conceptId: string; challenge?: Challenge }[] = daily
     ? [
@@ -155,13 +197,23 @@ export function LessonPlayer({
             ((fullLesson.id === 'equation'
               ? [
                   { type: 'sort', items: requireSort() },
-                  { type: 'entry', entry: practiceEntry(fullLesson.id, attempt) },
+                  {
+                    type: 'entry',
+                    entry: practiceEntry(fullLesson.id, attempt, lessonChallenge?.level),
+                  },
                 ]
               : [
-                  { type: 'entry', entry: practiceEntry(fullLesson.id, attempt) },
+                  {
+                    type: 'entry',
+                    entry: practiceEntry(fullLesson.id, attempt, lessonChallenge?.level),
+                  },
                   { type: 'order', items: fullLesson.order, tip: fullLesson.orderTip },
                 ]) as Task[])
-          ).map((task) => ({ task, conceptId: fullLesson.id }))
+          ).map((task) => ({
+            task,
+            conceptId: fullLesson.id,
+            ...(task.type === 'entry' && lessonChallenge ? { challenge: lessonChallenge } : {}),
+          }))
         : [];
   const [intro, setIntro] = useState(checkpoint?.intro ?? (!daily && !review && !quickStart));
   const [step, setStep] = useState(Math.min(checkpoint?.step || 0, tasks.length - 1));
@@ -194,6 +246,7 @@ export function LessonPlayer({
       results,
       ...(review ? { reviewPlan } : {}),
       ...(daily ? { dailyChallenge } : {}),
+      ...(lessonChallenge ? { lessonChallenge } : {}),
     });
   }, [
     lesson,
@@ -209,6 +262,7 @@ export function LessonPlayer({
     results,
     reviewPlan,
     dailyChallenge,
+    lessonChallenge,
     daily,
     done,
     onDraft,
@@ -241,6 +295,17 @@ export function LessonPlayer({
     return () => clearTimeout(id);
   }, [intro, step, reflect, done, still]);
   function next() {
+    // Adapt between activities, preserving an answer already being entered.
+    if (
+      !review &&
+      !daily &&
+      startingTutor.support === 'auto' &&
+      tasks[step + 1]?.task.type === 'entry' &&
+      lessonChallenge?.level !== 'guided' &&
+      ((results[step]?.mistakes || 0) >= 2 || (results[step]?.hints || 0) >= 2)
+    ) {
+      setLessonChallenge((old) => (old ? { ...old, level: 'guided' } : old));
+    }
     const support =
       (results[step]?.mistakes || 0) + (results[step]?.hints || 0) > 0 ||
       confidence === 'Still learning';
@@ -363,6 +428,9 @@ export function LessonPlayer({
       id={tasks[step]?.conceptId || 'equation'}
       evidence={coaching?.[tasks[step]?.conceptId]}
       save={onCoaching}
+      tutor={tutor}
+      review={history[tasks[step]?.conceptId]}
+      onFormat={onFormat}
     >
       <div className="lesson-player" ref={player}>
         <div className="lesson-toolbar">
@@ -479,12 +547,39 @@ export function LessonPlayer({
                     <p>
                       {currentChallenge.followUp
                         ? 'Practice the same topic with a fresh question. This extra question does not add XP.'
-                        : currentChallenge.level !==
-                            recommendedChallenge(history[currentChallenge.id]).level
-                          ? 'Continue with this saved question.'
-                          : recommendedChallenge(history[currentChallenge.id]).reason}
+                        : !review &&
+                            !daily &&
+                            currentChallenge.level === 'guided' &&
+                            Object.entries(results).some(
+                              ([index, result]) =>
+                                Number(index) < step && (result.mistakes >= 2 || result.hints >= 2),
+                            )
+                          ? 'An earlier activity needed a hand. This next example keeps the method visible.'
+                          : currentChallenge.level !==
+                              personalChallenge(
+                                currentChallenge.id,
+                                history[currentChallenge.id],
+                                startingTutor,
+                                coachingHistory?.[currentChallenge.id],
+                                !review && !daily,
+                              ).level
+                            ? 'Continue with this saved question.'
+                            : personalChallenge(
+                                currentChallenge.id,
+                                history[currentChallenge.id],
+                                startingTutor,
+                                coachingHistory?.[currentChallenge.id],
+                                !review && !daily,
+                              ).reason}
                     </p>
                   </div>
+                )}
+                {((results[step]?.mistakes || 0) >= 2 || (results[step]?.hints || 0) >= 2) && (
+                  <TutorSupport
+                    key={`support-${step}`}
+                    id={tasks[step].conceptId}
+                    onHelp={() => record('hints')}
+                  />
                 )}
                 {task.type === 'choice' ? (
                   <ChoiceTask

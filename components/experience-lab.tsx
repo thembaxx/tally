@@ -29,6 +29,13 @@ import { Blob } from './brand';
 import { CoachScope, ExplanationTools } from './learning-coach';
 import { AnswerFeedback } from './answer-feedback';
 import { emitFeedback } from '@/lib/feedback';
+import type { TutorProfile, Explanation } from '@/lib/personalisation';
+import type { Review } from '@/lib/reviews';
+type ExplanationPreferences = {
+  tutor?: TutorProfile;
+  reviews?: Record<string, Review>;
+  onFormat?: (id: string, format: Explanation) => void;
+};
 const Scene = dynamic(() => import('./scene'), {
   ssr: false,
   loading: () => <div className="scene scene-loading" />,
@@ -38,11 +45,14 @@ export function ExperienceLab({
   data,
   update,
   feedback,
+  tutor,
+  reviews,
+  onFormat,
 }: {
   data: Experiences;
   update: UpdateExperience;
   feedback: (correct: boolean) => void;
-}) {
+} & ExplanationPreferences) {
   const [screen, setScreen] = useState<'shop' | 'projects' | null>(null);
   return (
     <section className="experience-lab">
@@ -92,9 +102,18 @@ export function ExperienceLab({
         wide
       >
         {screen === 'shop' ? (
-          <BusinessSandbox data={data} update={update} feedback={feedback} />
+          <CoachScope id="bakery" tutor={tutor} review={reviews?.bakery} onFormat={onFormat}>
+            <BusinessSandbox data={data} update={update} feedback={feedback} />
+          </CoachScope>
         ) : screen === 'projects' ? (
-          <ProjectRoom data={data} update={update} feedback={feedback} />
+          <ProjectRoom
+            data={data}
+            update={update}
+            feedback={feedback}
+            tutor={tutor}
+            reviews={reviews}
+            onFormat={onFormat}
+          />
         ) : null}
       </Modal>
     </section>
@@ -477,11 +496,14 @@ function ProjectRoom({
   data,
   update,
   feedback,
+  tutor,
+  reviews,
+  onFormat,
 }: {
   data: Experiences;
   update: UpdateExperience;
   feedback: (correct: boolean) => void;
-}) {
+} & ExplanationPreferences) {
   const [id, setId] = useState<ProjectId | null>(null);
   const [value, setValue] = useState('');
   const [correct, setCorrect] = useState<boolean | null>(null);
@@ -528,6 +550,9 @@ function ProjectRoom({
       {step ? (
         <CoachScope
           id={p.id}
+          tutor={tutor}
+          review={reviews?.[p.id]}
+          onFormat={onFormat}
           evidence={data.coaching[p.id]}
           save={(id, evidence) =>
             update((old) => ({ ...old, coaching: { ...old.coaching, [id]: evidence } }))

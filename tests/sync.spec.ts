@@ -117,14 +117,19 @@ test('vault encryption authenticates data, uses fresh nonces and keeps the acces
   );
 });
 type Record = { revision: string; payload: { iv: string; ciphertext: string } };
-async function seed(context: BrowserContext, name: string, xp: number) {
+async function seed(
+  context: BrowserContext,
+  name: string,
+  xp: number,
+  tutor = initialProgress.tutor,
+) {
   await context.addInitScript(
     (p) => {
       HTMLCanvasElement.prototype.getContext = () => null;
       if (!localStorage.getItem('tally-progress-v1'))
         localStorage.setItem('tally-progress-v1', JSON.stringify(p));
     },
-    { ...initialProgress, onboarded: true, name, xp },
+    { ...initialProgress, onboarded: true, name, xp, tutor },
   );
 }
 async function settings(page: Page) {
@@ -194,7 +199,11 @@ test('two devices connect with encrypted progress, review conflicts, retain pref
       });
     });
   try {
-    await seed(devices[0], 'Phone learner', 100);
+    await seed(devices[0], 'Phone learner', 100, {
+      ...initialProgress.tutor,
+      support: 'guided',
+      formats: { debit: 'example' },
+    });
     await seed(devices[1], 'Computer learner', 20);
     const phone = await devices[0].newPage();
     const computer = await devices[1].newPage();
@@ -215,6 +224,11 @@ test('two devices connect with encrypted progress, review conflicts, retain pref
     await computer.getByRole('button', { name: 'Use cloud progress', exact: true }).click();
     await expect(computer.getByLabel('Your name', { exact: true })).toHaveValue('Phone learner');
     await expect(computer.locator('html')).toHaveAttribute('data-theme', 'dark');
+    expect(
+      await computer.evaluate(
+        () => JSON.parse(localStorage.getItem('tally-progress-v1') || '{}').tutor,
+      ),
+    ).toMatchObject({ support: 'guided', formats: { debit: 'example' } });
     const backup = await computer.evaluate(() =>
       JSON.parse(localStorage.getItem('tally-before-sync-v1') || '{}'),
     );
