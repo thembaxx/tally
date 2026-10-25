@@ -1,5 +1,29 @@
 # Optional encrypted progress sync
 
+## Active hosted service — 25 October 2026
+
+The dedicated `tally-sync` project is provisioned in the **themba** organisation,
+in `eu-west-1` (project reference `pxbuigcmfuxyuixaosos`). Its applied migration
+history matches the committed `20261025062829_encrypted_progress_vaults.sql`.
+Vercel's production, preview and development environments have the two server
+configuration variables below. No service-role key is used. Existing projects
+in the organisation are separate from this vault.
+
+Hosted verification covered the actual Data API and two independent browser
+profiles through Tally: encrypted pairing, lesson notes, coaching reflections,
+case checkpoints, a new shop decision, device theme preservation, offline reload,
+competing offline edits, explicit conflict choice, the pre-sync safety copy and
+cloud deletion with local progress retained. Disposable test vaults were deleted.
+These checks used the real service rather than the mocked test transport.
+
+The security advisor reported no findings. The performance advisor reported
+`auth_rls_initplan`; the actual anonymous-role `EXPLAIN` plan contains two
+one-time InitPlans and a `progress_vaults_pkey` index scan. The capability checks
+are already evaluated once per query, so the verified policy is retained.
+See the [advisor guidance](https://supabase.com/docs/guides/database/database-linter?lint=0003_auth_rls_initplan)
+and [SELECT wrapping guidance](https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select)
+when reviewing a future policy change. Recheck both the plan and access tests.
+
 Core learning, the shop, cases, coaching and backup restore work without a server.
 Sync is opt-in in Settings. It connects a learner’s own devices with a randomly
 generated 256-bit private key, without an email address or account.

@@ -118,3 +118,22 @@ Validation evidence:
 - TypeScript, oxlint, oxfmt and the production build passed. CI now runs 64 Chromium cases and two WebKit cases against the production build.
 - Hosted preview checks passed for the shop, XP repeat limits, coaching and Me reflections. A real offline reload opened the saved shop and resumed the bank-reconciliation checkpoint, kept 120 XP, used only `tally-offline-v9`, and reported no page errors.
 - Actual WebGL shop rendering and inspection were checked on the preview. Visual evidence reviewed: `/workspace/scratch/business-mobile.png` and `/workspace/scratch/tally-shop-release-ready.png` (390 × 844). Muted pastel materials, dimensional blue awning, clear numerical balances, large sheet controls and whitespace remain consistent with Tally’s existing design.
+
+### Hosted sync activation — 25 October 2026
+
+The user selected the themba organisation. The separate `tally-sync` project
+(`pxbuigcmfuxyuixaosos`, `eu-west-1`) now hosts the encrypted vault. The committed
+migration is applied, with matching migration history and explicit RLS/grants.
+The actual anonymous database role and hosted REST API passed owner-only access,
+missing/wrong-key denial, ID-reassignment protection, stale revision rejection,
+encrypted round-trip and deletion checks. Security advisors report no findings;
+the performance advisor's InitPlan notice was checked against the actual plan,
+which has two one-time InitPlans and a primary-key index scan.
+
+Two independent hosted browser profiles passed real pairing, notes/reflections,
+case and shop transfer, per-device themes, an offline reload with the connection
+retained, competing offline edits, explicit conflict resolution, a safety backup
+and deletion while keeping local progress. No page errors were observed. Test
+keys were disposable, never committed, and their cloud copies were removed.
+Server settings are configured for production, previews and development.
+Physical-device checks remain documented separately in `docs/mobile-qa.md`.
