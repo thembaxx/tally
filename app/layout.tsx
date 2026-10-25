@@ -3,6 +3,7 @@ import { absoluteUrl, brand, isPreview, jsonLd, siteUrl } from '@/lib/site';
 import './globals.css';
 import './expressive.css';
 import './guides.css';
+import './experiences.css';
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: { default: brand.title, template: '%s · Tally' },
@@ -54,7 +55,7 @@ export const viewport: Viewport = {
   themeColor: '#faf8f2',
   colorScheme: 'light dark',
 };
-const themeScript = `try{let t=localStorage.getItem('tally-theme')||'system';let d=t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';document.documentElement.style.colorScheme=d?'dark':'light';document.querySelector('meta[name="theme-color"]')?.setAttribute('content',d?'#111524':'#faf8f2')}catch{}`;
+const themeScript = `try{let t=localStorage.getItem('tally-theme')||'system';let d=t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';document.documentElement.style.colorScheme=d?'dark':'light';document.querySelector('meta[name="theme-color"]')?.setAttribute('content',d?'#111524':'#faf8f2');document.documentElement.dataset.graphics=JSON.parse(localStorage.getItem('tally-progress-v1')||'null')?.graphics==='simple'?'simple':'auto'}catch{}`;
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en-ZA" suppressHydrationWarning>

@@ -31,6 +31,8 @@ import {
   type Category,
 } from '@/lib/learning';
 import { Blob } from './brand';
+import { CoachScope, ExplanationTools } from './learning-coach';
+import type { Experiences, CoachingEvidence } from '@/lib/experiences';
 import { ConceptExplorer } from './concept-explorer';
 import type { StudioActivity } from '@/lib/activity-types';
 import { ChoiceTask, JournalTask, RecallTask } from './studio-activities';
@@ -68,6 +70,8 @@ type Props = {
   reviews: Record<string, Review>;
   draft: LessonDraft | null;
   savedNote?: string;
+  coaching?: Experiences['coaching'];
+  onCoaching?: (id: string, evidence: CoachingEvidence) => void;
   quickStart?: boolean;
   onDraft: (draft: LessonDraft) => void;
   onComplete: (result: SessionResult) => number;
@@ -88,6 +92,8 @@ export function LessonPlayer({
   quickStart = false,
   onDraft,
   onComplete,
+  coaching,
+  onCoaching,
   onCelebrate,
   onCue,
   onClose,
@@ -351,259 +357,268 @@ export function LessonPlayer({
       </div>
     );
   return (
-    <div className="lesson-player" ref={player}>
-      <div className="lesson-toolbar">
-        <span className="pill">
-          {review ? 'TARGETED REVIEW' : daily ? 'DAILY MIX' : fullLesson?.level.toUpperCase()}
-        </span>
-        <button className="text-button" onClick={onFocus}>
-          <TargetIcon /> Focus
-        </button>
-      </div>
-      <div className="lesson-progress">
-        <div
-          style={{ width: `${intro ? 5 : reflect ? 95 : ((step + 0.5) / tasks.length) * 85}%` }}
-        />
-      </div>
-      <p className="fine">{learningContext}</p>
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={intro ? 'intro' : reflect ? 'reflect' : step}
-          initial={still ? false : { opacity: 0, y: 20, scale: 0.985 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={still ? {} : { opacity: 0, y: -12 }}
-          transition={{ duration: still ? 0 : 0.32, ease: [0.22, 1, 0.36, 1] }}
-        >
-          {intro && fullLesson ? (
-            <div className="lesson-intro">
-              <span className="eyebrow">LET’S MAKE IT CLICK</span>
-              <h2>{fullLesson.title}</h2>
-              <p className="concept">{fullLesson.concept}</p>
-              <ConceptExplorer lesson={fullLesson} />
-              <div className="worked-example">
-                <span>
-                  <LightbulbIcon weight="duotone" /> A real-life example
-                </span>
-                <p>{fullLesson.example}</p>
+    <CoachScope
+      key={tasks[step]?.conceptId}
+      id={tasks[step]?.conceptId || 'equation'}
+      evidence={coaching?.[tasks[step]?.conceptId]}
+      save={onCoaching}
+    >
+      <div className="lesson-player" ref={player}>
+        <div className="lesson-toolbar">
+          <span className="pill">
+            {review ? 'TARGETED REVIEW' : daily ? 'DAILY MIX' : fullLesson?.level.toUpperCase()}
+          </span>
+          <button className="text-button" onClick={onFocus}>
+            <TargetIcon /> Focus
+          </button>
+        </div>
+        <div className="lesson-progress">
+          <div
+            style={{ width: `${intro ? 5 : reflect ? 95 : ((step + 0.5) / tasks.length) * 85}%` }}
+          />
+        </div>
+        <p className="fine">{learningContext}</p>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={intro ? 'intro' : reflect ? 'reflect' : step}
+            initial={still ? false : { opacity: 0, y: 20, scale: 0.985 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={still ? {} : { opacity: 0, y: -12 }}
+            transition={{ duration: still ? 0 : 0.32, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {intro && fullLesson ? (
+              <div className="lesson-intro">
+                <span className="eyebrow">LET’S MAKE IT CLICK</span>
+                <h2>{fullLesson.title}</h2>
+                <p className="concept">{fullLesson.concept}</p>
+                <ConceptExplorer lesson={fullLesson} />
+                <ExplanationTools id={fullLesson.id} />
+                <div className="worked-example">
+                  <span>
+                    <LightbulbIcon weight="duotone" /> A real-life example
+                  </span>
+                  <p>{fullLesson.example}</p>
+                </div>
+                <div className="tutor-tip">
+                  <Blob small />
+                  <p>{fullLesson.tip}</p>
+                </div>
+                <button
+                  className="button primary full"
+                  data-tally-sound="open"
+                  onClick={() => setIntro(false)}
+                >
+                  I’m ready to try <ArrowRightIcon />
+                </button>
+                <p className="fine center">Take your time. Hints are always here.</p>
               </div>
-              <div className="tutor-tip">
-                <Blob small />
-                <p>{fullLesson.tip}</p>
-              </div>
-              <button
-                className="button primary full"
-                data-tally-sound="open"
-                onClick={() => setIntro(false)}
-              >
-                I’m ready to try <ArrowRightIcon />
-              </button>
-              <p className="fine center">Take your time. Hints are always here.</p>
-            </div>
-          ) : reflect ? (
-            <div className="reflection">
-              <span className="eyebrow">MAKE IT YOURS</span>
-              <h2>Could you teach it to a friend?</h2>
-              <p>
-                Try explaining the idea in one sentence. Saying it in your own words helps it stick.
-              </p>
-              <label htmlFor="reflection">
-                My takeaway <span className="muted">(optional · not graded)</span>
-              </label>
-              <textarea
-                id="reflection"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="The way I think about it is…"
-                rows={3}
-                maxLength={2000}
-              />
-              <p>How does it feel now?</p>
-              <div className="confidence-options">
-                {confidenceOptions.map((c) => (
-                  <button
-                    aria-pressed={confidence === c}
-                    className={confidence === c ? 'selected' : ''}
-                    key={c}
-                    data-tally-sound="select"
-                    onClick={() => setConfidence(c)}
-                  >
-                    {c}
-                  </button>
-                ))}
-              </div>
-              <div className="tutor-tip">
-                <Blob small />
+            ) : reflect ? (
+              <div className="reflection">
+                <span className="eyebrow">MAKE IT YOURS</span>
+                <h2>Could you teach it to a friend?</h2>
                 <p>
-                  {confidence === 'Still learning'
-                    ? 'This topic will return for review tomorrow.'
-                    : 'Your answers and hint use will help choose when this returns.'}
+                  Try explaining the idea in one sentence. Saying it in your own words helps it
+                  stick.
                 </p>
-              </div>
-              <button className="button primary full" onClick={finish}>
-                Finish lesson <CheckIcon />
-              </button>
-            </div>
-          ) : task ? (
-            <>
-              <div className="task-label">
-                {review ? 'RECALL' : daily ? 'CHALLENGE' : 'PRACTICE'}{' '}
-                <span className="mono">
-                  0{step + 1} / 0{tasks.length}
-                </span>
-              </div>
-              {currentChallenge && (
-                <div className="challenge-context" role="note" aria-label="Why this challenge">
-                  <strong>
-                    {lessons.find((l) => l.id === currentChallenge.id)?.title} ·{' '}
-                    {currentChallenge.level === 'guided'
-                      ? 'Guided practice'
-                      : currentChallenge.level === 'stretch'
-                        ? 'Stretch challenge'
-                        : 'Standard practice'}
-                  </strong>
+                <label htmlFor="reflection">
+                  My takeaway <span className="muted">(optional · not graded)</span>
+                </label>
+                <textarea
+                  id="reflection"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="The way I think about it is…"
+                  rows={3}
+                  maxLength={2000}
+                />
+                <p>How does it feel now?</p>
+                <div className="confidence-options">
+                  {confidenceOptions.map((c) => (
+                    <button
+                      aria-pressed={confidence === c}
+                      className={confidence === c ? 'selected' : ''}
+                      key={c}
+                      data-tally-sound="select"
+                      onClick={() => setConfidence(c)}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+                <div className="tutor-tip">
+                  <Blob small />
                   <p>
-                    {currentChallenge.followUp
-                      ? 'Practice the same topic with a fresh question. This extra question does not add XP.'
-                      : currentChallenge.level !==
-                          recommendedChallenge(history[currentChallenge.id]).level
-                        ? 'Continue with this saved question.'
-                        : recommendedChallenge(history[currentChallenge.id]).reason}
+                    {confidence === 'Still learning'
+                      ? 'This topic will return for review tomorrow.'
+                      : 'Your answers and hint use will help choose when this returns.'}
                   </p>
                 </div>
-              )}
-              {task.type === 'choice' ? (
-                <ChoiceTask
-                  onHint={() => record('hints')}
-                  key={`choice-${step}`}
-                  challenge={task.challenge}
-                  onNext={next}
-                  feedback={feedback}
-                  onMistake={() => record('mistakes')}
-                />
-              ) : task.type === 'journal' ? (
-                <JournalTask
-                  onHint={() => record('hints')}
-                  key={`journal-${step}`}
-                  challenge={task.challenge}
-                  onNext={next}
-                  feedback={feedback}
-                  onMistake={() => record('mistakes')}
-                />
-              ) : task.type === 'recall' ? (
-                <RecallTask
-                  key={`recall-${step}`}
-                  cards={task.cards}
-                  onNext={next}
-                  feedback={feedback}
-                  onMistake={() => record('mistakes')}
-                />
-              ) : task.type === 'sort' ? (
-                <SortTask
-                  key={`sort-${step}`}
-                  items={task.items}
-                  onNext={next}
-                  feedback={feedback}
-                  onMistake={() => record('mistakes')}
-                />
-              ) : task.type === 'entry' ? (
-                <EntryTask
-                  onHint={() => record('hints')}
-                  key={`entry-${step}`}
-                  entry={task.entry}
-                  onNext={next}
-                  feedback={feedback}
-                  onMistake={() => record('mistakes')}
-                  onCorrect={() => setAnsweredStep(step)}
-                >
-                  {review && currentChallenge && answeredStep === step && (
-                    <div className="challenge-decisions">
-                      <fieldset>
-                        <legend>How confident do you feel about this session?</legend>
-                        <div className="confidence-options">
-                          {confidenceOptions.map((c) => (
-                            <button
-                              key={c}
-                              type="button"
-                              aria-pressed={confidence === c}
-                              className={confidence === c ? 'selected' : ''}
-                              onClick={() => setConfidence(c)}
-                            >
-                              {c}
-                            </button>
-                          ))}
-                        </div>
-                      </fieldset>
-                      {!currentChallenge.followUp && (
-                        <div
-                          role="group"
-                          aria-label="Choose a follow-up question"
-                          className="challenge-options"
-                        >
-                          {currentChallenge.level !== 'guided' && (
-                            <button
-                              type="button"
-                              className="text-button"
-                              aria-pressed={
-                                !!reviewPlan[step + 1]?.followUp &&
-                                reviewPlan[step + 1]?.level === 'guided'
-                              }
-                              onClick={() => chooseFollowUp('guided')}
-                            >
-                              Practice with guidance
-                            </button>
-                          )}
-                          {currentChallenge.level !== 'stretch' && (
-                            <button
-                              type="button"
-                              className="text-button"
-                              aria-pressed={
-                                !!reviewPlan[step + 1]?.followUp &&
-                                reviewPlan[step + 1]?.level !== 'guided'
-                              }
-                              onClick={() =>
-                                chooseFollowUp(
-                                  challengeLevels[
-                                    challengeLevels.indexOf(currentChallenge.level) + 1
-                                  ],
-                                )
-                              }
-                            >
-                              {currentChallenge.level === 'guided'
-                                ? 'Try without the steps'
-                                : 'Try a harder question'}
-                            </button>
-                          )}
-                        </div>
-                      )}
-                      <p className="fine" aria-live="polite">
-                        {reviewPlan[step + 1]?.followUp
-                          ? `Continue to a ${reviewPlan[step + 1].level} follow-up question.`
-                          : (results[step]?.mistakes ||
-                                results[step]?.hints ||
-                                confidence === 'Still learning') &&
-                              !currentChallenge.followUp
-                            ? 'Continue to a guided follow-up for this topic.'
-                            : 'Continue when you’re ready.'}
-                      </p>
-                    </div>
-                  )}
-                </EntryTask>
-              ) : (
-                <OrderTask
-                  onHint={() => record('hints')}
-                  key={`order-${step}`}
-                  items={task.items}
-                  tip={task.tip}
-                  onNext={next}
-                  feedback={feedback}
-                  onMistake={() => record('mistakes')}
-                />
-              )}
-            </>
-          ) : null}
-        </motion.div>
-      </AnimatePresence>
-    </div>
+                <button className="button primary full" onClick={finish}>
+                  Finish lesson <CheckIcon />
+                </button>
+              </div>
+            ) : task ? (
+              <>
+                <div className="task-label">
+                  {review ? 'RECALL' : daily ? 'CHALLENGE' : 'PRACTICE'}{' '}
+                  <span className="mono">
+                    0{step + 1} / 0{tasks.length}
+                  </span>
+                </div>
+                {currentChallenge && (
+                  <div className="challenge-context" role="note" aria-label="Why this challenge">
+                    <strong>
+                      {lessons.find((l) => l.id === currentChallenge.id)?.title} ·{' '}
+                      {currentChallenge.level === 'guided'
+                        ? 'Guided practice'
+                        : currentChallenge.level === 'stretch'
+                          ? 'Stretch challenge'
+                          : 'Standard practice'}
+                    </strong>
+                    <p>
+                      {currentChallenge.followUp
+                        ? 'Practice the same topic with a fresh question. This extra question does not add XP.'
+                        : currentChallenge.level !==
+                            recommendedChallenge(history[currentChallenge.id]).level
+                          ? 'Continue with this saved question.'
+                          : recommendedChallenge(history[currentChallenge.id]).reason}
+                    </p>
+                  </div>
+                )}
+                {task.type === 'choice' ? (
+                  <ChoiceTask
+                    onHint={() => record('hints')}
+                    key={`choice-${step}`}
+                    challenge={task.challenge}
+                    onNext={next}
+                    feedback={feedback}
+                    onMistake={() => record('mistakes')}
+                  />
+                ) : task.type === 'journal' ? (
+                  <JournalTask
+                    onHint={() => record('hints')}
+                    key={`journal-${step}`}
+                    challenge={task.challenge}
+                    onNext={next}
+                    feedback={feedback}
+                    onMistake={() => record('mistakes')}
+                  />
+                ) : task.type === 'recall' ? (
+                  <RecallTask
+                    key={`recall-${step}`}
+                    cards={task.cards}
+                    onNext={next}
+                    feedback={feedback}
+                    onMistake={() => record('mistakes')}
+                  />
+                ) : task.type === 'sort' ? (
+                  <SortTask
+                    key={`sort-${step}`}
+                    items={task.items}
+                    onNext={next}
+                    feedback={feedback}
+                    onMistake={() => record('mistakes')}
+                  />
+                ) : task.type === 'entry' ? (
+                  <EntryTask
+                    onHint={() => record('hints')}
+                    key={`entry-${step}`}
+                    entry={task.entry}
+                    onNext={next}
+                    feedback={feedback}
+                    onMistake={() => record('mistakes')}
+                    onCorrect={() => setAnsweredStep(step)}
+                  >
+                    {review && currentChallenge && answeredStep === step && (
+                      <div className="challenge-decisions">
+                        <fieldset>
+                          <legend>How confident do you feel about this session?</legend>
+                          <div className="confidence-options">
+                            {confidenceOptions.map((c) => (
+                              <button
+                                key={c}
+                                type="button"
+                                aria-pressed={confidence === c}
+                                className={confidence === c ? 'selected' : ''}
+                                onClick={() => setConfidence(c)}
+                              >
+                                {c}
+                              </button>
+                            ))}
+                          </div>
+                        </fieldset>
+                        {!currentChallenge.followUp && (
+                          <div
+                            role="group"
+                            aria-label="Choose a follow-up question"
+                            className="challenge-options"
+                          >
+                            {currentChallenge.level !== 'guided' && (
+                              <button
+                                type="button"
+                                className="text-button"
+                                aria-pressed={
+                                  !!reviewPlan[step + 1]?.followUp &&
+                                  reviewPlan[step + 1]?.level === 'guided'
+                                }
+                                onClick={() => chooseFollowUp('guided')}
+                              >
+                                Practice with guidance
+                              </button>
+                            )}
+                            {currentChallenge.level !== 'stretch' && (
+                              <button
+                                type="button"
+                                className="text-button"
+                                aria-pressed={
+                                  !!reviewPlan[step + 1]?.followUp &&
+                                  reviewPlan[step + 1]?.level !== 'guided'
+                                }
+                                onClick={() =>
+                                  chooseFollowUp(
+                                    challengeLevels[
+                                      challengeLevels.indexOf(currentChallenge.level) + 1
+                                    ],
+                                  )
+                                }
+                              >
+                                {currentChallenge.level === 'guided'
+                                  ? 'Try without the steps'
+                                  : 'Try a harder question'}
+                              </button>
+                            )}
+                          </div>
+                        )}
+                        <p className="fine" aria-live="polite">
+                          {reviewPlan[step + 1]?.followUp
+                            ? `Continue to a ${reviewPlan[step + 1].level} follow-up question.`
+                            : (results[step]?.mistakes ||
+                                  results[step]?.hints ||
+                                  confidence === 'Still learning') &&
+                                !currentChallenge.followUp
+                              ? 'Continue to a guided follow-up for this topic.'
+                              : 'Continue when you’re ready.'}
+                        </p>
+                      </div>
+                    )}
+                  </EntryTask>
+                ) : (
+                  <OrderTask
+                    onHint={() => record('hints')}
+                    key={`order-${step}`}
+                    items={task.items}
+                    tip={task.tip}
+                    onNext={next}
+                    feedback={feedback}
+                    onMistake={() => record('mistakes')}
+                  />
+                )}
+              </>
+            ) : null}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </CoachScope>
   );
 }
 function requireSort(): SortItem[] {

@@ -1,3 +1,4 @@
+import { emptyExperiences, readExperiences, type Experiences } from './experiences';
 import type { StudioActivity } from './activity-types';
 import { studioLessons, cashFlowLesson } from './studio-lessons';
 import { createBakeryLesson } from './bakery';
@@ -502,12 +503,14 @@ export type Progress = {
   dailyRuns: Record<string, number>;
   focusDays: string[];
   theme: 'system' | 'light' | 'dark';
+  graphics: 'auto' | 'simple';
   haptics: boolean;
   sound: boolean;
   soundVolume: number;
   reviews: Record<string, Review>;
   notes: Record<string, string>;
   draft: LessonDraft | null;
+  experiences: Experiences;
 };
 export const initialProgress: Progress = {
   name: '',
@@ -519,12 +522,14 @@ export const initialProgress: Progress = {
   dailyRuns: {},
   focusDays: [],
   theme: 'system',
+  graphics: 'auto',
   haptics: true,
   sound: false,
   soundVolume: 45,
   reviews: {},
   notes: {},
   draft: null,
+  experiences: emptyExperiences,
 };
 export function readProgress(raw: string | null, legacyReviews?: string | null): Progress {
   try {
@@ -540,6 +545,7 @@ export function readProgress(raw: string | null, legacyReviews?: string | null):
     }
     return {
       ...initialProgress,
+      experiences: readExperiences(p.experiences),
       name: typeof p.name === 'string' ? p.name.slice(0, 30) : '',
       onboarded: p.onboarded === true,
       goal: [3, 5, 10].includes(p.goal) ? p.goal : 5,
@@ -559,6 +565,7 @@ export function readProgress(raw: string | null, legacyReviews?: string | null):
         ? p.focusDays.filter((x: unknown) => typeof x === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(x))
         : [],
       theme: ['system', 'light', 'dark'].includes(p.theme) ? p.theme : 'system',
+      graphics: p.graphics === 'simple' ? 'simple' : 'auto',
       haptics: p.haptics !== false,
       sound: p.sound === true,
       soundVolume:

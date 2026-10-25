@@ -52,6 +52,9 @@ import {
   type Lesson,
   type Progress,
 } from '@/lib/learning';
+import { ReflectionNotebook } from './reflection-notebook';
+import { ProgressSync } from './progress-sync';
+import { useProgressSync } from './use-progress-sync';
 import { useTally, useFocus, useTheme } from './use-tally';
 import { useSoundscape } from './use-soundscape';
 import { Logo, Blob } from './brand';
@@ -59,6 +62,7 @@ import { Modal } from './modal';
 import { LessonPlayer } from './lesson-player';
 import { Segmented, Switch } from './ui/controls';
 import { MotionPage } from './motion-page';
+import { ExperienceLab, type UpdateExperience } from './experience-lab';
 import { PracticeStudio } from './practice-studio';
 import { SkillMap } from './skill-map';
 import { recallEvidence } from '@/lib/skills';
@@ -115,6 +119,7 @@ function lessonIcon(icon: string, size = 25) {
 }
 export default function TallyApp() {
   const { progress: p, setProgress, ready, storageError, today } = useTally();
+  const cloudSync = useProgressSync(p, setProgress, ready);
   const [tab, setTab] = useState<Tab>('home');
   const [settings, setSettings] = useState(false);
   const [active, setActive] = useState<Session | null>(null);
@@ -128,6 +133,25 @@ export default function TallyApp() {
   const [installInfo, setInstallInfo] = useState(false);
   const [online, setOnline] = useState(true);
   const [reset, setReset] = useState(false);
+  const updateExperience: UpdateExperience = useCallback(
+    (change) => {
+      setProgress((old) => {
+        const next = change(old.experiences);
+        const earned = next.awards
+          .filter((id) => !old.experiences.awards.includes(id))
+          .reduce((sum, id) => sum + (id.startsWith('shop-') ? 5 : 30), 0);
+        return {
+          ...old,
+          experiences: next,
+          xp: old.xp + earned,
+          activity: earned
+            ? { ...old.activity, [localDay()]: (old.activity[localDay()] || 0) + 1 }
+            : old.activity,
+        };
+      });
+    },
+    [setProgress],
+  );
   const reviews = p.reviews;
   const [imported, setImported] = useState<Progress | null>(null);
   const [importError, setImportError] = useState('');
@@ -159,6 +183,11 @@ export default function TallyApp() {
     );
   });
   useTheme(p.theme, focus.active);
+  useEffect(() => {
+    if (!ready) return;
+    document.documentElement.dataset.graphics = p.graphics;
+    window.dispatchEvent(new Event('tally-graphics'));
+  }, [p.graphics, ready]);
   useEffect(() => {
     if (!ready || lessonLinkOpened.current) return;
     lessonLinkOpened.current = true;
@@ -523,6 +552,14 @@ export default function TallyApp() {
               </button>
             </div>
           </header>
+          {cloudSync.conflict && (
+            <div className="sync-attention" role="status">
+              <span>Progress from another device is ready to review.</span>
+              <button className="text-button" onClick={() => setSettings(true)}>
+                Review in Settings <ArrowRightIcon />
+              </button>
+            </div>
+          )}
           {!online && (
             <div className="connection-banner" role="status">
               <WifiSlashIcon /> You’re offline. Keep learning—your progress stays on this device.
@@ -965,6 +1002,11 @@ export default function TallyApp() {
                         minimalControls
                       />
                     </div>
+                    <ExperienceLab
+                      data={p.experiences}
+                      update={updateExperience}
+                      feedback={feedback}
+                    />
                     <PracticeStudio onLaunch={launch} completed={p.completed} />
                     <section className="path-section">
                       <div className="section-heading">
@@ -1160,6 +1202,7 @@ export default function TallyApp() {
                         ))}
                       </div>
                     </section>
+                    <ReflectionNotebook coaching={p.experiences.coaching} />
                   </>
                 )}
                 <footer className="page-footer">
@@ -1256,6 +1299,13 @@ export default function TallyApp() {
                   : {}
               }
               reviews={reviews}
+              coaching={p.experiences.coaching}
+              onCoaching={(id, evidence) =>
+                updateExperience((old) => ({
+                  ...old,
+                  coaching: { ...old.coaching, [id]: evidence },
+                }))
+              }
               savedNote={active !== 'daily' && !('kind' in active) ? p.notes[active.id] : ''}
               quickStart={
                 !p.onboarded &&
@@ -1371,6 +1421,20 @@ export default function TallyApp() {
                 { id: 'dark', label: 'Dark', icon: <MoonIcon /> },
               ]}
             />
+            <div className="setting-row">
+              <span>
+                <strong>3D illustrations</strong>
+                <small>Simple illustrations save graphics work on older phones.</small>
+              </span>
+              <select
+                aria-label="3D illustrations"
+                value={p.graphics}
+                onChange={(e) => patch({ graphics: e.target.value as Progress['graphics'] })}
+              >
+                <option value="auto">Interactive 3D</option>
+                <option value="simple">Simple illustrations</option>
+              </select>
+            </div>
             <h3 className="settings-section-title">Learning</h3>
             <div className="setting-row">
               <span>
@@ -1465,6 +1529,7 @@ export default function TallyApp() {
                 Install
               </button>
             </div>
+            {cloudSync.available && <ProgressSync sync={cloudSync} progress={p} />}
             <div className="settings-links">
               <button onClick={exportProgress}>
                 <ExportIcon /> Export my progress <ArrowUpRightIcon />
@@ -1536,14 +1601,20 @@ export default function TallyApp() {
               </div>
             )}
             <div className="privacy-note">
-              <LockKeyIcon /> Your progress lives on this device. No account, no tracking.
+              <LockKeyIcon /> Your progress stays on this device unless you enable encrypted sync.
+              No account or tracking.
             </div>
             {reset ? (
               <div className="reset-confirm">
-                <p>Start over? This clears your XP, lessons, and streak on this device.</p>
+                <p>
+                  Start over? This clears your XP, lessons, shop, projects and streak on this
+                  device, and disconnects sync. Any existing cloud copy is kept.
+                </p>
                 <button
                   className="small-button"
+                  disabled={cloudSync.busy}
                   onClick={() => {
+                    cloudSync.disconnect();
                     setProgress({ ...initialProgress, theme: p.theme });
                     localStorage.removeItem('tally-reviews-v1');
                     setReset(false);

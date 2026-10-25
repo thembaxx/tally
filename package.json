@@ -11,7 +11,8 @@
     "format": "oxfmt .",
     "format:check": "oxfmt --check .",
     "typecheck": "tsc --noEmit",
-    "test": "playwright test"
+    "test": "playwright test",
+    "test:mobile": "playwright test --config playwright.mobile.config.ts"
   },
   "dependencies": {
     "@gsap/react": "2.1.2",

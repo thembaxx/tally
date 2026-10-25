@@ -29,7 +29,7 @@ jobs:
       - name: Production build
         run: npm run build
       - name: Install browser
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium webkit
       - name: Playwright on production build
         shell: bash
         run: |
@@ -39,6 +39,7 @@ jobs:
           for attempt in $(seq 1 45); do
             if curl --silent --show-error --fail http://localhost:3000/ >/dev/null 2>&1; then
               npm test
+              npm run test:mobile
               exit $?
             fi
             sleep 2

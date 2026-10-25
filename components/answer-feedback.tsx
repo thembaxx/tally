@@ -1,4 +1,5 @@
 'use client';
+import { WhyCoach } from './learning-coach';
 import { motion, useReducedMotion } from 'motion/react';
 import type { ReactNode } from 'react';
 import { CheckIcon, ArrowRightIcon, ArrowCounterClockwiseIcon } from '@phosphor-icons/react';
@@ -35,6 +36,7 @@ export function AnswerFeedback({
       </strong>
       <p>{text}</p>
       {children}
+      <WhyCoach correct={correct} />
       {correct && (
         <button className="button primary full" onClick={onNext}>
           Continue <ArrowRightIcon />
