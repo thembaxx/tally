@@ -36,7 +36,9 @@ npm run dev
 - A public `/learn` shelf and 16 statically rendered lesson guides, with unique metadata, canonical URLs, breadcrumbs and structured data. Guides work without JavaScript and link to the matching interactive lesson.
 - `robots.txt` advertises the 18-page sitemap. `/llms.txt` and `/llm.txt` share a generated source, and `/llms-full.txt` exposes the authored explanations and examples.
 
-Progress is stored on the current browser/device. Existing v1 progress and separate review schedules migrate automatically. Settings exports version 2 backups containing progress, reviews, takeaways, and the unfinished session; restore accepts those backups and older versionless exports, validates the file, and requires explicit replacement confirmation. There is no account, server database, analytics, cross-device synchronization, or generative AI chat. The tutor uses authored accounting content and feedback. Introductory advanced-topic lessons are not a comprehensive professional accounting qualification.
+Progress is stored on the current browser/device. Existing v1 progress and separate review schedules migrate automatically. Settings exports version 2 backups containing progress, reviews, takeaways, and the unfinished session; restore accepts those backups and older versionless exports, validates the file, and requires explicit replacement confirmation. Optional encrypted cross-device sync uses a separate Supabase vault with a private capability key and revision checks; device preferences remain local. See [progress sync](docs/progress-sync.md) for setup and recovery. There is no account, analytics, or generative AI chat. The tutor uses authored accounting content and feedback. Introductory advanced-topic lessons are not a comprehensive professional accounting qualification.
+
+The Practice screen also includes a persistent 3D tuck-shop sandbox and three case files (bank reconciliation, a ledger correction, and profit versus cash). Shop decisions use a validated transaction log, produce balanced journal entries, and update all three statements. Learners predict outcomes before trying decisions. Unique decision types earn 5 XP once, and each completed case earns 30 XP once. Replays and shop resets preserve award history. Coaching adds explanation levels, a wordbook, structured reasoning checks and private reflections without claiming to grade prose.
 
 ## Checks
 
@@ -46,11 +48,12 @@ npm run lint
 npm run format:check
 npm run build
 npm test
+npm run test:mobile
 ```
 
 The suite also covers complete journal, recall, detective, and cash-flow story flows, existing-progress compatibility, reduced motion, automated AA checks, no-JavaScript guides, all public guide URLs, structured data, crawler files, immediate practice from lesson deep links, adaptive review, backup restore, saved takeaways, and session recovery. Gesture tests use Chromium’s touch-input protocol for swipes, multi-touch cancellation, drag-and-drop, edge scrolling, reordering, sheet dismissal, card flips and 3D pinch/rotation; physical-device testing remains a separate check.
 
-Tests use Playwright’s lockfile-pinned Chromium in both local and CI runs. Install it with `npx playwright install --with-deps chromium`. Start the app before running tests; `BASE_URL` can point the suite at a deployed app. The suite covers the accounting model, onboarding, swipes, answers, feedback, reordering, XP, review persistence, streaks, themes, focus timing, navigation, and five viewport widths.
+Tests use Playwright’s lockfile-pinned Chromium plus a separate WebKit mobile suite in local and CI runs. Install them with `npx playwright install --with-deps chromium webkit`. See [physical-device QA](docs/mobile-qa.md) for checks that browser automation cannot establish. Start the app before running tests; `BASE_URL` can point the suite at a deployed app. The suite covers the accounting model, onboarding, swipes, answers, feedback, reordering, XP, review persistence, streaks, themes, focus timing, navigation, and five viewport widths.
 
 `oxlint` and `oxfmt` handle linting and formatting. Dependencies are pinned and committed with the npm lockfile.
 
@@ -62,7 +65,7 @@ Learning methods are informed by The Learning Scientists' retrieval practice, sp
 
 ## Deployment
 
-This project is connected to `thembaxx/tally` on GitHub and the `tally` Vercel project. Vercel builds with Next.js on Node.js 24. No secrets are needed. `NEXT_PUBLIC_SITE_URL` sets the canonical origin; it defaults to `https://tally-wine-alpha.vercel.app` so local and preview builds never become canonical. Copy `.env.example` when changing the primary domain. Vercel previews carry `noindex` metadata and an `X-Robots-Tag` header, while permitting crawling so the directive can be read.
+This project is connected to `thembaxx/tally` on GitHub and the `tally` Vercel project. Vercel builds with Next.js on Node.js 24. Core offline learning needs no secrets. Optional progress sync needs the two server environment variables in `.env.example` and the committed database migration. `NEXT_PUBLIC_SITE_URL` sets the canonical origin; it defaults to `https://tally-wine-alpha.vercel.app` so local and preview builds never become canonical. Copy `.env.example` when changing the primary domain. Vercel previews carry `noindex` metadata and an `X-Robots-Tag` header, while permitting crawling so the directive can be read.
 
 ## Brand and discovery maintenance
 

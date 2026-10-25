@@ -12,15 +12,27 @@ import {
   StackIcon,
   ArrowCounterClockwiseIcon,
   SlidersHorizontalIcon,
+  StorefrontIcon,
 } from '@phosphor-icons/react';
 
 const VIEW_CAMERA = { position: [4, 2.7, 7] as [number, number, number], fov: 37 };
 const VIEW_TARGET: [number, number, number] = [0, -0.15, 0];
 const VIEW_DISTANCE = Math.hypot(4, 2.85, 7);
 const VIEW_TOUCHES = { ONE: TOUCH.ROTATE, TWO: TOUCH.DOLLY_ROTATE };
+function FirstFrame({ onReady }: { onReady: () => void }) {
+  const reported = useRef(false);
+  useFrame(() => {
+    if (!reported.current) {
+      reported.current = true;
+      onReady();
+    }
+  });
+  return null;
+}
 
 type Props = {
-  kind?: 'scale' | 'tower' | 'bars';
+  kind?: 'scale' | 'tower' | 'bars' | 'shop';
+  onInspect?: (part: 'stock' | 'cash' | 'oven') => void;
   values?: number[];
   maxValue?: number;
   tilt?: number;
@@ -287,8 +299,95 @@ function Bar({ value, x, color }: { value: number; x: number; color: string }) {
     </group>
   );
 }
+function Shop({
+  values,
+  onInspect,
+  still,
+}: {
+  values: number[];
+  onInspect?: Props['onInspect'];
+  still: boolean;
+}) {
+  const stocks = Math.min(8, Math.max(0, values[0] || 0));
+  return (
+    <group position={[0, -0.5, 0]} rotation={[0, -0.2, 0]}>
+      <Box position={[0, -1.08, 0]} scale={[3.9, 0.22, 2.6]} color="#c9dcc6" />
+      <Box position={[0, 0.12, -0.8]} scale={[3.3, 2.1, 0.22]} color="#efb393" />
+      <Box
+        position={[0, 1.35, -0.18]}
+        scale={[3.65, 0.24, 1.65]}
+        color="#4568e7"
+        rotation={[0.1, 0, 0]}
+      />
+      {[-1.35, -0.9, -0.45, 0, 0.45, 0.9, 1.35].map((x, i) => (
+        <Box
+          key={x}
+          position={[x, 1.22, 0.6]}
+          scale={[0.44, 0.3, 0.18]}
+          color={i % 2 ? '#f7e8c6' : '#4568e7'}
+        />
+      ))}
+      <Box position={[0, -0.45, 0.35]} scale={[3, 1, 1]} color="#a7cdb4" />
+      <Box position={[0, 0.1, 0.35]} scale={[3.15, 0.14, 1.12]} color="#f8e8c9" />
+      <group
+        onClick={(e) => {
+          if (e.delta < 8) {
+            e.stopPropagation();
+            onInspect?.('stock');
+          }
+        }}
+      >
+        <Box position={[-0.8, 0.33, 0.4]} scale={[1.2, 0.25, 0.6]} color="#b58ee3" />
+        {Array.from({ length: stocks }, (_, i) => (
+          <Falling key={i} still={still}>
+            <Box
+              position={[-1.18 + (i % 4) * 0.26, 0.58 + Math.floor(i / 4) * 0.23, 0.4]}
+              scale={[0.21, 0.21, 0.28]}
+              color={i % 2 ? '#f4c65b' : '#ef9476'}
+            />
+          </Falling>
+        ))}
+      </group>
+      <group
+        onClick={(e) => {
+          if (e.delta < 8) {
+            e.stopPropagation();
+            onInspect?.('cash');
+          }
+        }}
+      >
+        <Box position={[0.58, 0.33, 0.32]} scale={[0.62, 0.37, 0.5]} color="#526be6" />
+        <Box position={[0.58, 0.56, 0.14]} scale={[0.47, 0.22, 0.09]} color="#b8e0c2" />
+        {Array.from({ length: Math.min(5, Math.ceil((values[1] || 0) / 500)) }, (_, i) => (
+          <Coin key={i} position={[1.13, 0.23 + i * 0.1, 0.46]} />
+        ))}
+      </group>
+      {values[2] > 0 && (
+        <group
+          onClick={(e) => {
+            if (e.delta < 8) {
+              e.stopPropagation();
+              onInspect?.('oven');
+            }
+          }}
+        >
+          <Box position={[0.8, 0.54, -0.48]} scale={[0.8, 0.7, 0.5]} color="#e2c9ee" />
+          <Box position={[0.8, 0.52, -0.215]} scale={[0.61, 0.36, 0.04]} color="#343b5c" />
+          <Box position={[0.8, 0.77, -0.18]} scale={[0.5, 0.05, 0.07]} color="#fff0cb" />
+        </group>
+      )}
+    </group>
+  );
+}
 function Fallback({ kind = 'scale' }: { kind?: Props['kind'] }) {
-  const Icon = kind === 'bars' ? ChartBarIcon : kind === 'tower' ? StackIcon : ScalesIcon;
+  const Icon =
+    kind === 'shop'
+      ? StorefrontIcon
+      : kind === 'bars'
+        ? ChartBarIcon
+        : kind === 'tower'
+          ? StackIcon
+          : ScalesIcon;
   return (
     <div className="scene-fallback">
       <Icon size={112} weight="duotone" />
@@ -319,8 +418,10 @@ export default function Scene({
   values = [],
   maxValue,
   minimalControls = false,
+  onInspect,
 }: Props) {
   const [capable, setCapable] = useState<boolean | null>(null);
+  const [rendered, setRendered] = useState(false);
   const [active, setActive] = useState(false);
   const [still, setStill] = useState(false);
   const [touched, setTouched] = useState(false);
@@ -350,14 +451,23 @@ export default function Scene({
     reportView();
   }
   useEffect(() => {
-    try {
-      const c = document.createElement('canvas');
-      const gl = c.getContext('webgl2');
-      setCapable(!!gl);
-      gl?.getExtension('WEBGL_lose_context')?.loseContext();
-    } catch {
-      setCapable(false);
-    }
+    const checkGraphics = () => {
+      if (document.documentElement.dataset.graphics === 'simple') {
+        setRendered(false);
+        setCapable(false);
+        return;
+      }
+      try {
+        const c = document.createElement('canvas');
+        const gl = c.getContext('webgl2');
+        setCapable(!!gl);
+        gl?.getExtension('WEBGL_lose_context')?.loseContext();
+      } catch {
+        setCapable(false);
+      }
+    };
+    checkGraphics();
+    window.addEventListener('tally-graphics', checkGraphics);
     const q = matchMedia('(prefers-reduced-motion: reduce)');
     setStill(q.matches);
     const change = () => setStill(q.matches);
@@ -384,6 +494,7 @@ export default function Scene({
     document.addEventListener('visibilitychange', update);
     if (el) io.observe(el);
     return () => {
+      window.removeEventListener('tally-graphics', checkGraphics);
       io.disconnect();
       dialogs.disconnect();
       document.removeEventListener('visibilitychange', update);
@@ -402,11 +513,13 @@ export default function Scene({
       }}
       role="group"
       aria-label={
-        kind === 'bars'
-          ? 'Interactive 3D comparison. Drag sideways to rotate; pinch to zoom.'
-          : kind === 'tower'
-            ? 'Interactive statement tower. Drag sideways to rotate; pinch to zoom.'
-            : 'Interactive 3D balance scale. Drag sideways to rotate; pinch to zoom.'
+        kind === 'shop'
+          ? 'Interactive 3D shop. Inspect the stock, till or oven. Drag sideways to rotate; pinch to zoom.'
+          : kind === 'bars'
+            ? 'Interactive 3D comparison. Drag sideways to rotate; pinch to zoom.'
+            : kind === 'tower'
+              ? 'Interactive statement tower. Drag sideways to rotate; pinch to zoom.'
+              : 'Interactive 3D balance scale. Drag sideways to rotate; pinch to zoom.'
       }
     >
       {capable === null ? (
@@ -422,6 +535,7 @@ export default function Scene({
             camera={VIEW_CAMERA}
             gl={{ antialias: true, alpha: true, powerPreference: 'low-power' }}
           >
+            <FirstFrame onReady={() => setRendered(true)} />
             <ambientLight intensity={1.7} />
             <directionalLight
               position={[3, 7, 5]}
@@ -430,7 +544,9 @@ export default function Scene({
               shadow-mapSize={[1024, 1024]}
             />
             <directionalLight position={[-4, 3, -2]} intensity={2} color="#ffe5cd" />
-            {kind === 'bars' ? (
+            {kind === 'shop' ? (
+              <Shop values={values} onInspect={onInspect} still={still} />
+            ) : kind === 'bars' ? (
               <Bars values={values} maxValue={maxValue} />
             ) : kind === 'scale' ? (
               <Scale tilt={tilt} blocks={blocks} still={still} />
@@ -462,6 +578,12 @@ export default function Scene({
             />
           </Canvas>
         </Boundary>
+      )}
+      {capable && !rendered && (
+        <div className="scene-preparing" aria-hidden="true">
+          <span />
+          <small>Setting the scene…</small>
+        </div>
       )}
       {capable && (
         <div
