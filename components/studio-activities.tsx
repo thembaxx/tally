@@ -1,7 +1,8 @@
 'use client';
 import { useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion } from 'motion/react';
+import { createPortal } from 'react-dom';
 import {
   ArrowRightIcon,
   ArrowCounterClockwiseIcon,
@@ -18,6 +19,12 @@ import { accepts } from '@/lib/learning';
 import { learnerNumber, money } from '@/lib/south-africa';
 import { AnswerFeedback } from './answer-feedback';
 import { Blob } from './brand';
+import {
+  swipeDirection,
+  useDragAutoScroll,
+  usePointerGesture,
+  type Gesture,
+} from './use-pointer-gesture';
 const Scene = dynamic(() => import('./scene'), {
   ssr: false,
   loading: () => <div className="scene scene-loading" />,
@@ -107,6 +114,48 @@ export function ChoiceTask({
     </div>
   );
 }
+function AccountChip({
+  account,
+  selected,
+  disabled,
+  onSelect,
+  onStart,
+  onMove,
+  onDrop,
+  onCancel,
+}: {
+  account: string;
+  selected: boolean;
+  disabled: boolean;
+  onSelect: () => void;
+  onStart: (account: string, move: Gesture) => void;
+  onMove: (move: Gesture) => void;
+  onDrop: (account: string, move: Gesture) => void;
+  onCancel: () => void;
+}) {
+  const gesture = usePointerGesture({
+    enabled: !disabled,
+    onStart: (move) => onStart(account, move),
+    onMove,
+    onEnd: (move) => onDrop(account, move),
+    onCancel,
+  });
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      aria-pressed={selected}
+      className={selected ? 'selected' : ''}
+      data-tally-sound="select"
+      onClick={onSelect}
+      {...gesture}
+      onContextMenu={(event) => event.preventDefault()}
+    >
+      {account}
+    </button>
+  );
+}
+
 export function JournalTask({
   onHint,
   challenge: c,
@@ -119,6 +168,18 @@ export function JournalTask({
   const [amounts, setAmounts] = useState({ debit: '', credit: '' });
   const [result, setResult] = useState<boolean | null>(null);
   const creditRef = useRef<HTMLInputElement>(null);
+  const root = useRef<HTMLDivElement>(null);
+  const slots = useRef<Record<'debit' | 'credit', HTMLButtonElement | null>>({
+    debit: null,
+    credit: null,
+  });
+  const [dragged, setDragged] = useState<string | null>(null);
+  const selectionBeforeDrag = useRef<string | null>(null);
+  const [hovered, setHovered] = useState<'debit' | 'credit' | null>(null);
+  const [announcement, setAnnouncement] = useState('');
+  const point = useRef({ x: 0, y: 0 });
+  const ghostX = useMotionValue(0),
+    ghostY = useMotionValue(0);
   const locked = result === true;
   const parse = (s: string) => learnerNumber(s) ?? 0;
   const debitTotal = parse(amounts.debit),
@@ -129,7 +190,29 @@ export function JournalTask({
     setAccounts((v) => ({ ...v, [side]: account }));
     setSelected(null);
     setResult(null);
+    setAnnouncement(`${account} placed on ${side}.`);
   }
+  function sideAt(x: number, y: number) {
+    for (const side of ['debit', 'credit'] as const) {
+      const bounds = slots.current[side]?.getBoundingClientRect();
+      if (bounds && x >= bounds.left && x <= bounds.right && y >= bounds.top && y <= bounds.bottom)
+        return side;
+    }
+    return null;
+  }
+  function moveAccount(move: Gesture) {
+    point.current = { x: move.x, y: move.y };
+    ghostX.set(Math.max(8, Math.min(window.innerWidth - 172, move.x + 12)));
+    ghostY.set(move.y - 24);
+    setHovered(sideAt(move.x, move.y));
+  }
+  function clearDrag() {
+    setDragged(null);
+    setHovered(null);
+  }
+  useDragAutoScroll(!!dragged, point, root, () =>
+    setHovered(sideAt(point.current.x, point.current.y)),
+  );
   function check(e: React.FormEvent) {
     e.preventDefault();
     const ok =
@@ -142,7 +225,7 @@ export function JournalTask({
     if (!ok) onMistake();
   }
   return (
-    <div className="journal-task">
+    <div className="journal-task" ref={root}>
       <div className="activity-kicker">
         <NotebookIcon weight="duotone" /> YOU’RE THE BOOKKEEPER
       </div>
@@ -163,23 +246,34 @@ export function JournalTask({
         </div>
       </div>
       <p className="account-instruction">
-        <HandTapIcon /> Choose an account, then tap its side. You can also drag.
+        <HandTapIcon /> Drag an account to its side, or choose it and tap a slot.
       </p>
       <div className="account-pool" aria-label="Available accounts">
         {c.accounts.map((account) => (
-          <button
-            type="button"
+          <AccountChip
             key={account}
+            account={account}
             disabled={locked}
-            draggable={!locked}
-            data-tally-sound="select"
-            onDragStart={(e) => e.dataTransfer.setData('text/plain', account)}
-            aria-pressed={selected === account}
-            className={selected === account ? 'selected' : ''}
-            onClick={() => setSelected(selected === account ? null : account)}
-          >
-            {account}
-          </button>
+            selected={selected === account}
+            onSelect={() => setSelected(selected === account ? null : account)}
+            onStart={(value, move) => {
+              selectionBeforeDrag.current = selected;
+              setDragged(value);
+              setSelected(value);
+              moveAccount(move);
+            }}
+            onMove={moveAccount}
+            onDrop={(value, move) => {
+              const side = sideAt(move.x, move.y);
+              if (side) put(side, value);
+              else setSelected(selectionBeforeDrag.current);
+              clearDrag();
+            }}
+            onCancel={() => {
+              setSelected(selectionBeforeDrag.current);
+              clearDrag();
+            }}
+          />
         ))}
       </div>
       <form onSubmit={check}>
@@ -188,16 +282,14 @@ export function JournalTask({
             <div key={side} className={`journal-side ${accounts[side] ? 'filled' : ''}`}>
               <button
                 type="button"
-                className={`journal-slot ${selected ? 'ready' : ''}`}
+                ref={(element) => {
+                  slots.current[side] = element;
+                }}
+                className={`journal-slot ${selected ? 'ready' : ''} ${hovered === side ? 'drag-over' : ''}`}
                 data-tally-sound={selected ? 'select' : undefined}
                 disabled={locked}
                 aria-label={`Place account on ${side}${accounts[side] ? `: ${accounts[side]}` : ''}`}
                 onClick={() => put(side)}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  put(side, e.dataTransfer.getData('text/plain'));
-                }}
               >
                 <span>{side === 'debit' ? 'Debit · left' : 'Credit · right'}</span>
                 <strong>{accounts[side] || 'Place account here'}</strong>
@@ -239,6 +331,20 @@ export function JournalTask({
           </button>
         )}
       </form>
+      <span className="sr-only" role="status">
+        {announcement}
+      </span>
+      {dragged &&
+        createPortal(
+          <motion.div
+            aria-hidden="true"
+            className="account-drag-preview"
+            style={{ x: ghostX, y: ghostY }}
+          >
+            {dragged}
+          </motion.div>,
+          document.body,
+        )}
       {result !== null && (
         <AnswerFeedback
           correct={result}
@@ -268,6 +374,23 @@ export function RecallTask({
   const [flipped, setFlipped] = useState(false);
   const [thought, setThought] = useState('');
   const still = useReducedMotion();
+  const dragX = useMotionValue(0);
+  function settleCard() {
+    animate(dragX, 0, { duration: still ? 0 : 0.18 });
+  }
+  const gesture = usePointerGesture({
+    onStart: () => dragX.stop(),
+    onMove: (move) => {
+      if (Math.abs(move.dx) > Math.abs(move.dy))
+        dragX.set(Math.max(-45, Math.min(45, move.dx * 0.25)));
+    },
+    onEnd: (move) => {
+      const direction = swipeDirection(move);
+      settleCard();
+      if (direction === 'left' || direction === 'right') setFlipped((value) => !value);
+    },
+    onCancel: settleCard,
+  });
   const card = cards.find((c) => c.id === queue[0])!;
   function rate(remembered: boolean) {
     if (!flipped) return;
@@ -309,6 +432,7 @@ export function RecallTask({
         <AnimatePresence mode="wait">
           <motion.div
             key={card.id}
+            style={{ x: dragX }}
             initial={still ? false : { opacity: 0, x: 35, rotate: 3 }}
             animate={{ opacity: 1, x: 0, rotate: 0 }}
             exit={still ? {} : { opacity: 0, x: -35, rotate: -3 }}
@@ -316,6 +440,7 @@ export function RecallTask({
           >
             <motion.button
               className="recall-card"
+              {...gesture}
               type="button"
               data-tally-sound="flip"
               onClick={() => setFlipped((v) => !v)}
@@ -337,7 +462,7 @@ export function RecallTask({
                 </span>
                 <span className="recall-prompt">{card.question}</span>
                 <span className="recall-turn">
-                  <ArrowsLeftRightIcon /> Tap to find the connection
+                  <ArrowsLeftRightIcon /> Tap or swipe to find the connection
                 </span>
               </span>
               <span

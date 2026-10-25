@@ -1,7 +1,15 @@
 'use client';
 import { useState, useRef, useEffect, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
-import { AnimatePresence, motion, Reorder, useDragControls, useReducedMotion } from 'motion/react';
+import {
+  AnimatePresence,
+  animate,
+  motion,
+  Reorder,
+  useDragControls,
+  useMotionValue,
+  useReducedMotion,
+} from 'motion/react';
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -27,6 +35,7 @@ import { ConceptExplorer } from './concept-explorer';
 import type { StudioActivity } from '@/lib/activity-types';
 import { ChoiceTask, JournalTask, RecallTask } from './studio-activities';
 import { AnswerFeedback } from './answer-feedback';
+import { swipeDirection, useDragAutoScroll, usePointerGesture } from './use-pointer-gesture';
 import type { SoundCue } from './use-soundscape';
 import { practiceEntry } from '@/lib/questions';
 import { challengeLevels, type Challenge } from '@/lib/challenge-questions';
@@ -632,7 +641,10 @@ function SortTask({
 }) {
   const [index, setIndex] = useState(0);
   const [answer, setAnswer] = useState<Category | null>(null);
-  const start = useRef({ x: 0, y: 0 });
+  const [preview, setPreview] = useState<Category | null>(null);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const still = useReducedMotion();
   const item = items[index];
   const correct = answer === item.category;
   const sorted = items.slice(0, index + (correct ? 1 : 0));
@@ -645,6 +657,39 @@ function SortTask({
     feedback(category === item.category);
     if (category !== item.category) onMistake();
   }
+  function settle() {
+    setPreview(null);
+    animate(x, 0, { duration: still ? 0 : 0.2 });
+    animate(y, 0, { duration: still ? 0 : 0.2 });
+  }
+  const gesture = usePointerGesture({
+    enabled: !correct,
+    onStart: () => {
+      x.stop();
+      y.stop();
+    },
+    onMove: (move) => {
+      x.set(Math.max(-125, Math.min(125, move.dx * 0.65)));
+      y.set(Math.max(-80, Math.min(45, move.dy * 0.5)));
+      setPreview(
+        Math.abs(move.dx) > Math.abs(move.dy) * 1.2
+          ? move.dx < 0
+            ? 'Asset'
+            : 'Liability'
+          : move.dy < -12 && Math.abs(move.dy) > Math.abs(move.dx) * 1.2
+            ? 'Equity'
+            : null,
+      );
+    },
+    onEnd: (move) => {
+      const direction = swipeDirection(move);
+      settle();
+      if (direction === 'left') choose('Asset');
+      if (direction === 'right') choose('Liability');
+      if (direction === 'up') choose('Equity');
+    },
+    onCancel: settle,
+  });
   function advance() {
     if (index === items.length - 1) onNext();
     else {
@@ -669,28 +714,25 @@ function SortTask({
         </div>
       </div>
       <motion.div
-        className="sort-card"
+        className={`sort-card ${preview ? 'is-swiping' : ''}`}
         key={index}
+        style={{ x, y }}
+        {...gesture}
         initial={{ scale: 0.92, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        onPointerDown={(e) => {
-          start.current = { x: e.clientX, y: e.clientY };
-          e.currentTarget.setPointerCapture(e.pointerId);
-        }}
-        onPointerUp={(e) => {
-          const dx = e.clientX - start.current.x,
-            dy = e.clientY - start.current.y;
-          if (dy < -50 && Math.abs(dy) > Math.abs(dx)) choose('Equity');
-          else if (Math.abs(dx) > 50) choose(dx < 0 ? 'Asset' : 'Liability');
-        }}
       >
+        {preview && (
+          <span className="sort-gesture-preview" aria-hidden="true">
+            {preview}
+          </span>
+        )}
         <span className="fine mono">
           ITEM {index + 1} OF {items.length}
         </span>
         <h3>{item.name}</h3>
         <strong className="mono">{money(item.amount)}</strong>
         <span className="swipe-hint">
-          <HandSwipeLeftIcon /> Swipe, or choose below
+          <HandSwipeLeftIcon /> Left: Asset · Right: Liability · Up: Equity
         </span>
       </motion.div>
       <div className="sort-options">
@@ -698,6 +740,7 @@ function SortTask({
           <button
             key={c}
             disabled={correct}
+            data-preview={preview === c}
             className={answer === c ? (correct ? 'chosen good' : 'chosen bad') : ''}
             onClick={() => choose(c)}
           >
@@ -842,9 +885,29 @@ function OrderRow({
   move: (i: number, delta: number) => void;
 }) {
   const controls = useDragControls();
+  const handle = useRef<HTMLButtonElement>(null);
+  const point = useRef({ y: 0 });
+  const [dragging, setDragging] = useState(false);
+  useDragAutoScroll(dragging, point, handle);
   return (
-    <Reorder.Item className="order-row" value={value} dragListener={false} dragControls={controls}>
+    <Reorder.Item
+      className="order-row"
+      value={value}
+      dragListener={false}
+      dragControls={controls}
+      dragMomentum={false}
+      whileDrag={{ zIndex: 2, boxShadow: '0 8px 24px #202b4324' }}
+      onDragStart={(_, info) => {
+        point.current.y = info.point.y - window.scrollY;
+        setDragging(true);
+      }}
+      onDrag={(_, info) => {
+        point.current.y = info.point.y - window.scrollY;
+      }}
+      onDragEnd={() => setDragging(false)}
+    >
       <button
+        ref={handle}
         className="drag-handle"
         onPointerDown={(e) => controls.start(e)}
         aria-label={`Drag ${value}`}

@@ -23,10 +23,11 @@ npm run dev
 - Learn’s skill map shows every topic as Not started, Building, Strengthening, or Steady, with the practice evidence and next review date. Steady requires independent recall on at least three separate days in the current streak; hints, retries, or low confidence return a topic to Building. Completed lessons without recorded recall remain Building. Home links to the map and explains recommended reviews. Stages describe recorded practice rather than a mastery score.
 - First-time learners can try an activity immediately and choose optional profile/goal preferences after their first completion. Unfinished sessions resume at the current activity with the same generated question and saved reflection; partially entered activity answers restart.
 - Your First Bakery connects four journal entries, an income calculation, and a balance sheet using one consistent business. Its amounts vary on repeat lessons.
-- Swipe/tap sorting of assets, liabilities, and equity. The 3D beam tilts according to the amounts sorted, with a live equation readout.
+- Pointer-following swipe/tap sorting of assets, liabilities, and equity with direction previews. Short, diagonal, cancelled and multi-pointer gestures do not submit answers. The 3D beam tilts according to the amounts sorted, with a live equation readout.
 - A learning studio with four new lesson formats: journal-entry building with tappable/draggable account chips, accounting detective scenarios, branching story choices, and 3D flip cards that requeue uncertain ideas. All use the existing XP and review schedule.
 - Text and numeric entry with recognized synonyms, loose number formatting, and Enter-to-next-field behavior.
-- Drag-reordered statements and processes with a live animated 3D tower and accessible move buttons.
+- Drag-reordered statements and processes with a live animated 3D tower, edge scrolling and accessible move buttons. Journal chips support touch and mouse dragging with floating previews and highlighted targets; cancellation restores the previous selection. Recall cards support horizontal swipe-to-flip while vertical swipes scroll.
+- Mobile sheets have a pull-down handle with short-pull rebound, plus ordinary close and keyboard controls. 3D scenes support sideways rotation, two-finger pinch, cooperative vertical/wheel scrolling, correct zoom buttons and reset. Automatic rotation stops after interaction.
 - Interactive 3D comparison bars for profit, inventory, depreciation, accruals, ratios, budgeting, contribution margin, deferrals, and consolidation. Sliders and values share the same model.
 - Date-seeded three-part daily challenges; first completion earns 90 XP and repeats earn 15 XP. Lessons earn 60 XP initially and 10 XP on repeat completion; targeted reviews earn 10 XP per concept.
 - Real local-calendar streaks, daily activity, achievements, and a five-minute focus timer. The timer pauses in hidden tabs and awards 10 XP once per day.
@@ -47,7 +48,7 @@ npm run build
 npm test
 ```
 
-The suite also covers complete journal, recall, detective, and cash-flow story flows, existing-progress compatibility, reduced motion, automated AA checks, no-JavaScript guides, all public guide URLs, structured data, crawler files, immediate practice from lesson deep links, adaptive review, backup restore, saved takeaways, and session recovery.
+The suite also covers complete journal, recall, detective, and cash-flow story flows, existing-progress compatibility, reduced motion, automated AA checks, no-JavaScript guides, all public guide URLs, structured data, crawler files, immediate practice from lesson deep links, adaptive review, backup restore, saved takeaways, and session recovery. Gesture tests use Chromium’s touch-input protocol for swipes, multi-touch cancellation, drag-and-drop, edge scrolling, reordering, sheet dismissal, card flips and 3D pinch/rotation; physical-device testing remains a separate check.
 
 Tests use Playwright’s lockfile-pinned Chromium in both local and CI runs. Install it with `npx playwright install --with-deps chromium`. Start the app before running tests; `BASE_URL` can point the suite at a deployed app. The suite covers the accounting model, onboarding, swipes, answers, feedback, reordering, XP, review persistence, streaks, themes, focus timing, navigation, and five viewport widths.
 

@@ -57,16 +57,10 @@ test('onboarding, swipe sorting, loose answer, XP and review persistence', async
   const card = page.locator('.sort-card');
   const box = await card.boundingBox();
   if (!box) throw Error('No swipe card');
-  await card.dispatchEvent('pointerdown', {
-    clientX: box.x + 100,
-    clientY: box.y + 100,
-    pointerId: 1,
-  });
-  await card.dispatchEvent('pointerup', {
-    clientX: box.x + 100,
-    clientY: box.y + 20,
-    pointerId: 1,
-  });
+  await page.mouse.move(box.x + box.width / 2, box.y + 100);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2, box.y + 20, { steps: 8 });
+  await page.mouse.up();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page
     .getByLabel('Owner’s equity (R)')

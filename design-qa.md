@@ -73,3 +73,31 @@ Validation:
 - Icon dimensions and social-card dimensions match metadata. A pixel check found **zero** non-background pixels outside the maskable icon's central safe-area circle.
 
 Search ranking, actual indexing and AI citation outcomes were not measured. The asset/reference photographs are inspiration for the original logo, not a pixel-fidelity target for the entire app.
+
+## Gesture revision — October 23, 2026
+
+**final result: passed**
+
+The existing Tally visual system and learning flow remain the reference. This revision improves touch ownership, direct feedback, scroll cooperation and equivalent tap/keyboard controls.
+
+- Sort cards follow the pointer and show a direction label before release. Left/right/up map to Asset/Liability/Equity. Small or diagonal movements, cancellation, lost capture and a second pointer never submit an answer.
+- Journal chips use pointer capture on touch and mouse, with a floating label, highlighted drop zone, edge scrolling and a polite placement announcement. Canceled/outside drops restore the selection from before the drag.
+- Recall cards support horizontal swipe-to-flip. Vertical swipes scroll, and confidence ratings still require an explicit choice. Generated clicks after a drag cannot undo the action; a fresh tap remains immediately available.
+- The mobile sheet handle has a 44 px target, direct pull feedback and short-pull rebound. Long downward pulls dismiss the sheet and restore focus. Only the handle owns dismissal, leaving lesson inputs and other gestures alone.
+- Reordering retains its drag handle and arrow alternatives, adds edge scrolling, and removes release momentum. Coarse-pointer targets are enlarged.
+- 3D scenes use sideways rotation and two-finger dolly/rotation. Vertical swipes and ordinary wheel events scroll their containing page or sheet. Explicit zoom directions are corrected; reset restores the camera and target; auto-rotation stops after interaction.
+- Home and Practice use an expandable compact view toolbar to keep the main action clear. Exercise scenes expose rotate, zoom and reset controls directly. Numerical view updates are also available to assistive technology.
+
+Visual evidence opened and reviewed: `public/screenshots/home-mobile.png` (390 × 844, actual touch context), `public/screenshots/home-desktop.png` (1440 × 1000), `/workspace/scratch/gesture-journal-drag.png`, `/workspace/scratch/gesture-journal-placed.png`, and `/workspace/scratch/gesture-desktop-settings.png`. The mobile drag captures show the floating chip, highlighted destination and placed account. The desktop settings sheet remains centered and scrollable. The compact toolbar keeps large touch targets without covering the learning action.
+
+All **26** production-build Playwright tests passed in **4.5 minutes**. Eight new Chromium touch-input cases exercise sorting previews and all directions, cancel/diagonal/multi-touch protection, journal touch drop and cancellation, edge scrolling, recall swipe and vertical scrolling, sheet dismissal/focus, 3D drag/pinch/zoom/reset/scroll cooperation and compact controls, plus touch reordering and axe A/AA checks. The other 18 learning, theme, focus, SEO and visual regression tests also passed. This includes the existing readable 3D card-flip baseline.
+
+TypeScript, oxlint, oxfmt and the optimized build passed. An offline reload opened the recall lesson and its answer, preserved 120 XP and existing progress, and used only `tally-offline-v4`; capture and offline checks observed no page errors. The shared pointer hook removes capture and document listeners on completion, cancellation, blur, hidden tabs and unmount. Motion values handle transient movement; reduced motion suppresses rebound/flip animation.
+
+Physical iOS/Android and pen hardware were not available. Browser touch-input emulation verifies gesture routing and multi-touch behavior, not device-specific haptics or operating-system edge gestures. No P0/P1/P2 issues remain in this scope.
+
+### Integration with current main — October 25, 2026
+
+The release incorporates main `da58dc4`, preserving all 16 lessons, adaptive question plans, session recovery, skill stages, the opt-in soundscape, settings separation, South African English, rand and SAST calendars. Gesture tests use the adaptive question source for entry answers. The offline cache advances from main's v7 to v8; it does not revert to the earlier gesture build's v4. PWA captures were refreshed from the integrated app, and journal drag captures show rand and trade-payables terminology.
+
+All eight touch scenarios passed again after integration. TypeScript, oxlint, oxfmt and the production build passed. The expanded 55-case suite is the release regression suite; its final result is recorded in the pull request's Verify app check. The 26-case result above documents the earlier gesture-only build before main advanced.
