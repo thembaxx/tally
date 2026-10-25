@@ -212,6 +212,7 @@ test('3D pinch and drag work while one-finger vertical swipes and wheels scroll 
   await startLesson(page, 'equation', true);
   const scene = page.locator('.exercise-scene .scene');
   await scene.locator('canvas').waitFor();
+  await expect(scene.locator('.scene-preparing')).toHaveCount(0, { timeout: 20000 });
   const cdp = await page.context().newCDPSession(page);
   const reset = scene.getByRole('button', { name: 'Reset 3D view' });
   await reset.click();

@@ -19,6 +19,16 @@ const VIEW_CAMERA = { position: [4, 2.7, 7] as [number, number, number], fov: 37
 const VIEW_TARGET: [number, number, number] = [0, -0.15, 0];
 const VIEW_DISTANCE = Math.hypot(4, 2.85, 7);
 const VIEW_TOUCHES = { ONE: TOUCH.ROTATE, TWO: TOUCH.DOLLY_ROTATE };
+function FirstFrame({ onReady }: { onReady: () => void }) {
+  const reported = useRef(false);
+  useFrame(() => {
+    if (!reported.current) {
+      reported.current = true;
+      onReady();
+    }
+  });
+  return null;
+}
 
 type Props = {
   kind?: 'scale' | 'tower' | 'bars' | 'shop';
@@ -411,6 +421,7 @@ export default function Scene({
   onInspect,
 }: Props) {
   const [capable, setCapable] = useState<boolean | null>(null);
+  const [rendered, setRendered] = useState(false);
   const [active, setActive] = useState(false);
   const [still, setStill] = useState(false);
   const [touched, setTouched] = useState(false);
@@ -442,6 +453,7 @@ export default function Scene({
   useEffect(() => {
     const checkGraphics = () => {
       if (document.documentElement.dataset.graphics === 'simple') {
+        setRendered(false);
         setCapable(false);
         return;
       }
@@ -523,6 +535,7 @@ export default function Scene({
             camera={VIEW_CAMERA}
             gl={{ antialias: true, alpha: true, powerPreference: 'low-power' }}
           >
+            <FirstFrame onReady={() => setRendered(true)} />
             <ambientLight intensity={1.7} />
             <directionalLight
               position={[3, 7, 5]}
@@ -565,6 +578,12 @@ export default function Scene({
             />
           </Canvas>
         </Boundary>
+      )}
+      {capable && !rendered && (
+        <div className="scene-preparing" aria-hidden="true">
+          <span />
+          <small>Setting the scene…</small>
+        </div>
       )}
       {capable && (
         <div

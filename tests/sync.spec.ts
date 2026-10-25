@@ -1,7 +1,7 @@
 import { test, expect, type BrowserContext, type Page } from '@playwright/test';
 import { initialProgress } from '../lib/learning';
 import { createCode, accessToken, seal, unseal, fingerprint } from '../lib/vault';
-import { GET, POST, PUT } from '../app/api/sync/route';
+import { GET, HEAD, POST, PUT } from '../app/api/sync/route';
 test('sync API rejects invalid capabilities, origins and payloads, and uses revision checks without caching', async () => {
   const beforeUrl = process.env.TALLY_SYNC_URL;
   const beforeKey = process.env.TALLY_SYNC_PUBLISHABLE_KEY;
@@ -12,6 +12,9 @@ test('sync API rejects invalid capabilities, origins and payloads, and uses revi
     const status = await GET(new Request('https://tally.test/api/sync'));
     expect(await status.json()).toEqual({ configured: true });
     expect(status.headers.get('Cache-Control')).toContain('no-store');
+    const head = await HEAD(new Request('https://tally.test/api/sync', { method: 'HEAD' }));
+    expect(head.status).toBe(status.status);
+    expect(await head.text()).toBe('');
     expect(
       (
         await GET(

@@ -4,7 +4,11 @@ import { initialProgress } from '../lib/learning';
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(
     (p) => {
-      HTMLCanvasElement.prototype.getContext = () => null;
+      Reflect.set(window, 'tallyGLProbes', 0);
+      HTMLCanvasElement.prototype.getContext = () => {
+        Reflect.set(window, 'tallyGLProbes', Reflect.get(window, 'tallyGLProbes') + 1);
+        return null;
+      };
       if (!localStorage.getItem('tally-progress-v1'))
         localStorage.setItem('tally-progress-v1', JSON.stringify(p));
     },
@@ -35,6 +39,7 @@ test('WebKit mobile sheets fit small viewports, keep text legible and restore fo
   await page.getByRole('button', { name: 'Profit stays the same', exact: true }).tap();
   await page.getByRole('button', { name: 'Try this decision', exact: true }).tap();
   await expect(page.locator('.shop-receipt')).toContainText('Unsold stock is an asset');
+  expect(await page.evaluate(() => Reflect.get(window, 'tallyGLProbes'))).toBe(0);
   expect(
     await page.locator('[role="dialog"]').evaluate((e) => e.scrollWidth <= e.clientWidth + 1),
   ).toBe(true);
