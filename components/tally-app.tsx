@@ -552,7 +552,7 @@ export default function TallyApp() {
                         <div className="hero-visual">
                           <span className="hero-orbit" aria-hidden="true" />
                           <span className="floating-equation mono">A = L + E</span>
-                          <Scene />
+                          <Scene minimalControls />
                           <span className="scene-hint">
                             <span className="tiny-dot" /> A little balance goes a long way
                           </span>
@@ -851,7 +851,11 @@ export default function TallyApp() {
                           <ArrowRightIcon />
                         </button>
                       </div>
-                      <Scene kind="tower" order={['Sort', 'Type', 'Build', 'Understand']} />
+                      <Scene
+                        kind="tower"
+                        order={['Sort', 'Type', 'Build', 'Understand']}
+                        minimalControls
+                      />
                     </div>
                     <PracticeStudio onLaunch={launch} completed={p.completed} />
                     <section className="path-section">

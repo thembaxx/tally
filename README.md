@@ -16,10 +16,11 @@ npm run dev
 - Four screens: Home, Learn, Practice, and Me. Responsive sidebar on larger screens and a spring-animated floating mobile navigation pill.
 - Fifteen playable lessons across foundations, intermediate concepts, and introductions to advanced topics. Follow the Cash replaces the previous Cash Flow placeholder with two story-based challenges.
 - Worked examples, interactive numerical explorations, specific explanatory feedback, optional hints, ungraded self-explanation, and confidence-based review scheduling after one or three days.
-- Swipe/tap sorting of assets, liabilities, and equity. The 3D beam tilts according to the amounts sorted, with a live equation readout.
+- Pointer-following swipe/tap sorting of assets, liabilities, and equity with direction previews. Short, diagonal, canceled and multi-pointer gestures do not submit answers. The 3D beam tilts according to the amounts sorted, with a live equation readout.
 - A learning studio with four new lesson formats: journal-entry building with tappable/draggable account chips, accounting detective scenarios, branching story choices, and 3D flip cards that requeue uncertain ideas. All use the existing XP and review schedule.
 - Text and numeric entry with recognized synonyms, loose number formatting, and Enter-to-next-field behavior.
-- Drag-reordered statements and processes with a live animated 3D tower and accessible move buttons.
+- Drag-reordered statements and processes with a live animated 3D tower, edge scrolling and accessible move buttons. Journal chips support touch and mouse dragging with floating previews and highlighted targets; cancellation restores the previous selection. Recall cards support horizontal swipe-to-flip while vertical swipes scroll.
+- Mobile sheets have a pull-down handle with short-pull rebound, plus ordinary close and keyboard controls. 3D scenes support sideways rotation, two-finger pinch, cooperative vertical/wheel scrolling, correct zoom buttons and reset. Automatic rotation stops after interaction.
 - Interactive 3D comparison bars for profit, inventory, depreciation, accruals, ratios, budgeting, contribution margin, deferrals, and consolidation. Sliders and values share the same model.
 - Date-seeded three-part daily challenges; first completion earns 90 XP and repeats earn 15 XP. Lessons earn 60 XP initially and 10 XP on review.
 - Real local-calendar streaks, daily activity, achievements, and a five-minute focus timer. The timer pauses in hidden tabs and awards 10 XP once per day.
@@ -40,7 +41,7 @@ npm run build
 npm test
 ```
 
-The suite also covers complete journal, recall, detective, and cash-flow story flows, existing-progress compatibility, reduced motion, automated AA checks, no-JavaScript guides, all public guide URLs, structured data, crawler files, and onboarding from a lesson deep link.
+The suite also covers complete journal, recall, detective, and cash-flow story flows, existing-progress compatibility, reduced motion, automated AA checks, no-JavaScript guides, all public guide URLs, structured data, crawler files, and onboarding from a lesson deep link. Gesture tests use Chromium's real touch-input protocol for swipes, multi-touch cancellation, drag-and-drop, edge scrolling, reordering, sheet dismissal, card flips and 3D pinch/rotation; physical-device testing remains a separate check.
 
 Tests use Playwright and `/usr/bin/chromium` in this workspace. For another machine, set `executablePath` in `playwright.config.ts` or install Playwright's Chromium. Start the app before running tests; `BASE_URL` can point the suite at a deployed app. The suite covers the accounting model, onboarding, swipes, answers, feedback, reordering, XP, review persistence, streaks, themes, focus timing, navigation, and five viewport widths.
 

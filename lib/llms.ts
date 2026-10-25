@@ -22,11 +22,13 @@ Tally is an accounting education app, not bookkeeping software. No account is re
 ${available.map((lesson) => `- [${guideTitle(lesson)}](${absoluteUrl(`/learn/${lesson.id}`)}): ${lesson.level}; about ${lesson.minutes} minutes. ${lesson.subtitle}`).join('\n')}
 
 ## Learning experience
-- Swipe or tap to classify assets, liabilities and equity. A 3D balance scale illustrates Assets = Liabilities + Equity.
+- Swipe left for Asset, right for Liability or up for Equity, or use tap buttons. The card follows the pointer and previews its category; canceled or multi-pointer gestures do not submit an answer. A 3D balance scale illustrates Assets = Liabilities + Equity.
 - Type account names or amounts; recognized synonyms and numeric formatting are accepted.
 - Rearrange statement lines and accounting steps by dragging or using arrow buttons.
-- Build journal entries by selecting accounts, assigning debit and credit sides, and entering equal amounts.
-- Recall cards ask learners to remember before revealing an answer. Difficult cards can be requeued.
+- Build journal entries by dragging accounts into debit/credit slots using touch or a mouse, or selecting an account and tapping its side. Captured drags scroll near a sheet's edges. Then enter equal amounts.
+- Recall cards ask learners to remember before revealing an answer with a tap or horizontal swipe. Difficult cards can be requeued. Rating understanding remains an explicit button choice.
+- Drag 3D scenes sideways to rotate and pinch with two fingers to zoom. Vertical swipes and ordinary wheel gestures scroll the page. Rotate, zoom and reset buttons are also available. Automatic rotation stops after interacting.
+- Mobile panels can be dismissed by pulling down their handle; close buttons and Escape remain available.
 - Story decisions and error-spotting exercises explain every selection.
 - Daily challenges contain three date-based tasks. Repeat runs earn less XP.
 - Spaced review returns after one day or three days according to mistakes and confidence.

@@ -2,7 +2,7 @@
 import { Canvas, useFrame } from '@react-three/fiber';
 import { RoundedBox, OrbitControls, ContactShadows } from '@react-three/drei';
 import { Component, useEffect, useRef, useState, type ReactNode, type ComponentRef } from 'react';
-import { Group, MathUtils } from 'three';
+import { Group, MathUtils, TOUCH } from 'three';
 import {
   ScalesIcon,
   ArrowClockwiseIcon,
@@ -10,7 +10,14 @@ import {
   MagnifyingGlassMinusIcon,
   ChartBarIcon,
   StackIcon,
+  ArrowCounterClockwiseIcon,
+  SlidersHorizontalIcon,
 } from '@phosphor-icons/react';
+
+const VIEW_CAMERA = { position: [4, 2.7, 7] as [number, number, number], fov: 37 };
+const VIEW_TARGET: [number, number, number] = [0, -0.15, 0];
+const VIEW_DISTANCE = Math.hypot(4, 2.85, 7);
+const VIEW_TOUCHES = { ONE: TOUCH.ROTATE, TWO: TOUCH.DOLLY_ROTATE };
 
 type Props = {
   kind?: 'scale' | 'tower' | 'bars';
@@ -20,6 +27,7 @@ type Props = {
   blocks?: number;
   order?: string[];
   compact?: boolean;
+  minimalControls?: boolean;
 };
 function Box({
   position,
@@ -310,12 +318,37 @@ export default function Scene({
   compact,
   values = [],
   maxValue,
+  minimalControls = false,
 }: Props) {
   const [capable, setCapable] = useState<boolean | null>(null);
   const [active, setActive] = useState(true);
   const [still, setStill] = useState(false);
+  const [touched, setTouched] = useState(false);
+  const [controlsOpen, setControlsOpen] = useState(false);
+  const [view, setView] = useState({ zoom: 100, rotation: 30 });
   const holder = useRef<HTMLDivElement>(null);
   const orbit = useRef<ComponentRef<typeof OrbitControls>>(null);
+  function reportView() {
+    const controls = orbit.current;
+    if (controls)
+      setView({
+        zoom: Math.round((VIEW_DISTANCE / controls.getDistance()) * 100),
+        rotation: Math.round((controls.getAzimuthalAngle() * 180) / Math.PI),
+      });
+  }
+  function resetView() {
+    const controls = orbit.current;
+    if (!controls) return;
+    setTouched(true);
+    controls.autoRotate = false;
+    controls.enableDamping = false;
+    controls.update();
+    controls.position0.set(...VIEW_CAMERA.position);
+    controls.target0.set(...VIEW_TARGET);
+    controls.reset();
+    controls.enableDamping = !still;
+    reportView();
+  }
   useEffect(() => {
     try {
       const c = document.createElement('canvas');
@@ -341,13 +374,19 @@ export default function Scene({
     <div
       ref={holder}
       className={`scene ${compact ? 'compact' : ''}`}
+      onPointerDownCapture={(event) => {
+        if (!(event.target as Element).closest('.scene-controls')) setControlsOpen(false);
+      }}
+      onWheelCapture={(event) => {
+        if (!event.ctrlKey && !event.metaKey) event.stopPropagation();
+      }}
       role="group"
       aria-label={
         kind === 'bars'
-          ? 'Interactive 3D comparison. Drag to rotate; pinch to zoom.'
+          ? 'Interactive 3D comparison. Drag sideways to rotate; pinch to zoom.'
           : kind === 'tower'
-            ? 'Interactive statement tower. Drag to rotate; pinch to zoom.'
-            : 'Interactive 3D balance scale. Drag to rotate; pinch to zoom.'
+            ? 'Interactive statement tower. Drag sideways to rotate; pinch to zoom.'
+            : 'Interactive 3D balance scale. Drag sideways to rotate; pinch to zoom.'
       }
     >
       {capable === null ? (
@@ -360,7 +399,7 @@ export default function Scene({
             shadows
             dpr={[1, 1.7]}
             frameloop={active ? 'always' : 'never'}
-            camera={{ position: [4, 2.7, 7], fov: 37 }}
+            camera={VIEW_CAMERA}
             gl={{ antialias: true, alpha: true, powerPreference: 'low-power' }}
           >
             <ambientLight intensity={1.7} />
@@ -383,52 +422,96 @@ export default function Scene({
               ref={orbit}
               enablePan={false}
               enableZoom
+              touches={VIEW_TOUCHES}
+              enableDamping={!still}
+              dampingFactor={0.12}
+              rotateSpeed={0.7}
+              zoomSpeed={0.8}
               minDistance={5}
               maxDistance={11}
               minPolarAngle={0.4}
               maxPolarAngle={Math.PI / 2.05}
-              autoRotate={!still && active}
+              autoRotate={!still && active && !touched}
               autoRotateSpeed={0.45}
-              target={[0, -0.15, 0]}
+              target={VIEW_TARGET}
+              onStart={() => {
+                if (orbit.current) orbit.current.autoRotate = false;
+                setTouched(true);
+              }}
+              onEnd={reportView}
             />
           </Canvas>
         </Boundary>
       )}
       {capable && (
-        <div className="scene-controls" aria-label="3D view controls">
-          <button
-            type="button"
-            aria-label="Rotate 3D view"
-            onClick={() => {
-              const c = orbit.current;
-              if (c) {
-                c.setAzimuthalAngle(c.getAzimuthalAngle() + Math.PI / 4);
-                c.update();
-              }
-            }}
-          >
-            <ArrowClockwiseIcon />
-          </button>
-          <button
-            type="button"
-            aria-label="Zoom 3D view in"
-            onClick={() => {
-              orbit.current?.dollyIn(1.2);
-              orbit.current?.update();
-            }}
-          >
-            <MagnifyingGlassPlusIcon />
-          </button>
-          <button
-            type="button"
-            aria-label="Zoom 3D view out"
-            onClick={() => {
-              orbit.current?.dollyOut(1.2);
-              orbit.current?.update();
-            }}
-          >
-            <MagnifyingGlassMinusIcon />
-          </button>
+        <div
+          className={`scene-controls ${minimalControls ? 'minimal' : ''}`}
+          role="group"
+          aria-label="3D view controls"
+          onBlur={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget)) setControlsOpen(false);
+          }}
+        >
+          {minimalControls && (
+            <button
+              type="button"
+              aria-label="Show 3D view controls"
+              aria-expanded={controlsOpen}
+              onClick={() => setControlsOpen((value) => !value)}
+            >
+              <SlidersHorizontalIcon />
+            </button>
+          )}
+          <div className="scene-controls-actions" hidden={minimalControls && !controlsOpen}>
+            <button
+              type="button"
+              aria-label="Rotate 3D view"
+              onClick={() => {
+                const c = orbit.current;
+                if (c) {
+                  setTouched(true);
+                  c.autoRotate = false;
+                  c.setAzimuthalAngle(c.getAzimuthalAngle() + Math.PI / 4);
+                  c.update();
+                  reportView();
+                }
+              }}
+            >
+              <ArrowClockwiseIcon />
+            </button>
+            <button
+              type="button"
+              aria-label="Zoom 3D view in"
+              onClick={() => {
+                setTouched(true);
+                if (orbit.current) orbit.current.autoRotate = false;
+                orbit.current?.dollyIn(1 / 1.2);
+                orbit.current?.update();
+                reportView();
+              }}
+            >
+              <MagnifyingGlassPlusIcon />
+            </button>
+            <button
+              type="button"
+              aria-label="Zoom 3D view out"
+              onClick={() => {
+                setTouched(true);
+                if (orbit.current) orbit.current.autoRotate = false;
+                orbit.current?.dollyOut(1 / 1.2);
+                orbit.current?.update();
+                reportView();
+              }}
+            >
+              <MagnifyingGlassMinusIcon />
+            </button>
+            <button type="button" aria-label="Reset 3D view" onClick={resetView}>
+              <ArrowCounterClockwiseIcon />
+            </button>
+          </div>
+          <output className="sr-only" aria-live="polite">
+            Zoom {view.zoom}%. Rotation {view.rotation} degrees.
+          </output>
         </div>
       )}
     </div>
