@@ -44,10 +44,12 @@ export function Switch({
   checked,
   onChange,
   label,
+  feedback = true,
 }: {
   checked: boolean;
   onChange: (checked: boolean) => void;
   label: string;
+  feedback?: boolean;
 }) {
   const [pressed, setPressed] = useState(false);
   return (
@@ -57,6 +59,7 @@ export function Switch({
       role="switch"
       aria-checked={checked}
       aria-label={label}
+      data-tally-sound={feedback ? 'select' : undefined}
       onPointerDown={() => setPressed(true)}
       onPointerUp={() => setPressed(false)}
       onPointerLeave={() => setPressed(false)}

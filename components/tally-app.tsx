@@ -26,8 +26,6 @@ import {
   MoonIcon,
   MonitorIcon,
   DownloadSimpleIcon,
-  SpeakerHighIcon,
-  VibrateIcon,
   PauseIcon,
   PlayIcon,
   XIcon,
@@ -56,7 +54,8 @@ import { ReflectionNotebook } from './reflection-notebook';
 import { ProgressSync } from './progress-sync';
 import { useProgressSync } from './use-progress-sync';
 import { useTally, useFocus, useTheme } from './use-tally';
-import { useSoundscape } from './use-soundscape';
+import { useFeedback } from './use-feedback';
+import { FeedbackSettings } from './feedback-settings';
 import { Logo, Blob } from './brand';
 import { Modal } from './modal';
 import { LessonPlayer } from './lesson-player';
@@ -166,7 +165,8 @@ export default function TallyApp() {
   const sw = useRef<ServiceWorkerRegistration | null>(null);
   const lessonLinkOpened = useRef(false);
   const showToast = useCallback((s: string) => setToast(s), []);
-  const playSound = useSoundscape(p.sound, p.soundVolume);
+  const feedbackEngine = useFeedback(p.sound, p.soundVolume, p.haptics);
+  const playSound = feedbackEngine.cue;
   const focus = useFocus(() => {
     playSound('focus-end');
     const day = localDay();
@@ -298,11 +298,9 @@ export default function TallyApp() {
     setProgress((v) => ({ ...v, ...update }));
   }
   function feedback(success: boolean) {
-    if (p.haptics && 'vibrate' in navigator) navigator.vibrate(success ? [12, 35, 12] : 25);
     playSound(success ? 'correct' : 'incorrect');
   }
   function celebrate() {
-    if (p.haptics && 'vibrate' in navigator) navigator.vibrate([12, 40, 16, 55, 22]);
     playSound('complete');
   }
   function launch(lesson: Session) {
@@ -548,6 +546,7 @@ export default function TallyApp() {
                 className="icon-button settings-trigger"
                 onClick={() => setSettings(true)}
                 aria-label="Open settings"
+                data-tally-sound="open"
               >
                 <GearSixIcon size={23} />
               </button>
@@ -1460,68 +1459,7 @@ export default function TallyApp() {
                 ))}
               </select>
             </div>
-            <h3 className="settings-section-title">Feedback</h3>
-            <div className="setting-row">
-              <span>
-                <strong>
-                  <VibrateIcon /> Haptic feedback
-                </strong>
-                <small>Vibration feedback on supported phones.</small>
-              </span>
-              <Switch
-                checked={p.haptics}
-                onChange={(v) => patch({ haptics: v })}
-                label="Haptic feedback"
-              />
-            </div>
-            <div className="setting-row">
-              <span>
-                <strong>
-                  <SpeakerHighIcon /> Sound effects
-                </strong>
-                <small>Audio cues for navigation, answers, and completed sessions.</small>
-              </span>
-              <Switch
-                checked={p.sound}
-                onChange={(v) => {
-                  patch({ sound: v });
-                  if (v) playSound('correct', { force: true });
-                }}
-                label="Sound effects"
-              />
-            </div>
-            <div className="setting-row sound-volume-row">
-              <span>
-                <strong>Sound volume</strong>
-                <small>Gentle, short cues. No background music.</small>
-              </span>
-              <div className="sound-volume-control">
-                <input
-                  aria-label="Sound volume"
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="5"
-                  value={p.soundVolume}
-                  disabled={!p.sound}
-                  onChange={(e) => patch({ soundVolume: Number(e.target.value) })}
-                  onPointerUp={() => playSound('select')}
-                  onKeyUp={() => playSound('select')}
-                />
-                <span className="mono" aria-hidden="true">
-                  {p.soundVolume}%
-                </span>
-                <button
-                  className="small-button"
-                  type="button"
-                  disabled={!p.sound || p.soundVolume === 0}
-                  aria-label="Preview sounds"
-                  onClick={() => playSound('complete')}
-                >
-                  <SpeakerHighIcon /> Try
-                </button>
-              </div>
-            </div>
+            <FeedbackSettings progress={p} patch={patch} engine={feedbackEngine} />
             <h3 className="settings-section-title">App &amp; data</h3>
             <div className="setting-row">
               <span>

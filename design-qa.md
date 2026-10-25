@@ -137,3 +137,32 @@ and deletion while keeping local progress. No page errors were observed. Test
 keys were disposable, never committed, and their cloud copies were removed.
 Server settings are configured for production, previews and development.
 Physical-device checks remain documented separately in `docs/mobile-qa.md`.
+
+## Sound and haptic feedback — October 25, 2026
+
+Integrated seven React Bits Sound Lab audio exports (24,747 bytes total), keeping
+original synthetic cues as immediate/load-failure fallbacks. The source snapshot,
+tuning and upstream MIT + Commons Clause licence are recorded in
+`docs/sound-and-haptics.md` and `public/sounds/REACT_BITS_LICENSE.md`. No dependency
+or hosted audio service was added. Offline cache v10 includes all seven clips.
+
+One feedback engine now coordinates button/keyboard interactions, dialog portals,
+actual journal placements, statement moves, 3D controls, learning feedback and focus
+milestones. Cancelled journal drags do not play a placement cue. Short selection
+pulses are rate-limited; haptic preferences remain independent of sound. Sound is
+still opt-in with the existing local volume preference. Muting, hiding or leaving
+the page stops active cues and cancels vibration; stale pending audio is dropped.
+
+Settings has a compact three-cue audition tray and a vibration test with honest
+capability information. Safari/WebKit lacks the standard vibration API, so its test
+is disabled with an explanation. No hidden-switch vibration workaround is used.
+Physical vibration feel, Bluetooth routing and phone silent-mode behaviour still
+require the device checks in `docs/mobile-qa.md`.
+
+Local proof on the production build: TypeScript, Oxlint, Oxfmt and build pass;
+21 targeted Chromium tests and three WebKit mobile tests pass. This includes real
+MP3 decoding/playback, context reuse, opt-in, immediate mute and visibility cleanup,
+offline sound reload, throwing vibration APIs, failed-download synth fallback,
+touch drop versus cancellation, full studio lessons, 3D pinch/scroll, reduced
+motion and automated AA checks. Light/dark mobile screenshots of Sound & feel were
+visually reviewed at 390px; overflow/accessibility checks include 320 × 480px.

@@ -105,6 +105,21 @@ test('cancellation, diagonals and a second finger never submit a sorting answer'
 test('journal accounts drag on touch, highlight slots, and cancel without placing', async ({
   page,
 }) => {
+  await page.addInitScript(() => {
+    Reflect.set(window, 'tallyPlacementPulses', 0);
+    Object.defineProperty(navigator, 'vibrate', {
+      configurable: true,
+      value: (pattern: number | number[]) => {
+        if (pattern === 12)
+          Reflect.set(
+            window,
+            'tallyPlacementPulses',
+            Reflect.get(window, 'tallyPlacementPulses') + 1,
+          );
+        return true;
+      },
+    });
+  });
   await startLesson(page, 'journal-lab');
   const cdp = await page.context().newCDPSession(page);
   const debit = page.getByRole('button', { name: 'Place account on debit', exact: true });
@@ -128,6 +143,7 @@ test('journal accounts drag on touch, highlight slots, and cancel without placin
     page.getByRole('status').filter({ hasText: 'Equipment placed on debit.' }),
   ).toBeVisible();
   await expect(page.locator('.account-drag-preview')).toHaveCount(0);
+  expect(await page.evaluate(() => Reflect.get(window, 'tallyPlacementPulses'))).toBe(1);
   const cash = page.getByRole('button', { name: 'Cash', exact: true });
   const cashFrom = await center(cash);
   const creditBounds = await credit.boundingBox();
@@ -139,11 +155,13 @@ test('journal accounts drag on touch, highlight slots, and cancel without placin
   });
   await contact(cdp, 'touchCancel', []);
   await expect(credit).toContainText('Place account here');
+  expect(await page.evaluate(() => Reflect.get(window, 'tallyPlacementPulses'))).toBe(1);
   await cash.tap();
   await credit.tap();
   await expect(
     page.getByRole('button', { name: 'Place account on credit: Cash', exact: true }),
   ).toBeVisible();
+  expect(await page.evaluate(() => Reflect.get(window, 'tallyPlacementPulses'))).toBe(2);
 });
 
 test('recall swipes flip once, allow scrolling, and keep ratings explicit', async ({ page }) => {

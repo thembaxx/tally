@@ -39,6 +39,7 @@ import { ChoiceTask, JournalTask, RecallTask } from './studio-activities';
 import { AnswerFeedback } from './answer-feedback';
 import { swipeDirection, useDragAutoScroll, usePointerGesture } from './use-pointer-gesture';
 import type { SoundCue } from './use-soundscape';
+import { emitFeedback } from '@/lib/feedback';
 import { practiceEntry } from '@/lib/questions';
 import { challengeLevels, type Challenge } from '@/lib/challenge-questions';
 import { followUp, recommendedChallenge } from '@/lib/adaptive';
@@ -903,6 +904,7 @@ function OrderRow({
   const handle = useRef<HTMLButtonElement>(null);
   const point = useRef({ y: 0 });
   const [dragging, setDragging] = useState(false);
+  const startIndex = useRef(index);
   useDragAutoScroll(dragging, point, handle);
   return (
     <Reorder.Item
@@ -913,13 +915,18 @@ function OrderRow({
       dragMomentum={false}
       whileDrag={{ zIndex: 2, boxShadow: '0 8px 24px #202b4324' }}
       onDragStart={(_, info) => {
+        startIndex.current = index;
+        emitFeedback('pickup');
         point.current.y = info.point.y - window.scrollY;
         setDragging(true);
       }}
       onDrag={(_, info) => {
         point.current.y = info.point.y - window.scrollY;
       }}
-      onDragEnd={() => setDragging(false)}
+      onDragEnd={() => {
+        setDragging(false);
+        if (startIndex.current !== index) emitFeedback('place');
+      }}
     >
       <button
         ref={handle}
@@ -933,7 +940,6 @@ function OrderRow({
       <span>{value}</span>
       <div className="order-arrows">
         <button
-          data-tally-sound="select"
           aria-label={`Move ${value} up`}
           disabled={index === 0}
           onClick={() => move(index, -1)}
@@ -941,7 +947,6 @@ function OrderRow({
           <ArrowUpIcon />
         </button>
         <button
-          data-tally-sound="select"
           aria-label={`Move ${value} down`}
           disabled={index === total - 1}
           onClick={() => move(index, 1)}
@@ -974,6 +979,7 @@ function OrderTask({
     const next = [...order];
     [next[i], next[i + delta]] = [next[i + delta], next[i]];
     setOrder(next);
+    emitFeedback('place');
     setResult(null);
   }
   return (

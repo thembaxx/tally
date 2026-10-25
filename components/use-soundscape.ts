@@ -2,21 +2,21 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 
-// Original, short Web Audio cues informed by the semantic categories of React Bits Sound Lab.
-// No audio downloads, network requests, autoplay, or third-party sound dependency.
-export type SoundCue =
-  | 'tap'
-  | 'navigate'
-  | 'open'
-  | 'select'
-  | 'hint'
-  | 'flip'
-  | 'correct'
-  | 'incorrect'
-  | 'complete'
-  | 'focus-start'
-  | 'focus-pause'
-  | 'focus-end';
+import type { FeedbackCue } from '@/lib/feedback';
+export type SoundCue = FeedbackCue;
+
+// React Bits Sound Lab exports are served locally. Original synth cues provide an
+// immediate first-interaction fallback while the small MP3s decode, and work if a file fails.
+const soundFiles: Partial<Record<SoundCue, string>> = {
+  tap: 'felt',
+  pickup: 'felt',
+  navigate: 'tab',
+  open: 'unfold',
+  select: 'check',
+  place: 'place',
+  correct: 'tally',
+  complete: 'bloom',
+};
 
 type Note = {
   frequency: number;
@@ -29,6 +29,8 @@ type Note = {
 
 const cues: Record<SoundCue, Note[]> = {
   // Felt / pebble: low, rounded transients rather than a sharp digital tick.
+  pickup: [{ frequency: 420, end: 580, duration: 0.07, level: 0.06, wave: 'triangle' }],
+  place: [{ frequency: 380, end: 260, duration: 0.1, level: 0.08, wave: 'triangle' }],
   tap: [{ frequency: 500, end: 370, duration: 0.075, level: 0.085, wave: 'triangle' }],
   navigate: [{ frequency: 475, end: 540, duration: 0.105, level: 0.08, wave: 'sine' }],
   open: [
@@ -66,82 +68,165 @@ const cues: Record<SoundCue, Note[]> = {
   ],
 };
 
-const soundNames = new Set<SoundCue>(Object.keys(cues) as SoundCue[]);
-
 export function useSoundscape(enabled: boolean, volume: number) {
   const context = useRef<AudioContext | null>(null);
+  const settings = useRef({ enabled, volume });
+  settings.current = { enabled, volume };
   const lastPlayed = useRef<Partial<Record<SoundCue, number>>>({});
+  const encoded = useRef(new Map<string, Promise<ArrayBuffer>>());
+  const decoded = useRef(new Map<string, AudioBuffer>());
+  const warming = useRef(new Set<string>());
+  const voices = useRef(new Map<AudioScheduledSourceNode, GainNode>());
+  const epoch = useRef(0);
+
+  const stop = useCallback(() => {
+    epoch.current += 1;
+    for (const [source, gain] of voices.current) {
+      source.onended = null;
+      try {
+        source.stop();
+      } catch {
+        // A source may have finished between the visibility event and this loop.
+      }
+      source.disconnect();
+      gain.disconnect();
+    }
+    voices.current.clear();
+  }, []);
+
+  const preload = useCallback(() => {
+    for (const name of new Set(Object.values(soundFiles))) {
+      if (encoded.current.has(name)) continue;
+      const pending = fetch(`/sounds/${name}-v1.mp3`).then((response) => {
+        if (!response.ok) throw new Error('Sound unavailable');
+        return response.arrayBuffer();
+      });
+      encoded.current.set(name, pending);
+      // Fetch failure is optional feedback, never an unhandled page error.
+      void pending.catch(() => {});
+    }
+  }, []);
+
+  const warm = useCallback((audio: AudioContext) => {
+    for (const [name, pending] of encoded.current) {
+      if (decoded.current.has(name) || warming.current.has(name)) continue;
+      warming.current.add(name);
+      void pending
+        .then((bytes) => audio.decodeAudioData(bytes.slice(0)))
+        .then((buffer) => decoded.current.set(name, buffer))
+        .catch(() => {})
+        .finally(() => warming.current.delete(name));
+    }
+  }, []);
 
   const play = useCallback(
     (cue: SoundCue, options?: { force?: boolean; volume?: number }) => {
-      if ((!enabled && !options?.force) || typeof window === 'undefined' || document.hidden) return;
-      const loudness = Math.max(0, Math.min(100, options?.volume ?? volume)) / 100;
+      if (
+        (!settings.current.enabled && !options?.force) ||
+        document.hidden ||
+        navigator.userActivation?.hasBeenActive === false
+      )
+        return;
+      const loudness = Math.max(0, Math.min(100, options?.volume ?? settings.current.volume)) / 100;
       if (!loudness) return;
+      const now = performance.now();
+      if (now - (lastPlayed.current[cue] ?? -Infinity) < 100) return;
+      lastPlayed.current[cue] = now;
+      const ticket = epoch.current;
 
       try {
-        const now = performance.now();
-        const cooldown = cue === 'select' || cue === 'tap' ? 95 : 70;
-        if (now - (lastPlayed.current[cue] ?? -Infinity) < cooldown) return;
-        lastPlayed.current[cue] = now;
-
-        const ctx = context.current?.state === 'closed' ? null : context.current;
-        const audio = ctx ?? new AudioContext();
-        context.current = audio;
-        if (audio.state === 'suspended') void audio.resume().catch(() => {});
-        const base = audio.currentTime + 0.012;
-        for (const note of cues[cue]) {
-          const start = base + (note.delay ?? 0);
-          const end = start + note.duration;
-          const oscillator = audio.createOscillator();
-          const envelope = audio.createGain();
-          oscillator.type = note.wave ?? 'sine';
-          oscillator.frequency.setValueAtTime(note.frequency, start);
-          if (note.end) {
-            oscillator.frequency.exponentialRampToValueAtTime(note.end, end);
-          }
-          const peak = Math.max(0.0002, note.level * loudness);
-          envelope.gain.setValueAtTime(0.0001, start);
-          envelope.gain.exponentialRampToValueAtTime(peak, start + 0.012);
-          envelope.gain.exponentialRampToValueAtTime(0.0001, end);
-          oscillator.connect(envelope);
-          envelope.connect(audio.destination);
-          oscillator.start(start);
-          oscillator.stop(end + 0.01);
-          oscillator.onended = () => {
-            oscillator.disconnect();
-            envelope.disconnect();
+        const audio = context.current?.state !== 'closed' ? context.current : null;
+        const ctx = audio ?? new AudioContext({ latencyHint: 'interactive' });
+        context.current = ctx;
+        preload();
+        warm(ctx);
+        const schedule = () => {
+          // Never replay a queued cue after muting, hiding, or returning to the tab.
+          if (
+            epoch.current !== ticket ||
+            document.hidden ||
+            ctx.state !== 'running' ||
+            performance.now() - now > 250
+          )
+            return;
+          if ((!settings.current.enabled && !options?.force) || !settings.current.volume) return;
+          const base = ctx.currentTime + 0.004;
+          const connect = (source: AudioScheduledSourceNode, gain: GainNode) => {
+            source.connect(gain);
+            gain.connect(ctx.destination);
+            voices.current.set(source, gain);
+            source.onended = () => {
+              voices.current.delete(source);
+              source.disconnect();
+              gain.disconnect();
+            };
           };
-        }
+          const file = soundFiles[cue];
+          const buffer = file && decoded.current.get(file);
+          if (buffer) {
+            const source = ctx.createBufferSource();
+            const gain = ctx.createGain();
+            source.buffer = buffer;
+            gain.gain.setValueAtTime(loudness * 0.65, base);
+            connect(source, gain);
+            source.start(base);
+          } else {
+            for (const note of cues[cue]) {
+              const start = base + (note.delay ?? 0);
+              const end = start + note.duration;
+              const oscillator = ctx.createOscillator();
+              const envelope = ctx.createGain();
+              oscillator.type = note.wave ?? 'sine';
+              oscillator.frequency.setValueAtTime(note.frequency, start);
+              if (note.end) oscillator.frequency.exponentialRampToValueAtTime(note.end, end);
+              envelope.gain.setValueAtTime(0.0001, start);
+              envelope.gain.exponentialRampToValueAtTime(
+                Math.max(0.0002, note.level * loudness),
+                start + 0.012,
+              );
+              envelope.gain.exponentialRampToValueAtTime(0.0001, end);
+              connect(oscillator, envelope);
+              oscillator.start(start);
+              oscillator.stop(end + 0.01);
+            }
+          }
+        };
+        if (ctx.state !== 'running')
+          void ctx
+            .resume()
+            .then(schedule)
+            .catch(() => {});
+        else schedule();
       } catch {
         // Unsupported/blocked Web Audio must never interrupt learning or keyboard use.
       }
     },
-    [enabled, volume],
+    [preload, warm],
   );
 
-  // Explicit opt-in targets inside the lesson dialog are rendered in a Radix portal.
-  // Delegate at document level so both the app and its portals use the same sound engine.
   useEffect(() => {
-    const onClick = (event: MouseEvent) => {
-      if (!(event.target instanceof Element)) return;
-      const target = event.target.closest<HTMLElement>('[data-tally-sound]');
-      if (!target || target.getAttribute('aria-disabled') === 'true') return;
-      if (target instanceof HTMLButtonElement && target.disabled) return;
-      const cue = target.dataset.tallySound as SoundCue | undefined;
-      if (cue && soundNames.has(cue)) play(cue);
-    };
-    document.addEventListener('click', onClick);
-    return () => document.removeEventListener('click', onClick);
-  }, [play]);
+    if (enabled && volume > 0) preload();
+    else stop();
+  }, [enabled, volume, preload, stop]);
 
-  // Reuse one audio context, releasing it when the app unmounts.
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    const hide = () => {
+      stop();
+      if (context.current?.state === 'running') void context.current.suspend().catch(() => {});
+    };
+    const visibility = () => {
+      if (document.hidden) hide();
+    };
+    document.addEventListener('visibilitychange', visibility);
+    window.addEventListener('pagehide', hide);
+    return () => {
+      document.removeEventListener('visibilitychange', visibility);
+      window.removeEventListener('pagehide', hide);
+      stop();
       if (context.current) void context.current.close().catch(() => {});
       context.current = null;
-    },
-    [],
-  );
+    };
+  }, [stop]);
 
   return play;
 }

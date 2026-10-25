@@ -28,6 +28,7 @@ import { Segmented } from './ui/controls';
 import { Blob } from './brand';
 import { CoachScope, ExplanationTools } from './learning-coach';
 import { AnswerFeedback } from './answer-feedback';
+import { emitFeedback } from '@/lib/feedback';
 const Scene = dynamic(() => import('./scene'), {
   ssr: false,
   loading: () => <div className="scene scene-loading" />,
@@ -53,7 +54,11 @@ export function ExperienceLab({
         </div>
       </div>
       <div className="experience-launchers">
-        <button className="experience-launch shop-launch" onClick={() => setScreen('shop')}>
+        <button
+          data-tally-sound="open"
+          className="experience-launch shop-launch"
+          onClick={() => setScreen('shop')}
+        >
           <span className="experience-icon">
             <StorefrontIcon size={34} weight="duotone" />
           </span>
@@ -64,7 +69,11 @@ export function ExperienceLab({
             {data.transactions.length ? 'Return to my shop' : 'Open my shop'} <ArrowRightIcon />
           </span>
         </button>
-        <button className="experience-launch project-launch" onClick={() => setScreen('projects')}>
+        <button
+          data-tally-sound="open"
+          className="experience-launch project-launch"
+          onClick={() => setScreen('projects')}
+        >
           <span className="experience-icon">
             <DetectiveIcon size={34} weight="duotone" />
           </span>
@@ -170,7 +179,10 @@ function BusinessSandbox({
           kind="shop"
           values={[b.inventory / 20, b.cash, b.equipment]}
           minimalControls
-          onInspect={setInspect}
+          onInspect={(part) => {
+            setInspect(part);
+            emitFeedback('select');
+          }}
         />
         <span className="shop-world-label">THE TALLY TUCK SHOP</span>
       </div>
@@ -179,6 +191,7 @@ function BusinessSandbox({
           <button
             key={part}
             className="text-button"
+            data-tally-sound="select"
             aria-pressed={inspect === part}
             onClick={() => setInspect(part)}
           >
@@ -276,6 +289,7 @@ function BusinessSandbox({
                       key={p.id}
                       aria-pressed={prediction === p.id}
                       onClick={() => setPrediction(p.id)}
+                      data-tally-sound="select"
                     >
                       {p.label}
                     </button>

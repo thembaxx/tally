@@ -16,6 +16,7 @@ import {
 } from '@phosphor-icons/react';
 import type { ChoiceChallenge, JournalChallenge, RecallCard } from '@/lib/activity-types';
 import { accepts } from '@/lib/learning';
+import { emitFeedback } from '@/lib/feedback';
 import { learnerNumber, money } from '@/lib/south-africa';
 import { AnswerFeedback } from './answer-feedback';
 import { Blob } from './brand';
@@ -188,6 +189,7 @@ export function JournalTask({
   function put(side: 'debit' | 'credit', account = selected) {
     if (!account || locked || !c.accounts.includes(account)) return;
     setAccounts((v) => ({ ...v, [side]: account }));
+    emitFeedback('place');
     setSelected(null);
     setResult(null);
     setAnnouncement(`${account} placed on ${side}.`);
@@ -257,6 +259,7 @@ export function JournalTask({
             selected={selected === account}
             onSelect={() => setSelected(selected === account ? null : account)}
             onStart={(value, move) => {
+              emitFeedback('pickup');
               selectionBeforeDrag.current = selected;
               setDragged(value);
               setSelected(value);
@@ -286,7 +289,6 @@ export function JournalTask({
                   slots.current[side] = element;
                 }}
                 className={`journal-slot ${selected ? 'ready' : ''} ${hovered === side ? 'drag-over' : ''}`}
-                data-tally-sound={selected ? 'select' : undefined}
                 disabled={locked}
                 aria-label={`Place account on ${side}${accounts[side] ? `: ${accounts[side]}` : ''}`}
                 onClick={() => put(side)}

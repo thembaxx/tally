@@ -598,6 +598,7 @@ export default function Scene({
             <button
               type="button"
               aria-label="Show 3D view controls"
+              data-tally-sound="select"
               aria-expanded={controlsOpen}
               onClick={() => setControlsOpen((value) => !value)}
             >
@@ -608,6 +609,7 @@ export default function Scene({
             <button
               type="button"
               aria-label="Rotate 3D view"
+              data-tally-sound="select"
               onClick={() => {
                 const c = orbit.current;
                 if (c) {
@@ -624,6 +626,7 @@ export default function Scene({
             <button
               type="button"
               aria-label="Zoom 3D view in"
+              data-tally-sound="select"
               onClick={() => {
                 setTouched(true);
                 if (orbit.current) orbit.current.autoRotate = false;
@@ -637,6 +640,7 @@ export default function Scene({
             <button
               type="button"
               aria-label="Zoom 3D view out"
+              data-tally-sound="select"
               onClick={() => {
                 setTouched(true);
                 if (orbit.current) orbit.current.autoRotate = false;
@@ -647,7 +651,12 @@ export default function Scene({
             >
               <MagnifyingGlassMinusIcon />
             </button>
-            <button type="button" aria-label="Reset 3D view" onClick={resetView}>
+            <button
+              type="button"
+              data-tally-sound="select"
+              aria-label="Reset 3D view"
+              onClick={resetView}
+            >
               <ArrowCounterClockwiseIcon />
             </button>
           </div>
