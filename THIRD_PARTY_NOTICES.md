@@ -13,3 +13,5 @@ The teaching sequence is informed by [The Learning Scientists: Six Strategies fo
 DM Sans, DM Mono, and Outfit are distributed under the SIL Open Font License. Font license files are in public/fonts.
 
 The new original folded-ribbon Tally mark was generated with Image Gen using the supplied colorful app-icon and ribbon photographs as visual inspiration. It does not use existing brand artwork. Motion composition uses GSAP and @gsap/react alongside the existing Motion interactions.
+
+Tally includes seven audio exports from [React Bits Sound Lab](https://reactbits.dev/tools/sound-lab): Felt, Tab, Unfold, Check, Place, Tally and Bloom. Copyright (c) 2026 David Haz, MIT + Commons Clause. The full licence is included in [public/sounds/REACT_BITS_LICENSE.md](public/sounds/REACT_BITS_LICENSE.md). These exports are used within the Tally application; they are not offered as a sound library. Source snapshot and tuning are documented in [sound and haptics](docs/sound-and-haptics.md). No React Bits synthesis engine is shipped.

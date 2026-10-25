@@ -46,3 +46,13 @@ small iPhone-sized screen. Desktop WebKit is not a physical iOS simulator.
 
 Physical-device checks have not been executed by the cloud agent. Keep that
 distinction when reporting release verification.
+
+## Sound and physical haptics
+
+- On an Android phone with a vibration motor, try Settings → Test vibration, journal placement, statement reordering, correct/retry feedback and lesson completion. Confirm the short patterns feel distinct and repeated selection stays restrained.
+- On iPhone Safari and the installed PWA, confirm the unavailable-vibration message and disabled test. Sound previews and visual feedback must still work.
+- With headphones and a Bluetooth speaker, confirm quiet previews, correct output routing and an appropriate volume range. Try the iOS silent switch and Android silent/DND settings; browser policy and device settings can affect feedback.
+- Mute during a celebration, move the app into the background and return. There should be no continuing or delayed cue. Haptic feedback must stop when disabled.
+- After an online visit and successful offline installation, enable flight mode and reload. Sound choices and all three previews should work.
+
+These hardware checks remain unperformed in the cloud environment; automated audio decoding and vibration-request tests do not replace them.

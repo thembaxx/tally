@@ -129,9 +129,9 @@ async function seed(context: BrowserContext, name: string, xp: number) {
 }
 async function settings(page: Page) {
   await page.goto('/');
-  const sidebar = page.locator('.sidebar-settings');
-  if (await sidebar.isVisible()) await sidebar.click();
-  else await page.getByRole('button', { name: 'Open settings', exact: true }).click();
+  // Both viewport variants are accessible by name. Wait for the visible control
+  // instead of committing to the mobile branch while the app is still loading.
+  await page.getByRole('button', { name: /^(?:Open settings|Settings\b)/ }).click();
 }
 test('two devices connect with encrypted progress, review conflicts, retain preferences and reconnect after offline changes', async ({
   browser,

@@ -66,3 +66,48 @@ test('WebKit preserves case checkpoints and supports accessible explanation cont
   await page.getByRole('button', { name: 'Example', exact: true }).tap();
   await expect(page.locator('.coach-content').first()).toContainText('R500 oven');
 });
+
+test('WebKit offers honest vibration support and decodes the sound previews', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.addInitScript(() => {
+    Reflect.set(window, 'tallyDecodedSounds', 0);
+    Reflect.set(window, 'tallyPlayedSamples', 0);
+    const Native = window.AudioContext;
+    window.AudioContext = class extends Native {
+      override decodeAudioData(bytes: ArrayBuffer) {
+        return super.decodeAudioData(bytes).then((buffer) => {
+          Reflect.set(window, 'tallyDecodedSounds', Reflect.get(window, 'tallyDecodedSounds') + 1);
+          return buffer;
+        });
+      }
+      override createBufferSource() {
+        const source = super.createBufferSource();
+        const start = source.start.bind(source);
+        source.start = (when?: number) => {
+          Reflect.set(window, 'tallyPlayedSamples', Reflect.get(window, 'tallyPlayedSamples') + 1);
+          start(when);
+        };
+        return source;
+      }
+    };
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Open settings', exact: true }).tap();
+  await expect(page.getByRole('button', { name: 'Test vibration' })).toBeDisabled();
+  await expect(
+    page.getByRole('status').filter({ hasText: 'This browser doesn’t offer vibration' }),
+  ).toBeVisible();
+  await page.getByRole('switch', { name: 'Sound effects' }).tap();
+  await expect.poll(() => page.evaluate(() => Reflect.get(window, 'tallyDecodedSounds'))).toBe(7);
+  await page.getByRole('button', { name: 'Preview sounds', exact: true }).tap();
+  await expect
+    .poll(() => page.evaluate(() => Reflect.get(window, 'tallyPlayedSamples')))
+    .toBeGreaterThan(0);
+  await page.setViewportSize({ width: 320, height: 480 });
+  await page.getByRole('button', { name: 'Preview placement sound' }).tap();
+  expect(await page.getByRole('dialog').evaluate((e) => e.scrollWidth <= e.clientWidth + 1)).toBe(
+    true,
+  );
+  expect(errors).toEqual([]);
+});

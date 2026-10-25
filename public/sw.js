@@ -1,10 +1,10 @@
-const CACHE='tally-offline-v9';
-const CORE=['/','/offline.html','/brand-mark.webp','/icons/icon-32.png','/icons/icon-192.png','/icons/icon-512.png','/fonts/dm-sans.ttf','/fonts/outfit.ttf','/fonts/dm-mono.ttf'];
+const CACHE='tally-offline-v10';
+const CORE=['/','/offline.html','/brand-mark.webp','/icons/icon-32.png','/icons/icon-192.png','/icons/icon-512.png','/fonts/dm-sans.ttf','/fonts/outfit.ttf','/fonts/dm-mono.ttf',...['felt','tab','unfold','check','place','tally','bloom'].map(name=>`/sounds/${name}-v1.mp3`)];
 self.addEventListener('install',event=>{event.waitUntil((async()=>{const cache=await caches.open(CACHE);await cache.addAll(CORE);const shell=await cache.match('/');if(shell){const html=await shell.text();const assets=[...html.matchAll(/(?:src|href)="([^"]+)"/g)].map(m=>new URL(m[1],self.location.origin)).filter(u=>u.origin===self.location.origin&&u.pathname.startsWith('/_next/static/')&&/\.(js|css)$/.test(u.pathname)).map(u=>u.href);await cache.addAll([...new Set(assets)]);}})())});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('tally-')&&key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()))});
 self.addEventListener('message',event=>{if(event.data==='SKIP_WAITING')self.skipWaiting();if(event.data?.type==='CACHE_ASSETS'&&Array.isArray(event.data.urls)){const urls=event.data.urls.filter(value=>{try{const u=new URL(value);return u.origin===self.location.origin&&u.pathname.startsWith('/_next/static/')&&/\.(js|css)$/.test(u.pathname)}catch{return false}});event.waitUntil(caches.open(CACHE).then(cache=>Promise.allSettled(urls.map(url=>cache.add(url)))));}});
 self.addEventListener('fetch',event=>{
  const req=event.request;const url=new URL(req.url);if(req.method!=='GET'||url.origin!==self.location.origin||url.pathname.startsWith('/api/'))return;
  if(req.mode==='navigate'){event.respondWith(fetch(req).then(res=>{if(res.ok){const copy=res.clone();event.waitUntil(caches.open(CACHE).then(c=>c.put(req,copy)))}return res}).catch(async()=>await caches.match(req)||await caches.match('/')||await caches.match('/offline.html')));return}
- if(url.pathname.startsWith('/_next/')||/\.(ttf|png|svg|webp|ico)$/.test(url.pathname)){event.respondWith(caches.match(req).then(hit=>hit||fetch(req).then(res=>{if(res.ok){const copy=res.clone();event.waitUntil(caches.open(CACHE).then(c=>c.put(req,copy)))}return res})));}
+ if(url.pathname.startsWith('/_next/')||/\.(ttf|png|svg|webp|ico|mp3)$/.test(url.pathname)){event.respondWith(caches.match(req).then(hit=>hit||fetch(req).then(res=>{if(res.ok){const copy=res.clone();event.waitUntil(caches.open(CACHE).then(c=>c.put(req,copy)))}return res})));}
 });
