@@ -166,3 +166,10 @@ offline sound reload, throwing vibration APIs, failed-download synth fallback,
 touch drop versus cancellation, full studio lessons, 3D pinch/scroll, reduced
 motion and automated AA checks. Light/dark mobile screenshots of Sound & feel were
 visually reviewed at 390px; overflow/accessibility checks include 320 × 480px.
+
+The first full CI run passed 67 Chromium tests, then the existing sync test timed
+out when its immediate `isVisible()` branch selected a mobile-only Settings button
+on the desktop page. The sync helper now waits for the visible accessible Settings
+control instead of making a one-time rendering assumption. This is a test-only
+change; production sync and feedback code are unchanged. The focused sync suite
+passes with the corrected helper.
