@@ -50,6 +50,7 @@ import {
   type Lesson,
   type Progress,
 } from '@/lib/learning';
+import { TransferAssessment } from './transfer-assessment';
 import { ReflectionNotebook } from './reflection-notebook';
 import { ProgressSync } from './progress-sync';
 import { useProgressSync } from './use-progress-sync';
@@ -1001,6 +1002,19 @@ export default function TallyApp() {
                   </>
                 ) : tab === 'practice' ? (
                   <>
+                    <TransferAssessment
+                      progress={p}
+                      today={today}
+                      onDraftChange={(draft) =>
+                        setProgress((old) => ({ ...old, transferDraft: draft }))
+                      }
+                      onSave={(result) =>
+                        setProgress((old) => ({
+                          ...old,
+                          transferResults: [...old.transferResults, result].slice(-20),
+                        }))
+                      }
+                    />
                     {reviewAction}
                     <PageHeading
                       eyebrow="MAKE IT STICK"

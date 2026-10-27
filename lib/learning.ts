@@ -1,3 +1,4 @@
+import { readTransferResults, transferCase, type TransferResult } from './transfer-assessment';
 import { emptyExperiences, readExperiences, type Experiences } from './experiences';
 import type { StudioActivity } from './activity-types';
 import { studioLessons, cashFlowLesson } from './studio-lessons';
@@ -494,7 +495,46 @@ export function accepts(value: string, answers: string[]) {
   );
 }
 export const STORAGE_KEY = 'tally-progress-v1';
+export type TransferDraft = {
+  answers: Record<string, string>;
+  hints: Record<string, number>;
+  seenSolutions: boolean;
+};
+
+/** Restore only this authored case's fields, retaining exposure to worked solutions. */
+export function readTransferDraft(value: unknown, solutionsAlreadySeen = false): TransferDraft {
+  const empty = { answers: {}, hints: {}, seenSolutions: solutionsAlreadySeen };
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return empty;
+  const raw = value as Record<string, unknown>;
+  const answers =
+    raw.answers && typeof raw.answers === 'object' && !Array.isArray(raw.answers)
+      ? (raw.answers as Record<string, unknown>)
+      : {};
+  const hints =
+    raw.hints && typeof raw.hints === 'object' && !Array.isArray(raw.hints)
+      ? (raw.hints as Record<string, unknown>)
+      : {};
+  return {
+    answers: Object.fromEntries(
+      transferCase.questions.flatMap(({ id }) =>
+        typeof answers[id] === 'string' ? [[id, answers[id].slice(0, 100)]] : [],
+      ),
+    ),
+    hints: Object.fromEntries(
+      transferCase.questions.flatMap(({ id }) => {
+        const count = hints[id];
+        return typeof count === 'number' && Number.isSafeInteger(count) && count > 0
+          ? [[id, Math.min(100, count)]]
+          : [];
+      }),
+    ),
+    seenSolutions: solutionsAlreadySeen || raw.seenSolutions === true,
+  };
+}
+
 export type Progress = {
+  transferDraft: TransferDraft;
+  transferResults: TransferResult[];
   name: string;
   onboarded: boolean;
   goal: number;
@@ -515,6 +555,8 @@ export type Progress = {
   tutor: TutorProfile;
 };
 export const initialProgress: Progress = {
+  transferDraft: readTransferDraft(null),
+  transferResults: [],
   name: '',
   onboarded: false,
   goal: 5,
@@ -546,8 +588,11 @@ export function readProgress(raw: string | null, legacyReviews?: string | null):
         reviewData = {};
       }
     }
+    const transferResults = readTransferResults(p.transferResults);
     return {
       ...initialProgress,
+      transferDraft: readTransferDraft(p.transferDraft, transferResults.length > 0),
+      transferResults,
       experiences: readExperiences(p.experiences),
       tutor: readTutor(
         p.tutor,
