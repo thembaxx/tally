@@ -215,8 +215,10 @@ strong {
   line-height: 1.5;
   min-height: 46px;
 }
-.button:hover {
-  box-shadow: 0 6px 16px #1b2a2312;
+@media (hover: hover) and (pointer: fine) {
+  .button:hover {
+    box-shadow: 0 6px 16px #1b2a2312;
+  }
 }
 .button svg {
   font-size: 18px;
@@ -233,8 +235,10 @@ strong {
 .text-button svg {
   font-size: 16px;
 }
-.text-button:hover {
-  color: var(--accent);
+@media (hover: hover) and (pointer: fine) {
+  .text-button:hover {
+    color: var(--accent);
+  }
 }
 .icon-button {
   width: 40px;
@@ -245,8 +249,10 @@ strong {
   border-radius: 50%;
   transition: background 0.2s;
 }
-.icon-button:hover {
-  background: var(--raised);
+@media (hover: hover) and (pointer: fine) {
+  .icon-button:hover {
+    background: var(--raised);
+  }
 }
 .pill {
   display: inline-flex;
@@ -317,8 +323,10 @@ strong {
   text-align: left;
   isolation: isolate;
 }
-.main-nav button:hover {
-  color: var(--text);
+@media (hover: hover) and (pointer: fine) {
+  .main-nav button:hover {
+    color: var(--text);
+  }
 }
 .main-nav button.active {
   font-weight: 600;
@@ -723,8 +731,10 @@ strong {
   min-width: 0;
   box-shadow: var(--shadow);
 }
-.lesson-card:hover {
-  border-color: #c2b5a2;
+@media (hover: hover) and (pointer: fine) {
+  .lesson-card:hover {
+    border-color: #c2b5a2;
+  }
 }
 .lesson-card-top {
   display: flex;
@@ -1825,8 +1835,10 @@ textarea {
   border-radius: 5px;
   font-size: 13px;
 }
-.order-arrows button:hover {
-  background: var(--raised);
+@media (hover: hover) and (pointer: fine) {
+  .order-arrows button:hover {
+    background: var(--raised);
+  }
 }
 .order-arrows button:disabled {
   opacity: 0.2;
@@ -2379,8 +2391,10 @@ textarea {
   height: 32px;
   width: 32px;
 }
-.focus-bar .icon-button:hover {
-  background: #354038;
+@media (hover: hover) and (pointer: fine) {
+  .focus-bar .icon-button:hover {
+    background: #354038;
+  }
 }
 .focus-time {
   font-size: 22px;
@@ -3721,9 +3735,13 @@ textarea {
   padding: 2px;
   backdrop-filter: blur(10px);
 }
-.scene:hover .scene-controls,
 .scene:focus-within .scene-controls {
   opacity: 1;
+}
+@media (hover: hover) and (pointer: fine) {
+  .scene:hover .scene-controls {
+    opacity: 1;
+  }
 }
 .scene-controls button {
   height: 32px;
@@ -3734,8 +3752,10 @@ textarea {
   border-radius: 7px;
   font-size: 15px;
 }
-.scene-controls button:hover {
-  background: var(--raised);
+@media (hover: hover) and (pointer: fine) {
+  .scene-controls button:hover {
+    background: var(--raised);
+  }
 }
 @media (pointer: coarse) {
   .scene-controls {
