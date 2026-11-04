@@ -40,9 +40,11 @@
 .project-launch {
   background: var(--peach);
 }
-.experience-launch:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow);
+@media (hover: hover) and (pointer: fine) {
+  .experience-launch:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow);
+  }
 }
 .experience-launch strong {
   font-family: Outfit, sans-serif;
@@ -183,9 +185,11 @@
     background 0.2s,
     transform 0.2s;
 }
-.decision-grid button:hover:not(:disabled) {
-  background: var(--blue);
-  transform: translateY(-2px);
+@media (hover: hover) and (pointer: fine) {
+  .decision-grid button:hover:not(:disabled) {
+    background: var(--blue);
+    transform: translateY(-2px);
+  }
 }
 .decision-grid strong {
   display: block;
@@ -610,9 +614,11 @@
   .decision-grid button {
     transition: none;
   }
-  .experience-launch:hover,
-  .decision-grid button:hover:not(:disabled) {
-    transform: none;
+  @media (hover: hover) and (pointer: fine) {
+    .experience-launch:hover,
+    .decision-grid button:hover:not(:disabled) {
+      transform: none;
+    }
   }
 }
 

@@ -144,9 +144,11 @@
     transform 0.2s,
     box-shadow 0.2s;
 }
-.guide-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px #263b7e12;
+@media (hover: hover) and (pointer: fine) {
+  .guide-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px #263b7e12;
+  }
 }
 .guide-card.peach,
 .guide-title-block.peach {
@@ -233,10 +235,12 @@
   gap: 22px;
   margin: 18px 0;
 }
-.guide-footer a:hover,
-.guide-breadcrumb a:hover {
-  text-decoration: underline;
-  text-underline-offset: 4px;
+@media (hover: hover) and (pointer: fine) {
+  .guide-footer a:hover,
+  .guide-breadcrumb a:hover {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
 }
 .guide-footer small {
   color: var(--muted);
@@ -354,9 +358,11 @@
   color: var(--muted);
   text-decoration: none;
 }
-.page-footer .public-guides-link:hover {
-  color: var(--accent);
-  text-decoration: underline;
+@media (hover: hover) and (pointer: fine) {
+  .page-footer .public-guides-link:hover {
+    color: var(--accent);
+    text-decoration: underline;
+  }
 }
 @media (max-width: 900px) {
   .guide-grid {
@@ -472,7 +478,9 @@
   .guide-card {
     transition: none;
   }
-  .guide-card:hover {
-    transform: none;
+  @media (hover: hover) and (pointer: fine) {
+    .guide-card:hover {
+      transform: none;
+    }
   }
 }

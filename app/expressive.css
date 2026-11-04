@@ -365,11 +365,13 @@
   color: var(--on-brand);
   box-shadow: 0 4px 0 color-mix(in srgb, var(--brand) 70%, #12204e);
 }
-.button:hover {
-  box-shadow:
-    0 7px 0 color-mix(in srgb, var(--brand) 70%, #12204e),
-    0 12px 25px #2644c01a;
-  transform: translateY(-2px);
+@media (hover: hover) and (pointer: fine) {
+  .button:hover {
+    box-shadow:
+      0 7px 0 color-mix(in srgb, var(--brand) 70%, #12204e),
+      0 12px 25px #2644c01a;
+    transform: translateY(-2px);
+  }
 }
 .button:active {
   box-shadow: 0 1px 0 color-mix(in srgb, var(--brand) 70%, #12204e);
@@ -378,8 +380,10 @@
 .button > svg {
   transition: translate 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-.button:hover > svg:last-child {
-  translate: 3px 0;
+@media (hover: hover) and (pointer: fine) {
+  .button:hover > svg:last-child {
+    translate: 3px 0;
+  }
 }
 .button.secondary {
   background: var(--raised);
@@ -583,10 +587,12 @@
   border-radius: 11px;
   min-height: 43px;
 }
-.daily-button:hover {
-  box-shadow:
-    0 5px 0 #b4af69,
-    0 8px 18px #0001;
+@media (hover: hover) and (pointer: fine) {
+  .daily-button:hover {
+    box-shadow:
+      0 5px 0 #b4af69,
+      0 8px 18px #0001;
+  }
 }
 .daily-reward,
 .daily-reward > span:first-child {
@@ -606,9 +612,11 @@
     border-color 0.3s;
   background: var(--surface);
 }
-.lesson-card:hover {
-  box-shadow: 0 14px 30px #24315c0b;
-  border-color: color-mix(in srgb, var(--brand) 35%, var(--line));
+@media (hover: hover) and (pointer: fine) {
+  .lesson-card:hover {
+    box-shadow: 0 14px 30px #24315c0b;
+    border-color: color-mix(in srgb, var(--brand) 35%, var(--line));
+  }
 }
 .lesson-card:before {
   content: '';
@@ -624,13 +632,17 @@
     opacity 0.3s,
     scale 0.4s;
 }
-.lesson-card:hover:before {
-  opacity: 0.65;
-  scale: 1.5;
+@media (hover: hover) and (pointer: fine) {
+  .lesson-card:hover:before {
+    opacity: 0.65;
+    scale: 1.5;
+  }
 }
-.lesson-card:hover .lesson-icon {
-  rotate: -7deg;
-  scale: 1.06;
+@media (hover: hover) and (pointer: fine) {
+  .lesson-card:hover .lesson-icon {
+    rotate: -7deg;
+    scale: 1.06;
+  }
 }
 .lesson-icon {
   transition:
@@ -649,9 +661,11 @@
     rotate 0.3s,
     background 0.3s;
 }
-.lesson-card:hover .lesson-arrow {
-  rotate: 45deg;
-  background: var(--blue);
+@media (hover: hover) and (pointer: fine) {
+  .lesson-card:hover .lesson-arrow {
+    rotate: 45deg;
+    background: var(--blue);
+  }
 }
 .peach {
   color: #9c422d;
@@ -806,9 +820,11 @@
     background 0.2s,
     transform 0.2s;
 }
-.studio-invitation:hover {
-  background: var(--blue);
-  transform: translateY(-2px);
+@media (hover: hover) and (pointer: fine) {
+  .studio-invitation:hover {
+    background: var(--blue);
+    transform: translateY(-2px);
+  }
 }
 .studio-invitation > span:nth-child(2) {
   display: flex;
@@ -905,9 +921,11 @@
     rotate 0.25s,
     scale 0.25s;
 }
-.format-card:hover .format-icon {
-  rotate: -9deg;
-  scale: 1.1;
+@media (hover: hover) and (pointer: fine) {
+  .format-card:hover .format-icon {
+    rotate: -9deg;
+    scale: 1.1;
+  }
 }
 .format-arrow {
   height: 28px;
@@ -974,9 +992,11 @@
     rotate 0.35s,
     scale 0.35s;
 }
-.badge-item:hover .hex-badge {
-  rotate: -6deg;
-  scale: 1.08;
+@media (hover: hover) and (pointer: fine) {
+  .badge-item:hover .hex-badge {
+    rotate: -6deg;
+    scale: 1.08;
+  }
 }
 .earned .hex-badge {
   box-shadow: inset 0 0 0 3px #ffffff40;
@@ -1042,9 +1062,11 @@
   border-radius: 12px;
   min-height: 48px;
 }
-.sort-options > button:hover:not(:disabled) {
-  background: var(--blue);
-  border-color: var(--brand);
+@media (hover: hover) and (pointer: fine) {
+  .sort-options > button:hover:not(:disabled) {
+    background: var(--blue);
+    border-color: var(--brand);
+  }
 }
 .sort-options .chosen.good {
   border-color: var(--green);
@@ -1131,8 +1153,10 @@
     transform 0.2s,
     background 0.2s;
 }
-.goal-options button:hover {
-  transform: translateX(3px);
+@media (hover: hover) and (pointer: fine) {
+  .goal-options button:hover {
+    transform: translateX(3px);
+  }
 }
 .toast {
   border-radius: 15px;
@@ -2316,9 +2340,11 @@
     scale 0.35s;
   filter: drop-shadow(0 2px 2px #3654cf10);
 }
-.brand-button:hover .brand-mark {
-  rotate: -9deg;
-  scale: 1.08;
+@media (hover: hover) and (pointer: fine) {
+  .brand-button:hover .brand-mark {
+    rotate: -9deg;
+    scale: 1.08;
+  }
 }
 .brand {
   gap: 5px;
